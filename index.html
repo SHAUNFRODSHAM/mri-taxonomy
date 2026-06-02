@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MRI ERP Taxonomy</title>
+</head>
+<body>
+
+  <!-- ── TOPBAR ── -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="burger-btn" id="burger-btn" title="Manage Versions">☰</button>
+      <div class="topbar-brand">
+        <div class="topbar-logo">🏢</div>
+        <div>
+          <div class="topbar-title">MRI Software · ERP Implementation Taxonomy</div>
+          <div class="topbar-sub">Interactive Process Map · Click any item for detail</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Version badge chip — shows active version name + dirty indicator -->
+    <button class="ver-badge" id="ver-badge" title="Manage versions">
+      <span class="ver-badge-dot" id="ver-badge-dot"></span>
+      <span class="ver-badge-name" id="ver-badge-name">Original</span>
+      <span class="ver-badge-caret">▾</span>
+    </button>
+
+    <div class="topbar-actions">
+      <button class="btn btn-blue"        id="gen-btn">⬇ Generate Doc</button>
+      <button class="btn btn-ghost"       id="undo-btn" disabled title="Nothing to undo">↩ Undo</button>
+      <button class="btn btn-reset"       id="reset-btn" style="display:none" title="Restore this module to its original factory content">↺ Reset</button>
+      <button class="btn btn-save-ver"    id="save-changes-btn" style="display:none" title="Save changes to this version">💾 Save Changes</button>
+      <button class="btn btn-edit"        id="edit-btn">✎ Edit Mode</button>
+      <button class="btn btn-add"         id="add-col-btn" style="display:none">+ Add Column</button>
+    </div>
+  </div>
+
+  <!-- ── TAB BAR ── -->
+  <div class="tab-bar" id="tab-bar">
+    <button class="tab-btn active" data-tab="cm"><span class="tab-icon">🏢</span>Commercial Management</button>
+    <button class="tab-btn"        data-tab="gl"><span class="tab-icon">📒</span>General Ledger</button>
+    <button class="tab-btn"        data-tab="ap"><span class="tab-icon">📤</span>Accounts Payable</button>
+    <button class="tab-btn"        data-tab="rm"><span class="tab-icon">🏠</span>Residential Management</button>
+    <button class="tab-add-btn"    id="tab-add-btn" title="Add new module tab">+ Add Tab</button>
+  </div>
+
+  <!-- ── CANVAS ── -->
+  <div class="canvas">
+    <div class="main-header cm-header" id="main-header">
+      <div class="main-header-text" id="main-header-text">Commercial Management</div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- ── OVERLAY (closes panel on click) ── -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- ── DETAIL PANEL ── -->
+  <div class="panel" id="panel">
+    <div class="panel-header">
+      <div class="panel-breadcrumb" id="panel-bc"></div>
+      <div class="panel-title"      id="panel-title"></div>
+      <div class="panel-badges"     id="panel-badges"></div>
+      <button class="panel-close"   id="panel-close">✕</button>
+    </div>
+    <div class="panel-body" id="panel-body"></div>
+  </div>
+
+  <!-- ── EDIT MODAL ── -->
+  <div class="modal-overlay" id="edit-modal-overlay">
+    <div class="modal">
+      <div class="modal-hdr">
+        <div>
+          <h3 id="em-modal-title">Edit Item</h3>
+          <p  id="em-modal-sub"></p>
+        </div>
+        <button class="modal-x" id="edit-modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="em-body"></div>
+      <div class="modal-ftr">
+        <button class="btn btn-cancel" id="edit-modal-cancel">Cancel</button>
+        <button class="btn btn-save"   id="edit-modal-save">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ADD ITEM MODAL ── -->
+  <div class="add-modal-overlay" id="add-modal-overlay">
+    <div class="add-modal">
+      <div class="add-modal-hdr">
+        <div><h3 id="add-modal-title">Add Item</h3></div>
+      </div>
+      <div class="add-modal-body">
+        <div id="add-modal-fields"></div>
+      </div>
+      <div class="add-modal-ftr">
+        <button class="btn btn-cancel" id="add-modal-cancel">Cancel</button>
+        <button class="btn btn-save"   id="add-modal-confirm">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ADD TAB MODAL ── -->
+  <div class="add-modal-overlay" id="add-tab-overlay">
+    <div class="add-modal">
+      <div class="add-modal-hdr">
+        <div>
+          <h3>Add New Module Tab</h3>
+          <p>Creates a new empty module in the taxonomy</p>
+        </div>
+      </div>
+      <div class="add-modal-body">
+        <label>Module Name</label>
+        <input type="text" id="new-tab-name" placeholder="e.g. Accounts Receivable" />
+        <label>Icon (emoji)</label>
+        <input type="text" id="new-tab-icon" placeholder="e.g. 📥" maxlength="4" />
+        <label>Banner Colour</label>
+        <select id="new-tab-color">
+          <option value="#1a3f6a">Blue (Accounts Payable style)</option>
+          <option value="#3d5a1a">Green (Commercial Management style)</option>
+          <option value="#2d4a0a">Dark Green (General Ledger style)</option>
+          <option value="#4a1a3a">Purple</option>
+          <option value="#5a2a0a">Amber/Brown</option>
+          <option value="#2a3a5a">Navy</option>
+        </select>
+      </div>
+      <div class="add-modal-ftr">
+        <button class="btn btn-cancel" id="add-tab-cancel">Cancel</button>
+        <button class="btn btn-save"   id="add-tab-confirm">Add Tab</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GENERATE DOCUMENT MODAL ── -->
+  <div class="gen-overlay" id="gen-overlay">
+    <div class="gen-modal">
+      <div class="gen-hdr">
+        <div>
+          <h3>Generate Process Summary Document</h3>
+          <p id="gen-hdr-sub">MRI ERP Implementation Taxonomy</p>
+        </div>
+        <button class="gen-x" id="gen-modal-close">✕</button>
+      </div>
+      <div class="gen-options">
+        <span class="gen-opt-label">Include Sections:</span>
+        <label class="gen-check-wrap">
+          <input type="checkbox" id="gopt-overview"    checked>
+          <label for="gopt-overview">Overview</label>
+        </label>
+        <label class="gen-check-wrap">
+          <input type="checkbox" id="gopt-activities"  checked>
+          <label for="gopt-activities">Core Activities</label>
+        </label>
+        <label class="gen-check-wrap">
+          <input type="checkbox" id="gopt-prereqs"     checked>
+          <label for="gopt-prereqs">Setup Prerequisites</label>
+        </label>
+        <label class="gen-check-wrap">
+          <input type="checkbox" id="gopt-assoc"       checked>
+          <label for="gopt-assoc">Associated Processes</label>
+        </label>
+        <span style="margin-left:12px;border-left:1px solid #ddd;padding-left:12px;" class="gen-opt-label">Module:</span>
+        <label class="gen-check-wrap">
+          <input type="radio" name="gen-scope" id="gscope-current" checked>
+          <label for="gscope-current">Current Tab</label>
+        </label>
+        <label class="gen-check-wrap">
+          <input type="radio" name="gen-scope" id="gscope-all">
+          <label for="gscope-all">All Modules</label>
+        </label>
+      </div>
+      <div class="gen-body">
+        <div class="doc-out" id="doc-out">Click Generate to build your document.</div>
+      </div>
+      <div class="gen-ftr">
+        <span class="gen-ftr-note">Word opens as editable · PDF opens print dialog — save as PDF</span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-cancel" id="gen-close-btn">Close</button>
+          <button class="btn btn-raised" id="gen-preview-btn">⚙ Generate Preview</button>
+          <button class="btn btn-blue"   id="gen-word-btn">⬇ Word (.doc)</button>
+          <button class="btn btn-pdf"    id="gen-pdf-btn">⬇ PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RESET CONFIRMATION MODAL ── -->
+  <div class="modal-overlay" id="reset-modal-overlay">
+    <div class="modal reset-modal">
+      <div class="modal-hdr reset-modal-hdr">
+        <div>
+          <h3>↺ Reset to Original Content</h3>
+          <p id="reset-modal-sub">Choose what to restore</p>
+        </div>
+      </div>
+      <div class="modal-body reset-modal-body">
+        <div class="reset-warning">
+          <div class="reset-warning-icon">⚠</div>
+          <div>
+            <div class="reset-warning-title">This will permanently discard all edits</div>
+            <div class="reset-warning-desc">
+              The selected module(s) will be restored to their original factory content.
+              Your current undo history will be preserved so you can undo this reset
+              if needed — but only within the <strong>20-step undo limit</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div class="reset-options">
+          <button class="reset-opt-btn" id="reset-tab-btn">
+            <span class="reset-opt-icon">↺</span>
+            <div class="reset-opt-text">
+              <div class="reset-opt-title" id="reset-tab-label">Reset Current Tab</div>
+              <div class="reset-opt-desc">Restores only the currently active module</div>
+            </div>
+          </button>
+          <button class="reset-opt-btn reset-opt-all-btn" id="reset-all-btn">
+            <span class="reset-opt-icon">↺↺</span>
+            <div class="reset-opt-text">
+              <div class="reset-opt-title">Reset All Built-in Modules</div>
+              <div class="reset-opt-desc">Restores Commercial Management, General Ledger &amp; Accounts Payable</div>
+            </div>
+          </button>
+        </div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-cancel" id="reset-modal-cancel">Cancel — Keep My Edits</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── VERSION PANEL (left slide-in) ── -->
+  <div class="ver-panel" id="ver-panel">
+    <div class="ver-panel-hdr">
+      <div class="ver-panel-title">📋 Versions</div>
+      <button class="ver-panel-close" id="ver-panel-close">✕</button>
+    </div>
+    <div class="ver-panel-body" id="ver-panel-body">
+      <!-- Rendered by versionMenu.js -->
+    </div>
+    <div class="ver-panel-ftr">
+      <button class="btn btn-raised" id="ver-save-as-btn">+ Save As New Version</button>
+    </div>
+  </div>
+
+  <!-- ── SAVE AS MODAL ── -->
+  <div class="modal-overlay" id="save-as-overlay">
+    <div class="modal save-as-modal">
+      <div class="modal-hdr">
+        <div>
+          <h3>💾 Save As New Version</h3>
+          <p>Create a named snapshot of the current state</p>
+        </div>
+        <button class="modal-x" id="save-as-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <label for="save-as-name">Version Name</label>
+        <input type="text" id="save-as-name" placeholder="e.g. Phase 1 Review" maxlength="60" />
+        <div class="field-hint">Give this version a meaningful name. You can rename it later from the versions menu.</div>
+      </div>
+      <div class="modal-ftr">
+        <button class="btn btn-cancel" id="save-as-cancel">Cancel</button>
+        <button class="btn btn-save"   id="save-as-confirm">💾 Save Version</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
