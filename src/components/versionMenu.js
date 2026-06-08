@@ -79,13 +79,11 @@ function buildVersionCard(v) {
   card.innerHTML =
     `<div class="ver-card-icon">📄</div>` +
     `<div class="ver-card-info">` +
-      `<div class="ver-card-name-wrap">` +
-        `<span class="ver-card-name">${escHtml(v.name)}</span>` +
-        `<button class="ver-btn ver-btn-rename" title="Rename this version">✎</button>` +
-      `</div>` +
+      `<div class="ver-card-name">${escHtml(v.name)}</div>` +
       `<div class="ver-card-meta">${formatDate(v.createdAt)}</div>` +
     `</div>` +
     `<div class="ver-card-actions">` +
+      `<button class="ver-btn ver-btn-rename" title="Rename this version">✎</button>` +
       (isActive
         ? `<span class="ver-active-dot" title="Currently loaded">●</span>`
         : `<button class="ver-btn ver-btn-load" title="Load this version">Load</button>`) +
@@ -118,7 +116,7 @@ function buildVersionCard(v) {
 // ── Inline rename ──────────────────────────────────────────────────────────
 
 function startRename(card, v) {
-  const nameEl    = card.querySelector('.ver-card-name');
+  const nameEl    = card.querySelector('.ver-card-info .ver-card-name');
   const renameBtn = card.querySelector('.ver-btn-rename');
   const current   = nameEl.textContent;
 

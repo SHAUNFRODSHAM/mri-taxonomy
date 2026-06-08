@@ -32,7 +32,11 @@ export function render(callbacks) {
     colHeader.className = cfg.colHeaderClass
       ? `col-header ${cfg.colHeaderClass}`
       : 'col-header';
-    colHeader.textContent = col.title;
+
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'col-header-title';
+    titleSpan.textContent = col.title;
+    colHeader.appendChild(titleSpan);
 
     const colDelBtn = document.createElement('span');
     colDelBtn.className = 'col-del-btn';
@@ -73,6 +77,15 @@ export function render(callbacks) {
 
     colEl.appendChild(colBody);
     grid.appendChild(colEl);
+  });
+
+  // Equalise all column header heights so they form a clean shared row
+  requestAnimationFrame(() => {
+    const headers = grid.querySelectorAll('.col-header');
+    headers.forEach(h => { h.style.height = ''; }); // reset to auto first
+    let maxH = 0;
+    headers.forEach(h => { maxH = Math.max(maxH, h.offsetHeight); });
+    if (maxH > 0) headers.forEach(h => { h.style.height = maxH + 'px'; });
   });
 }
 
