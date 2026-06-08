@@ -79,14 +79,15 @@ export function render(callbacks) {
     grid.appendChild(colEl);
   });
 
-  // Equalise all column header heights so they form a clean shared row
-  requestAnimationFrame(() => {
+  // Equalise all column header heights so they form a clean shared row.
+  // Double rAF ensures the browser has finished text-wrap layout before we measure.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
     const headers = grid.querySelectorAll('.col-header');
-    headers.forEach(h => { h.style.height = ''; }); // reset to auto first
+    headers.forEach(h => { h.style.height = ''; }); // reset to natural height first
     let maxH = 0;
     headers.forEach(h => { maxH = Math.max(maxH, h.offsetHeight); });
     if (maxH > 0) headers.forEach(h => { h.style.height = maxH + 'px'; });
-  });
+  }));
 }
 
 function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove) {
