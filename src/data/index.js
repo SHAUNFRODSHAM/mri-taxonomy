@@ -47,10 +47,11 @@ export const MODULE_CONFIG = {
     colHeaderClass: '',
     icon: '🏠',
   },
+  // ⚠️ PLACEHOLDER MODULE — content requires review before client use
   jc: {
     label: 'Job Cost',
     headerClass: 'jc-header',
-    headerText: 'Job Cost',
+    headerText: 'Job Cost ⚠️ Placeholder Content',
     colHeaderClass: '',
     icon: '🏗️',
   },

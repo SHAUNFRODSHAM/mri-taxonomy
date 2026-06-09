@@ -9,6 +9,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.3.0] — 2026-06-09
+
+### Added — Job Cost (JC) Placeholder Treatment
+
+- **Job Cost (JC)** module now treated as WIP/Placeholder — same treatment as CAR:
+  - Tab styled amber with `tab-btn-placeholder` CSS class and `⚠️` in the button label
+  - Module banner now reads `Job Cost ⚠️ Placeholder Content`
+  - `src/data/jc.js` — warning block added at top of file; `const PH = '[PLACEHOLDER] '` constant declared; all `desc`, `activities`, `mri_title`, `mri_prereqs`, and `mri_assoc` fields prefixed with `[PLACEHOLDER]`
+  - `src/data/index.js` — `MODULE_CONFIG.jc.headerText` updated; WIP comment added above JC config entry
+- Placeholder treatment makes it immediately clear in both source and UI that JC content is authored by a contributor and awaits review before client use
+
+### Changed
+
+- `index.html` — JC tab button updated with `tab-btn-placeholder` class and `⚠️` suffix
+- `src/data/index.js` — `MODULE_CONFIG.jc.headerText` changed from `'Job Cost'` to `'Job Cost ⚠️ Placeholder Content'`
+- `src/data/jc.js` — complete content rewrite: warning block, PH constant, all user-visible fields prefixed with `[PLACEHOLDER]`
+
+---
+
 ## [1.2.0] — 2026-06-09
 
 ### Added — Corporate Accounts Receivable (CAR) Module
