@@ -10,6 +10,73 @@ export function closeGenModal() {
   document.getElementById('gen-overlay').classList.remove('open');
 }
 
+// ── Scope helpers ──────────────────────────────────────────────────────────────
+
+const SCOPE_LABELS = {
+  'core':         '● CORE',
+  'custom':       '● CUSTOM',
+  'out-of-scope': '● OUT OF SCOPE',
+};
+
+function getScopeIncludes() {
+  return {
+    core:          document.getElementById('gscope-inc-core')?.checked   ?? true,
+    custom:        document.getElementById('gscope-inc-custom')?.checked ?? true,
+    'out-of-scope':document.getElementById('gscope-inc-oos')?.checked    ?? true,
+    untagged:      document.getElementById('gscope-inc-untag')?.checked  ?? true,
+  };
+}
+
+function scopeIncluded(item, includes) {
+  const scope = item.scope || null;
+  if (!scope)                     return includes.untagged;
+  if (scope === 'core')           return includes.core;
+  if (scope === 'custom')         return includes.custom;
+  if (scope === 'out-of-scope')   return includes['out-of-scope'];
+  return true;
+}
+
+function buildScopeSummary(tabs, includes) {
+  const counts = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0 };
+  const included = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0 };
+
+  tabs.forEach(tab => {
+    (ALL_DATA[tab] || []).forEach(col => {
+      col.processes.forEach(proc => {
+        tallyItem(proc, counts, included, includes);
+        (proc.subs || []).forEach(sub => tallyItem(sub, counts, included, includes));
+      });
+    });
+  });
+
+  const totalAll      = Object.values(counts).reduce((a, b) => a + b, 0);
+  const totalIncluded = Object.values(included).reduce((a, b) => a + b, 0);
+
+  return `
+    <table class="scope-summary-table">
+      <thead>
+        <tr>
+          <th>Scope</th>
+          <th>Total processes</th>
+          <th>In this document</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>● CORE</td>           <td>${counts.core}</td>           <td>${included.core}</td></tr>
+        <tr><td>● CUSTOM</td>         <td>${counts.custom}</td>         <td>${included.custom}</td></tr>
+        <tr><td>● OUT OF SCOPE</td>   <td>${counts['out-of-scope']}</td><td>${included['out-of-scope']}</td></tr>
+        <tr><td>Untagged</td>         <td>${counts.untagged}</td>       <td>${included.untagged}</td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>${totalAll}</strong></td><td><strong>${totalIncluded}</strong></td></tr>
+      </tbody>
+    </table>`;
+}
+
+function tallyItem(item, counts, included, includes) {
+  const key = item.scope || 'untagged';
+  if (key in counts) counts[key]++;
+  if (scopeIncluded(item, includes) && key in included) included[key]++;
+}
+
 // ── BUILD PREVIEW ──────────────────────────────────────────────────────────────
 
 export function buildDoc() {
@@ -18,15 +85,19 @@ export function buildDoc() {
   const inclPrereqs     = document.getElementById('gopt-prereqs').checked;
   const inclAssoc       = document.getElementById('gopt-assoc').checked;
   const scopeAll        = document.getElementById('gscope-all').checked;
+  const includes        = getScopeIncludes();
 
   const tabs      = scopeAll ? Object.keys(ALL_DATA) : [state.currentTab];
   const colClasses = { cm: '', gl: 'gl-col', ap: 'ap-col' };
 
+  const dateStr   = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  const scopeStr  = scopeAll ? 'All Modules' : MODULE_CONFIG[state.currentTab]?.label || state.currentTab;
+
   let html = `<h1>MRI ERP Implementation — Process Summary Document</h1>
-    <p style="color:#888;font-size:0.72rem;margin-bottom:20px;">
-      Generated: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
-      · Scope: ${scopeAll ? 'All Modules' : MODULE_CONFIG[state.currentTab]?.label || state.currentTab}
-    </p>`;
+    <p style="color:#888;font-size:0.72rem;margin-bottom:8px;">
+      Generated: ${dateStr} · Scope: ${scopeStr}
+    </p>
+    ${buildScopeSummary(tabs, includes)}`;
 
   tabs.forEach(tab => {
     if (!ALL_DATA[tab]) return;
@@ -39,8 +110,10 @@ export function buildDoc() {
     data.forEach(col => {
       html += `<h3>${col.title}</h3>`;
       col.processes.forEach(proc => {
+        if (!scopeIncluded(proc, includes)) return;
         html += renderItemHTML(proc, 'h4', inclOverview, inclActivities, inclPrereqs, inclAssoc);
         (proc.subs || []).forEach(sub => {
+          if (!scopeIncluded(sub, includes)) return;
           html += renderItemHTML(sub, 'h4', inclOverview, inclActivities, inclPrereqs, inclAssoc, true);
         });
       });
@@ -52,7 +125,8 @@ export function buildDoc() {
 
 function renderItemHTML(item, tag, overview, activities, prereqs, assoc, isSub = false) {
   const style = isSub ? ' style="background:#f0f0f0;color:#333;border-left:3px solid #c8a85a;"' : '';
-  let out = `<${tag}${style}>${item.title}</${tag}>`;
+  const scopeLabel = item.scope ? ` <span style="font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:8px;background:${scopeBgColor(item.scope)};color:${scopeTextColor(item.scope)};vertical-align:middle;">${SCOPE_LABELS[item.scope]}</span>` : '';
+  let out = `<${tag}${style}>${item.title}${scopeLabel}</${tag}>`;
   if (overview && item.desc) out += `<p>${item.desc}</p>`;
   if (activities && item.activities?.length) {
     out += `<ul>${item.activities.map(a => `<li>${a}</li>`).join('')}</ul>`;
@@ -66,6 +140,19 @@ function renderItemHTML(item, tag, overview, activities, prereqs, assoc, isSub =
       ${item.mri_assoc.map(a => `<div class="assoc-row"><strong>${a.name}:</strong> ${a.desc}</div>`).join('')}</div>`;
   }
   return out;
+}
+
+function scopeBgColor(scope) {
+  if (scope === 'core')         return 'rgba(143,184,58,0.15)';
+  if (scope === 'custom')       return 'rgba(200,168,90,0.15)';
+  if (scope === 'out-of-scope') return 'rgba(150,150,150,0.12)';
+  return 'transparent';
+}
+function scopeTextColor(scope) {
+  if (scope === 'core')         return '#4a7010';
+  if (scope === 'custom')       return '#7a5818';
+  if (scope === 'out-of-scope') return '#666';
+  return '#888';
 }
 
 // ── DOWNLOAD WORD ──────────────────────────────────────────────────────────────
@@ -82,6 +169,7 @@ export function downloadWord() {
   const inclPrereqs     = document.getElementById('gopt-prereqs').checked;
   const inclAssoc       = document.getElementById('gopt-assoc').checked;
   const scopeAll        = document.getElementById('gscope-all').checked;
+  const includes        = getScopeIncludes();
   const tabs            = scopeAll ? Object.keys(ALL_DATA) : [state.currentTab];
   const dateStr         = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
   const scopeStr        = scopeAll ? 'All Modules' : MODULE_CONFIG[state.currentTab]?.label || state.currentTab;
@@ -89,7 +177,10 @@ export function downloadWord() {
   const e = s => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const bullets = items => items.map(i => `<li>${e(i)}</li>`).join('');
 
-  let body = '';
+  // Scope summary table for Word
+  const wordSummary = buildWordScopeTable(tabs, includes, e);
+
+  let body = wordSummary;
 
   tabs.forEach(tab => {
     if (!ALL_DATA[tab]) return;
@@ -97,8 +188,10 @@ export function downloadWord() {
     ALL_DATA[tab].forEach(col => {
       body += `<h2>${e(col.title)}</h2>`;
       col.processes.forEach(proc => {
+        if (!scopeIncluded(proc, includes)) return;
         body += wordItem(proc, 'h3', e, bullets, inclOverview, inclActivities, inclPrereqs, inclAssoc);
         (proc.subs || []).forEach(sub => {
+          if (!scopeIncluded(sub, includes)) return;
           body += wordItem(sub, 'h4', e, bullets, inclOverview, inclActivities, inclPrereqs, inclAssoc);
         });
       });
@@ -122,16 +215,22 @@ export function downloadWord() {
   li    { font-size:10pt;margin-bottom:3pt;line-height:1.4; }
   p.meta{ font-size:9pt;color:#888888;margin-bottom:18pt; }
   strong{ font-weight:bold; }
+  table { border-collapse:collapse;width:100%;margin-bottom:16pt;font-size:10pt; }
+  th    { background:#f0f0f0;padding:5pt 10pt;text-align:left;font-size:8pt;text-transform:uppercase;border-bottom:2pt solid #ccc; }
+  td    { padding:4pt 10pt;border-bottom:1pt solid #ddd; }
+  .scope-core   { color:#4a7010; font-weight:bold; }
+  .scope-custom { color:#7a5818; font-weight:bold; }
+  .scope-oos    { color:#666;    font-weight:bold; }
   @page { margin:2.5cm;size:A4 portrait; }
 </style>
 </head>
 <body>
 <h1 style="page-break-before:avoid;border-bottom:3pt solid #2a2a2a;">MRI ERP Implementation &mdash; Process Summary</h1>
-<p class="meta">Generated: ${dateStr} &nbsp;&bull;&nbsp; Scope: ${scopeStr}</p>
+<p class="meta">Generated: ${dateStr} &nbsp;&bull;&nbsp; Scope: ${e(scopeStr)}</p>
 ${body}
 </body></html>`;
 
-  const blob = new Blob(['\uFEFF' + html], { type: 'application/vnd.ms-word;charset=utf-8' });
+  const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-word;charset=utf-8' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url;
@@ -142,8 +241,35 @@ ${body}
   URL.revokeObjectURL(url);
 }
 
+function buildWordScopeTable(tabs, includes, e) {
+  const counts   = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0 };
+  const included = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0 };
+  tabs.forEach(tab => {
+    (ALL_DATA[tab] || []).forEach(col => {
+      col.processes.forEach(proc => {
+        tallyItem(proc, counts, included, includes);
+        (proc.subs || []).forEach(sub => tallyItem(sub, counts, included, includes));
+      });
+    });
+  });
+  const totalAll      = Object.values(counts).reduce((a, b) => a + b, 0);
+  const totalIncluded = Object.values(included).reduce((a, b) => a + b, 0);
+  return `
+    <table>
+      <thead><tr><th>Scope</th><th>Total processes</th><th>In this document</th></tr></thead>
+      <tbody>
+        <tr><td class="scope-core">● CORE</td>           <td>${counts.core}</td>           <td>${included.core}</td></tr>
+        <tr><td class="scope-custom">● CUSTOM</td>       <td>${counts.custom}</td>         <td>${included.custom}</td></tr>
+        <tr><td class="scope-oos">● OUT OF SCOPE</td>    <td>${counts['out-of-scope']}</td><td>${included['out-of-scope']}</td></tr>
+        <tr><td>Untagged</td>                             <td>${counts.untagged}</td>       <td>${included.untagged}</td></tr>
+        <tr><td><strong>Total</strong></td>               <td><strong>${totalAll}</strong></td><td><strong>${totalIncluded}</strong></td></tr>
+      </tbody>
+    </table>`;
+}
+
 function wordItem(item, tag, e, bullets, overview, activities, prereqs, assoc) {
-  let out = `<${tag}>${e(item.title)}</${tag}>`;
+  const scopeStr = item.scope ? ` [${SCOPE_LABELS[item.scope] || item.scope}]` : '';
+  let out = `<${tag}>${e(item.title)}${e(scopeStr)}</${tag}>`;
   if (overview && item.desc)                out += `<p>${e(item.desc)}</p>`;
   if (activities && item.activities?.length) out += `<p><strong>Core Activities</strong></p><ul>${bullets(item.activities)}</ul>`;
   if (prereqs && item.mri_prereqs?.length)   out += `<p><strong>MRI Setup Prerequisites</strong></p><ul>${bullets(item.mri_prereqs)}</ul>`;
@@ -193,14 +319,17 @@ body{font-family:'Segoe UI',Arial,sans-serif;font-size:10pt;color:#2a2a2a;backgr
 .doc-out ul{list-style:none;padding:0;margin:0 0 9pt 0;}
 .doc-out ul li{font-size:9pt;color:#4a4a4a;padding:3pt 8pt 3pt 20pt;background:#f8f9fa;border-radius:3pt;margin-bottom:3pt;position:relative;line-height:1.4;}
 .doc-out ul li::before{content:'→';position:absolute;left:7pt;color:#8fb83a;font-size:8pt;}
-.doc-out .prereq-list li{background:#fff7ed;border:1pt solid #fce4bb;padding:4pt 10pt 4pt 26pt;}
-.doc-out .prereq-list li::before{content:'⚙';color:#c8a85a;top:5pt;}
 .doc-out .prereq-sec{background:#fff7ed;border:1pt solid #fce4bb;border-radius:4pt;padding:6pt 10pt;margin:6pt 0;}
 .doc-out .prereq-sec-title{font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#c8a85a;margin-bottom:3pt;}
 .doc-out .assoc-sec{background:#f0f7e6;border:1pt solid #c5de8a;border-radius:4pt;padding:6pt 10pt;margin:6pt 0;}
 .doc-out .assoc-sec-title{font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#5a7a1e;margin-bottom:3pt;}
 .doc-out .assoc-row{font-size:9pt;color:#3a5a10;margin:2pt 0;padding-left:10pt;position:relative;}
 .doc-out .assoc-row::before{content:'↗';position:absolute;left:0;}
+/* Scope summary table */
+.doc-out table{border-collapse:collapse;width:100%;margin:8pt 0 16pt;font-size:9pt;}
+.doc-out th{background:#f4f6f8;padding:5pt 10pt;text-align:left;font-size:7.5pt;text-transform:uppercase;letter-spacing:0.07em;color:#666;border-bottom:2pt solid #ddd;}
+.doc-out td{padding:4pt 10pt;border-bottom:1pt solid #eee;}
+.doc-out tr:last-child td{font-weight:700;border-top:2pt solid #ddd;border-bottom:none;}
 .print-bar{position:fixed;bottom:0;left:0;right:0;background:#2a2a2a;border-top:3pt solid #8fb83a;padding:10pt 20pt;display:flex;align-items:center;justify-content:space-between;z-index:999;}
 .print-bar span{color:rgba(255,255,255,0.5);font-size:8.5pt;letter-spacing:0.06em;}
 .print-bar button{background:#c0392b;color:#fff;border:none;padding:8pt 20pt;font-size:10pt;font-weight:700;border-radius:5pt;cursor:pointer;font-family:inherit;}

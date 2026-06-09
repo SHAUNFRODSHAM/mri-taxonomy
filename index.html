@@ -44,6 +44,7 @@
     <button class="tab-btn"        data-tab="ap"><span class="tab-icon">📤</span>Accounts Payable</button>
     <button class="tab-btn"        data-tab="rm"><span class="tab-icon">🏠</span>Residential Management</button>
     <button class="tab-btn"        data-tab="jc"><span class="tab-icon">🏗️</span>Job Cost</button>
+    <button class="tab-btn tab-btn-placeholder" data-tab="car" title="⚠️ Placeholder content — requires review"><span class="tab-icon">📥</span>Corp. Accounts Receivable ⚠️</button>
     <button class="tab-add-btn"    id="tab-add-btn" title="Add new module tab">+ Add Tab</button>
   </div>
 
@@ -52,6 +53,18 @@
     <div class="main-header cm-header" id="main-header">
       <div class="main-header-text" id="main-header-text">Commercial Management</div>
     </div>
+
+    <!-- ── SCOPE FILTER BAR ── -->
+    <div class="scope-filter-bar" id="scope-filter-bar">
+      <span class="scope-filter-label">Scope:</span>
+      <button class="scope-filter-btn active"              data-scope="all">All</button>
+      <button class="scope-filter-btn scope-filter-core"   data-scope="core">● CORE</button>
+      <button class="scope-filter-btn scope-filter-custom" data-scope="custom">● CUSTOM</button>
+      <button class="scope-filter-btn scope-filter-oos"    data-scope="out-of-scope">● OUT OF SCOPE</button>
+      <button class="scope-filter-btn scope-filter-untag"  data-scope="untagged">Untagged</button>
+      <div class="scope-filter-counts" id="scope-filter-counts"></div>
+    </div>
+
     <div class="grid" id="grid"></div>
   </div>
 
@@ -171,6 +184,11 @@
           <input type="radio" name="gen-scope" id="gscope-all">
           <label for="gscope-all">All Modules</label>
         </label>
+        <span style="margin-left:12px;border-left:1px solid #ddd;padding-left:12px;" class="gen-opt-label">Include scope:</span>
+        <label class="gen-check-wrap"><input type="checkbox" id="gscope-inc-core"    checked><label for="gscope-inc-core">● CORE</label></label>
+        <label class="gen-check-wrap"><input type="checkbox" id="gscope-inc-custom"  checked><label for="gscope-inc-custom">● CUSTOM</label></label>
+        <label class="gen-check-wrap"><input type="checkbox" id="gscope-inc-oos"     checked><label for="gscope-inc-oos">● OUT OF SCOPE</label></label>
+        <label class="gen-check-wrap"><input type="checkbox" id="gscope-inc-untag"   checked><label for="gscope-inc-untag">Untagged</label></label>
       </div>
       <div class="gen-body">
         <div class="doc-out" id="doc-out">Click Generate to build your document.</div>
