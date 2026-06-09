@@ -5,9 +5,19 @@ export function showPanel(item, bc, isPro) {
 
   document.getElementById('panel-bc').textContent = bc;
   document.getElementById('panel-title').textContent = item.title;
+  const scopeLabel = {
+    'core':         '● CORE',
+    'custom':       '● CUSTOM',
+    'out-of-scope': '● OUT OF SCOPE',
+  };
+  const scopeBadge = item.scope
+    ? `<span class="badge badge-scope-${item.scope}">${scopeLabel[item.scope] || item.scope}</span>`
+    : `<span class="badge badge-scope-untagged">Untagged</span>`;
+
   document.getElementById('panel-badges').innerHTML = `
     <span class="badge ${isPro ? 'badge-process' : 'badge-sub'}">${isPro ? 'Process' : 'Sub-Process'}</span>
-    <span class="badge badge-mri">MRI</span>`;
+    <span class="badge badge-mri">MRI</span>
+    ${scopeBadge}`;
 
   const prereqs = item.mri_prereqs || [];
   const assoc   = item.mri_assoc   || [];

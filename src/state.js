@@ -13,6 +13,9 @@ export const state = {
   activeVersionId:   'original',
   activeVersionName: 'Original',
   isDirty:           false,
+  // Scope filter — 'all' | 'core' | 'custom' | 'out-of-scope' | 'untagged'
+  // Resets to 'all' on every tab switch.
+  scopeFilter: 'all',
 };
 
 export const MAX_HIST = 20;

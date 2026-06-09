@@ -11,10 +11,12 @@ import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion,
 // ── CALLBACKS passed to grid renderer ─────────────────────────────────────────
 
 const gridCallbacks = {
-  onItemClick:  handleClick,
-  onEditClick:  openEditModal,
-  onRemoveItem: removeItem,
-  onAddModal:   openAddModal,
+  onItemClick:   handleClick,
+  onEditClick:   openEditModal,
+  onRemoveItem:  removeItem,
+  onAddModal:    openAddModal,
+  onScopeChange: cycleScope,
+  onBulkTag:     bulkTagColumn,
 };
 
 // Register render so components can call triggerRender()
@@ -54,6 +56,7 @@ function removeItem(type, colId, procId, subId) {
 function switchTab(tabId) {
   if (!ALL_DATA[tabId]) return;
   state.currentTab = tabId;
+  state.scopeFilter = 'all'; // reset filter on every tab switch
 
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tabId);
@@ -390,6 +393,33 @@ function handleDeleteVersion(id) {
   renderVersionPanel();
 }
 
+// ── SCOPE TAGGING ─────────────────────────────────────────────────────────────
+
+const SCOPE_CYCLE = [null, 'core', 'custom', 'out-of-scope'];
+
+/** Cycle an item's scope to the next value and re-render. */
+function cycleScope(item) {
+  snapshot();
+  const current = item.scope || null;
+  const idx     = SCOPE_CYCLE.indexOf(current);
+  item.scope    = SCOPE_CYCLE[(idx + 1) % SCOPE_CYCLE.length];
+  render(gridCallbacks);
+  updateVersionBadge();
+}
+
+/** Set all processes and sub-processes in a column to a given scope. */
+function bulkTagColumn(colId, scope) {
+  snapshot();
+  const col = ALL_DATA[state.currentTab]?.find(c => c.id === colId);
+  if (!col) return;
+  col.processes.forEach(proc => {
+    proc.scope = scope;
+    (proc.subs || []).forEach(sub => { sub.scope = scope; });
+  });
+  render(gridCallbacks);
+  updateVersionBadge();
+}
+
 // ── EVENT WIRING ──────────────────────────────────────────────────────────────
 
 // Topbar buttons
@@ -445,6 +475,14 @@ document.getElementById('gen-close-btn').addEventListener('click', closeGenModal
 document.getElementById('gen-preview-btn').addEventListener('click', buildDoc);
 document.getElementById('gen-word-btn').addEventListener('click', downloadWord);
 document.getElementById('gen-pdf-btn').addEventListener('click', downloadPDF);
+
+// Scope filter bar
+document.querySelectorAll('.scope-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.scopeFilter = btn.dataset.scope || 'all';
+    render(gridCallbacks);
+  });
+});
 
 // Static tab buttons
 document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {

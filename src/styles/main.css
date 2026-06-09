@@ -153,6 +153,10 @@ body {
 .tab-btn:hover  { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.06); }
 .tab-btn.active { color: #fff; border-bottom-color: var(--green); }
 .tab-btn .tab-icon { font-size: 14px; }
+/* Placeholder module tab — amber tint to signal content needs review */
+.tab-btn-placeholder { color: #f5c842 !important; }
+.tab-btn-placeholder:hover { color: #ffe580 !important; }
+.tab-btn-placeholder.active { border-bottom-color: #f5c842 !important; }
 
 .tab-add-btn {
   padding: 0 14px; height: 48px;
@@ -184,6 +188,8 @@ body {
 .gl-header { background: #2d4a0a; }
 .ap-header { background: #1a3f6a; }
 .rm-header { background: #5a3a1a; }
+/* ⚠️ CAR — placeholder module, red banner signals content review required */
+.car-header { background: #7a1a1a; }
 
 /* ── GRID ──────────────────────────────────────────────────────────────────── */
 .grid {
@@ -215,6 +221,7 @@ body {
 }
 .ap-header-col { background: var(--blue); }
 .gl-header-col { background: #3b6d11; }
+.car-header-col { background: #a02828; }
 
 .col-del-btn {
   position: absolute; top: 50%; right: 8px; transform: translateY(-50%);
@@ -819,3 +826,147 @@ body {
 
 /* ── SAVE AS MODAL ─────────────────────────────────────────────────────────── */
 .save-as-modal { max-width: 420px; width: 100%; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCOPE TAGGING — filter bar, badges, bulk-tag dropdown, card states
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Filter bar ── */
+.scope-filter-bar {
+  background: #1c2d1e;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding: 7px 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.scope-filter-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: rgba(255,255,255,0.35);
+  margin-right: 3px; font-family: var(--font);
+}
+.scope-filter-btn {
+  padding: 3px 11px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.13);
+  background: transparent; color: rgba(255,255,255,0.5);
+  font-size: 10px; font-weight: 600; font-family: var(--font);
+  cursor: pointer; transition: all var(--dur); letter-spacing: 0.02em;
+}
+.scope-filter-btn:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+.scope-filter-btn.active { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.35); }
+
+/* Per-scope active tints */
+.scope-filter-core.active   { background: rgba(143,184,58,0.2);  border-color: #8fb83a; color: #b8e060; }
+.scope-filter-custom.active { background: rgba(200,168,90,0.2);  border-color: #c8a85a; color: #e8c870; }
+.scope-filter-oos.active    { background: rgba(150,150,150,0.15);border-color: #999;    color: #bbb; }
+.scope-filter-untag.active  { background: rgba(100,140,255,0.15);border-color: #6496ff; color: #98b8ff; }
+
+/* Count chips in the filter bar */
+.scope-filter-counts { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.scope-count-chip {
+  padding: 2px 8px; border-radius: 10px;
+  font-size: 9.5px; font-weight: 700; font-family: var(--font);
+  letter-spacing: 0.03em;
+}
+.scope-count-core   { background: rgba(143,184,58,0.15);  color: #8fb83a; }
+.scope-count-custom { background: rgba(200,168,90,0.15);  color: #c8a85a; }
+.scope-count-oos    { background: rgba(150,150,150,0.12); color: #999; }
+.scope-count-untag  { background: rgba(100,140,255,0.12); color: #6496ff; }
+
+/* ── Scope badge on cards ── */
+.card-title { display: block; }
+
+.scope-badge {
+  display: inline-block; margin-top: 5px;
+  font-size: 8px; font-weight: 700; letter-spacing: 0.07em;
+  padding: 2px 7px; border-radius: 10px;
+  text-transform: uppercase; line-height: 1.4;
+  transition: opacity var(--dur), transform var(--dur);
+}
+.edit-active .scope-badge {
+  cursor: pointer;
+}
+.edit-active .scope-badge:hover { opacity: 0.75; transform: scale(1.08); }
+
+.scope-badge-core        { background: rgba(143,184,58,0.18); color: #4a7010; border: 1px solid rgba(143,184,58,0.45); }
+.scope-badge-custom      { background: rgba(200,168,90,0.16); color: #7a5818; border: 1px solid rgba(200,168,90,0.45); }
+.scope-badge-out-of-scope{ background: rgba(150,150,150,0.12);color: #666;    border: 1px solid rgba(150,150,150,0.3); }
+/* "+ Tag" prompt badge shown in edit mode on untagged items */
+.scope-badge-untagged {
+  background: transparent; color: rgba(0,0,0,0.28);
+  border: 1px dashed rgba(0,0,0,0.18);
+  font-weight: 600;
+}
+/* On amber process-box the untagged badge needs lighter colours */
+.process-box .scope-badge-untagged { color: rgba(255,255,255,0.45); border-color: rgba(255,255,255,0.25); }
+
+/* ── Out-of-scope card dimming ── */
+.process-box.scope-oos { opacity: 0.42; }
+.sub-box.scope-oos      { opacity: 0.42; }
+.process-box.scope-oos .card-title,
+.sub-box.scope-oos      .card-title { text-decoration: line-through; }
+
+/* ── Filtered-out items (hidden by active filter) ── */
+.item-hidden { display: none !important; }
+
+/* Empty column message when filter hides everything */
+.empty-filter-msg {
+  padding: 18px 10px; text-align: center;
+  font-size: 0.65rem; color: rgba(0,0,0,0.3);
+  font-style: italic; font-family: var(--font);
+}
+
+/* ── Bulk-tag dropdown on column headers (edit mode only) ── */
+.col-scope-wrap {
+  display: none; /* shown by .edit-active */
+  position: relative; margin-top: 6px;
+}
+.edit-active .col-scope-wrap { display: block; }
+
+.col-scope-btn {
+  background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.85); border-radius: 4px;
+  font-size: 9px; font-weight: 700; font-family: var(--font);
+  padding: 3px 8px; cursor: pointer; width: 100%;
+  letter-spacing: 0.04em; transition: background var(--dur);
+}
+.col-scope-btn:hover { background: rgba(255,255,255,0.22); }
+
+.col-scope-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: #263238; border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px; padding: 4px;
+  z-index: 60; box-shadow: var(--elev3);
+  display: none;
+}
+.col-scope-menu.open { display: block; }
+
+.col-scope-menu button {
+  display: block; width: 100%; text-align: left;
+  padding: 6px 10px; background: transparent; border: none;
+  color: rgba(255,255,255,0.8); font-size: 10.5px; font-family: var(--font);
+  cursor: pointer; border-radius: 4px; transition: background var(--dur);
+}
+.col-scope-menu button:hover { background: rgba(255,255,255,0.09); }
+.col-scope-menu button.scope-menu-clear { color: rgba(255,255,255,0.45); }
+
+/* ── Scope badge in detail panel ── */
+.badge-scope-core        { background: rgba(143,184,58,0.15); color: #3a6010; border: 1px solid rgba(143,184,58,0.4); }
+.badge-scope-custom      { background: rgba(200,168,90,0.15); color: #7a5818; border: 1px solid rgba(200,168,90,0.4); }
+.badge-scope-out-of-scope{ background: rgba(150,150,150,0.1); color: #555;    border: 1px solid rgba(150,150,150,0.35); }
+.badge-scope-untagged    { background: rgba(100,100,100,0.07);color: #888;    border: 1px dashed rgba(0,0,0,0.15); }
+
+/* ── Scope summary table in gen-modal doc preview ── */
+.scope-summary-table {
+  width: 100%; border-collapse: collapse;
+  margin: 12px 0 20px; font-size: 0.68rem;
+}
+.scope-summary-table th {
+  background: var(--surface2); padding: 5px 10px;
+  text-align: left; font-size: 0.6rem; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--ink3); border-bottom: 2px solid var(--border);
+}
+.scope-summary-table td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+.scope-summary-table tr:last-child td { font-weight: 700; border-top: 2px solid var(--border); border-bottom: none; }
