@@ -7,11 +7,12 @@ import { openAddModal, closeAddModal, confirmAdd, openAddTabModal, closeAddTabMo
 import { openGenModal, closeGenModal, buildDoc, downloadWord, downloadPDF } from './components/genModal.js';
 import { renderVersionPanel } from './components/versionMenu.js';
 import { renderBusiness, initBusinessView, setBusinessLinkRenderer, showBusinessPanel } from './components/businessView.js';
+import { openBusinessEditModal, saveBusinessEditModal, initBusinessEditModal, isBusinessEditOpen } from './components/businessEditModal.js';
 import { renderMapping, initMappingView, refreshMappingPanel } from './components/mappingView.js';
 import { systemLinksFor, businessLinksFor, systemItemModule,
          initLinks, seedLinks, addLink, removeLink, setLinkCoverage,
          COVERAGE, COVERAGE_ORDER } from './data/links.js';
-import { findBusinessItem, BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES } from './data/business/index.js';
+import { findBusinessItem, BUSINESS_DATA, BUSINESS_ORIGINAL, BUSINESS_CONFIG, BUSINESS_MODULES } from './data/business/index.js';
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData } from './versions.js';
 
 // ── CALLBACKS passed to grid renderer ─────────────────────────────────────────
@@ -89,6 +90,54 @@ function switchBusinessTab(mod) {
   state.businessTab = mod;
   closePanel();
   renderBusiness();
+}
+
+// ── BUSINESS CONTENT EDITING ──────────────────────────────────────────────────
+
+let bizIdSeq = 0;
+function newBizId(prefix) { bizIdSeq += 1; return `${prefix}-new${Date.now().toString(36)}${bizIdSeq}`; }
+
+/** Add a business column / process / sub, then open it for editing. */
+function businessAdd(kind, colId, procId) {
+  const data = BUSINESS_DATA[state.businessTab];
+  snapshot();
+  let newId;
+  if (kind === 'col') {
+    newId = newBizId(`${state.businessTab}-dom`);
+    data.push({ id: newId, title: 'New Domain', processes: [] });
+    renderBusiness();
+    return; // columns have no editable fields of their own
+  } else if (kind === 'process') {
+    const col = data.find(c => c.id === colId);
+    newId = newBizId(`${state.businessTab}-p`);
+    col.processes.push({ id: newId, title: 'New Process', type: 'process', desc: '', activities: [], subs: [] });
+  } else {
+    const proc = data.find(c => c.id === colId).processes.find(p => p.id === procId);
+    newId = newBizId(`${state.businessTab}-s`);
+    (proc.subs = proc.subs || []).push({ id: newId, title: 'New Sub-Process', desc: '', activities: [], market: null, vertical: null, standards: [] });
+  }
+  renderBusiness();
+  openBusinessEditModal(newId);
+  updateVersionBadge();
+}
+
+/** Remove a business column / process / sub. */
+function businessRemove(kind, colId, procId, subId) {
+  const data = BUSINESS_DATA[state.businessTab];
+  snapshot();
+  if (kind === 'col') {
+    const i = data.findIndex(c => c.id === colId);
+    if (i !== -1) data.splice(i, 1);
+  } else if (kind === 'process') {
+    const col = data.find(c => c.id === colId);
+    col.processes = col.processes.filter(p => p.id !== procId);
+  } else {
+    const proc = data.find(c => c.id === colId).processes.find(p => p.id === procId);
+    proc.subs = (proc.subs || []).filter(s => s.id !== subId);
+  }
+  renderBusiness();
+  updateUndoBtn();
+  updateVersionBadge();
 }
 
 // ── CROSS-VIEW LINKAGE (Phase 2) ──────────────────────────────────────────────
@@ -449,7 +498,9 @@ function toggleEdit() {
   document.getElementById('tab-bar').classList.toggle('edit-active-tabs', state.editMode);
   updateSaveChangesBtn();
   if (state.editMode) closePanel();
-  render(gridCallbacks);
+  if (state.viewMode === 'business') renderBusiness();
+  else if (state.viewMode === 'mapping') renderMapping();
+  else render(gridCallbacks);
 }
 
 /** Show Save Changes only when in edit mode on a non-original saved version. */
@@ -469,7 +520,7 @@ function saveChangesToVersion() {
   const customModules = Object.keys(MODULE_CONFIG)
     .filter(k => !builtIn.has(k))
     .map(k => ({ id: k, config: MODULE_CONFIG[k] }));
-  updateVersionData(state.activeVersionId, dataSnapshot, customModules, { ...state.moduleVisibility }, JSON.parse(JSON.stringify(state.links)));
+  updateVersionData(state.activeVersionId, dataSnapshot, customModules, { ...state.moduleVisibility }, JSON.parse(JSON.stringify(state.links)), JSON.parse(JSON.stringify(BUSINESS_DATA)));
   state.isDirty = false;
   updateVersionBadge();
   updateSaveChangesBtn();
@@ -493,6 +544,19 @@ function closeResetModal() {
 }
 
 function resetTab() {
+  // Business view → restore the active business module from its factory baseline
+  if (state.viewMode === 'business') {
+    const bt = state.businessTab;
+    if (!BUSINESS_ORIGINAL[bt]) { closeResetModal(); return; }
+    snapshot();
+    BUSINESS_DATA[bt] = JSON.parse(JSON.stringify(BUSINESS_ORIGINAL[bt]));
+    closeResetModal();
+    closePanel();
+    renderBusiness();
+    updateUndoBtn();
+    updateVersionBadge();
+    return;
+  }
   const tab = state.currentTab;
   if (!ORIGINAL_DATA[tab]) {
     closeResetModal();
@@ -532,9 +596,17 @@ function resetAll() {
 function undo() {
   if (!state.history.length) return;
   const prev = state.history.pop();
-  ALL_DATA[prev.tab] = prev.data;
-  if (prev.tab !== state.currentTab) switchTab(prev.tab);
-  else render(gridCallbacks);
+  if (prev.view === 'business') {
+    BUSINESS_DATA[prev.tab] = prev.data;
+    if (state.viewMode !== 'business') switchView('business');
+    if (state.businessTab !== prev.tab) state.businessTab = prev.tab;
+    renderBusiness();
+  } else {
+    ALL_DATA[prev.tab] = prev.data;
+    if (state.viewMode !== 'system') switchView('system');
+    if (prev.tab !== state.currentTab) switchTab(prev.tab);
+    else render(gridCallbacks);
+  }
   updateUndoBtn();
   updateVersionBadge();
 }
@@ -614,7 +686,7 @@ function confirmSaveAs() {
     .filter(k => !builtIn.has(k))
     .map(k => ({ id: k, config: MODULE_CONFIG[k] }));
 
-  const id = saveNewVersion(name, dataSnapshot, customModules, { ...state.moduleVisibility }, JSON.parse(JSON.stringify(state.links)));
+  const id = saveNewVersion(name, dataSnapshot, customModules, { ...state.moduleVisibility }, JSON.parse(JSON.stringify(state.links)), JSON.parse(JSON.stringify(BUSINESS_DATA)));
 
   // Set this as the active version, now clean
   state.activeVersionId   = id;
@@ -662,6 +734,7 @@ function loadVersion(id) {
     state.isDirty           = false;
     state.moduleVisibility  = {}; // original shows all modules
     state.links             = seedLinks(); // original = the seed mapping
+    Object.keys(BUSINESS_ORIGINAL).forEach(m => { BUSINESS_DATA[m] = JSON.parse(JSON.stringify(BUSINESS_ORIGINAL[m])); });
     if (!ALL_DATA[state.currentTab]) state.currentTab = 'cm';
 
   } else {
@@ -694,14 +767,19 @@ function loadVersion(id) {
     state.isDirty           = false;
     state.moduleVisibility  = { ...(v.moduleVisibility || {}) };
     state.links             = (v.links && v.links.length) ? JSON.parse(JSON.stringify(v.links)) : seedLinks();
+    if (v.businessData) {
+      Object.keys(v.businessData).forEach(m => { BUSINESS_DATA[m] = JSON.parse(JSON.stringify(v.businessData[m])); });
+    }
     if (!ALL_DATA[state.currentTab]) state.currentTab = Object.keys(ALL_DATA)[0] || 'cm';
   }
 
-  // Re-sync the tab bar, then re-render
+  // Re-sync the tab bar, then re-render the active view
   syncTabBar();
   closeVersionPanel();
   closePanel();
-  render(gridCallbacks);
+  if (state.viewMode === 'business')      renderBusiness();
+  else if (state.viewMode === 'mapping')  renderMapping();
+  else                                    render(gridCallbacks);
   updateUndoBtn();
   updateVersionBadge();
   updateSaveChangesBtn();
@@ -794,7 +872,11 @@ document.getElementById('panel-close').addEventListener('click', closePanel);
 // Edit modal
 document.getElementById('edit-modal-close').addEventListener('click', closeEditModal);
 document.getElementById('edit-modal-cancel').addEventListener('click', closeEditModal);
-document.getElementById('edit-modal-save').addEventListener('click', saveEditModal);
+function saveActiveEditModal() {
+  if (isBusinessEditOpen()) saveBusinessEditModal();
+  else saveEditModal();
+}
+document.getElementById('edit-modal-save').addEventListener('click', saveActiveEditModal);
 
 // Add modal
 document.getElementById('add-modal-cancel').addEventListener('click', closeAddModal);
@@ -829,7 +911,8 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
 document.querySelectorAll('.view-btn').forEach(btn => {
   btn.addEventListener('click', () => switchView(btn.dataset.view));
 });
-initBusinessView({ onTabSwitch: switchBusinessTab });
+initBusinessView({ onTabSwitch: switchBusinessTab, onEdit: openBusinessEditModal, onRemove: businessRemove, onAdd: businessAdd });
+initBusinessEditModal({ afterSave: () => { renderBusiness(); updateUndoBtn(); updateVersionBadge(); } });
 initMappingView({ navigate: navigateToLinked });
 
 // Cross-view linkage: inject link-section renderers into both panels and wire
@@ -881,7 +964,7 @@ document.addEventListener('keydown', e => {
     if (document.getElementById('save-as-overlay').classList.contains('open'))    confirmSaveAs();
   }
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    if (document.getElementById('edit-modal-overlay').classList.contains('open')) saveEditModal();
+    if (document.getElementById('edit-modal-overlay').classList.contains('open')) saveActiveEditModal();
   }
 });
 

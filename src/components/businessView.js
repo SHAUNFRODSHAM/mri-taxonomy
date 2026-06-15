@@ -20,8 +20,14 @@ let linkRenderer = null;
 export function setBusinessLinkRenderer(fn) { linkRenderer = fn; }
 
 let onSwitchBusinessTab = () => {};
-export function initBusinessView({ onTabSwitch }) {
+let onEditItem = () => {};
+let onRemoveItem = () => {};
+let onAddItem = () => {};
+export function initBusinessView({ onTabSwitch, onEdit, onRemove, onAdd }) {
   onSwitchBusinessTab = onTabSwitch || (() => {});
+  onEditItem   = onEdit   || (() => {});
+  onRemoveItem = onRemove || (() => {});
+  onAddItem    = onAdd    || (() => {});
 }
 
 /** Does a sub-process have content for the active vertical filter? */
@@ -91,10 +97,11 @@ export function renderBusiness() {
   if (headerText) headerText.textContent = `${cfg.label} · Business Process View`;
 
   const grid = document.getElementById('grid');
-  grid.className = 'grid';
+  grid.className = 'grid' + (state.editMode ? ' edit-active' : '');
   grid.innerHTML = '';
 
   const vertical = state.vertical;
+  const edit = state.editMode;
 
   data.forEach(col => {
     const colEl = document.createElement('div');
@@ -103,6 +110,14 @@ export function renderBusiness() {
     const colHeader = document.createElement('div');
     colHeader.className = 'col-header biz-col-header';
     colHeader.innerHTML = `<span class="col-header-title">${col.title}</span>`;
+    if (edit) {
+      const del = document.createElement('span');
+      del.className = 'col-del-btn';
+      del.textContent = '×';
+      del.title = 'Remove domain';
+      del.addEventListener('click', e => { e.stopPropagation(); onRemoveItem('col', col.id); });
+      colHeader.appendChild(del);
+    }
     colEl.appendChild(colHeader);
 
     const colBody = document.createElement('div');
@@ -112,28 +127,56 @@ export function renderBusiness() {
     col.processes.forEach(proc => {
       // A process shows if any of its subs match the vertical filter.
       const matchingSubs = (proc.subs || []).filter(s => matchesVertical(s, vertical));
-      if (vertical !== 'All' && matchingSubs.length === 0) return;
+      // In edit mode show everything (so empty processes can be edited/filled).
+      if (!edit && vertical !== 'All' && matchingSubs.length === 0) return;
 
-      colBody.appendChild(makeBizCard(proc, 'process-box biz-card', true));
+      colBody.appendChild(makeBizCard(proc, 'process-box biz-card', true, col.id));
       visible++;
 
       (proc.subs || []).forEach(sub => {
-        if (!matchesVertical(sub, vertical)) return;
-        colBody.appendChild(makeBizCard(sub, 'sub-box biz-card', false));
+        if (!edit && !matchesVertical(sub, vertical)) return;
+        colBody.appendChild(makeBizCard(sub, 'sub-box biz-card', false, col.id, proc.id));
         visible++;
       });
+
+      if (edit) {
+        const addSub = document.createElement('button');
+        addSub.className = 'add-row-btn';
+        addSub.textContent = '+ Add Sub-Process';
+        addSub.addEventListener('click', () => onAddItem('sub', col.id, proc.id));
+        colBody.appendChild(addSub);
+      }
     });
 
-    if (visible === 0) {
+    if (visible === 0 && !edit) {
       const msg = document.createElement('div');
       msg.className = 'empty-filter-msg';
       msg.textContent = 'No items for this vertical';
       colBody.appendChild(msg);
     }
 
+    if (edit) {
+      const addProc = document.createElement('button');
+      addProc.className = 'add-row-btn';
+      addProc.textContent = '+ Add Process';
+      addProc.addEventListener('click', () => onAddItem('process', col.id));
+      colBody.appendChild(addProc);
+    }
+
     colEl.appendChild(colBody);
     grid.appendChild(colEl);
   });
+
+  if (edit) {
+    const addColEl = document.createElement('div');
+    addColEl.className = 'col col-add-domain';
+    const btn = document.createElement('button');
+    btn.className = 'add-row-btn add-domain-btn';
+    btn.textContent = '+ Add Domain';
+    btn.addEventListener('click', () => onAddItem('col'));
+    addColEl.appendChild(btn);
+    grid.appendChild(addColEl);
+  }
 
   // Equalise column header heights (same as system grid)
   requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -145,7 +188,7 @@ export function renderBusiness() {
   }));
 }
 
-function makeBizCard(item, baseClass, isProcess) {
+function makeBizCard(item, baseClass, isProcess, colId, procId) {
   const el = document.createElement('div');
   el.className = baseClass;
   el.dataset.id = item.id;
@@ -164,7 +207,19 @@ function makeBizCard(item, baseClass, isProcess) {
     el.appendChild(chip);
   }
 
-  el.addEventListener('click', () => showBusinessPanel(item.id));
+  if (state.editMode) {
+    const del = document.createElement('span');
+    del.className = 'del-btn';
+    del.textContent = '×';
+    del.addEventListener('click', e => {
+      e.stopPropagation();
+      onRemoveItem(isProcess ? 'process' : 'sub', colId, isProcess ? item.id : procId, isProcess ? null : item.id);
+    });
+    el.appendChild(del);
+    el.addEventListener('click', () => onEditItem(item.id));
+  } else {
+    el.addEventListener('click', () => showBusinessPanel(item.id));
+  }
   return el;
 }
 

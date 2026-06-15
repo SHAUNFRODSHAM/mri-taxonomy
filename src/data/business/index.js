@@ -49,6 +49,10 @@ function normalise() {
 
 export const BUSINESS_DATA = normalise();
 
+// Deep-frozen factory baseline (mirrors ORIGINAL_DATA for the system view) — the
+// source of truth for "Reset" and for the Original version of the business view.
+export const BUSINESS_ORIGINAL = Object.freeze(JSON.parse(JSON.stringify(BUSINESS_DATA)));
+
 export const BUSINESS_CONFIG = {
   bgl: { label: 'General Ledger',      icon: '📒', headerClass: 'bgl-header', color: '#2d4a0a' },
   bap: { label: 'Accounts Payable',    icon: '📤', headerClass: 'bap-header', color: '#1a3f6a' },

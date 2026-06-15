@@ -18,7 +18,7 @@ export function listVersions() {
  * @param {Object} moduleVisibility — map of tabId -> boolean (hidden = false)
  * @returns {string} new version id
  */
-export function saveNewVersion(name, dataSnapshot, customModules = [], moduleVisibility = {}, links = []) {
+export function saveNewVersion(name, dataSnapshot, customModules = [], moduleVisibility = {}, links = [], businessData = null) {
   const id = 'v_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
   const versions = listVersions();
   versions.push({
@@ -29,6 +29,7 @@ export function saveNewVersion(name, dataSnapshot, customModules = [], moduleVis
     customModules,
     moduleVisibility,
     links,
+    businessData,
   });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(versions));
   return id;
@@ -56,10 +57,10 @@ export function getVersion(id) {
 }
 
 /** Overwrite the data in an existing version (save changes). */
-export function updateVersionData(id, dataSnapshot, customModules = [], moduleVisibility = {}, links = []) {
+export function updateVersionData(id, dataSnapshot, customModules = [], moduleVisibility = {}, links = [], businessData = null) {
   const versions = listVersions().map(v =>
     v.id === id
-      ? { ...v, data: dataSnapshot, customModules, moduleVisibility, links, updatedAt: new Date().toISOString() }
+      ? { ...v, data: dataSnapshot, customModules, moduleVisibility, links, businessData, updatedAt: new Date().toISOString() }
       : v
   );
   localStorage.setItem(STORAGE_KEY, JSON.stringify(versions));

@@ -1,4 +1,5 @@
 import { ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA } from './data/index.js';
+import { BUSINESS_DATA } from './data/business/index.js';
 
 export { ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA };
 
@@ -51,10 +52,21 @@ export function currentData() {
 }
 
 export function snapshot() {
-  state.history.push({
-    tab: state.currentTab,
-    data: JSON.parse(JSON.stringify(ALL_DATA[state.currentTab])),
-  });
+  // View-aware: capture the active business module when in the Business view,
+  // otherwise the active system module. Undo restores to the right view.
+  if (state.viewMode === 'business') {
+    state.history.push({
+      view: 'business',
+      tab: state.businessTab,
+      data: JSON.parse(JSON.stringify(BUSINESS_DATA[state.businessTab])),
+    });
+  } else {
+    state.history.push({
+      view: 'system',
+      tab: state.currentTab,
+      data: JSON.parse(JSON.stringify(ALL_DATA[state.currentTab])),
+    });
+  }
   if (state.history.length > MAX_HIST) state.history.shift();
   state.isDirty = true;
 }
