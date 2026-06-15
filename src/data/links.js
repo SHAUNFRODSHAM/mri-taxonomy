@@ -15,7 +15,7 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 import { ALL_DATA, MODULE_CONFIG } from './index.js';
-import { BUSINESS_DATA, BUSINESS_CONFIG, findBusinessItem } from './business/index.js';
+import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, findBusinessItem } from './business/index.js';
 
 /** @type {{b: string, s: string}[]}  business id ⇄ system id */
 export const LINKS = [
@@ -160,4 +160,70 @@ export function businessLinksFor(systemId) {
 export function systemItemModule(id) {
   const r = resolveSystem(id);
   return r ? r.module : null;
+}
+
+/** The business domain (column) a business item belongs to. */
+function businessDomainOf(bid) {
+  for (const mod of BUSINESS_MODULES) {
+    for (const col of BUSINESS_DATA[mod]) {
+      for (const proc of col.processes) {
+        if (proc.id === bid) return { module: mod, domainId: col.id, domainTitle: col.title };
+        for (const sub of (proc.subs || [])) {
+          if (sub.id === bid) return { module: mod, domainId: col.id, domainTitle: col.title };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/** Every link, fully resolved (business side incl. its domain + system side). */
+export function allResolvedLinks() {
+  return LINKS.map(l => {
+    const b = resolveBusiness(l.b);
+    const s = resolveSystem(l.s);
+    if (!b || !s) return null;
+    return { b: { ...b, domain: businessDomainOf(l.b) }, s };
+  }).filter(Boolean);
+}
+
+/**
+ * Mapping-matrix model: business domains (rows, grouped by business module) ×
+ * system modules (columns). Each cell carries the resolved link pairs and a
+ * count; domains with no links at all are flagged as gaps.
+ */
+export function buildMappingMatrix() {
+  const systemModules = Object.keys(ALL_DATA).map(m => ({ id: m, label: MODULE_CONFIG[m]?.label || m }));
+  const resolved = allResolvedLinks();
+
+  const rows = [];
+  for (const mod of BUSINESS_MODULES) {
+    for (const col of BUSINESS_DATA[mod]) {
+      const cells = {};
+      systemModules.forEach(sm => { cells[sm.id] = []; });
+      let total = 0;
+      resolved.forEach(r => {
+        if (r.b.domain && r.b.domain.domainId === col.id && cells[r.s.module]) {
+          cells[r.s.module].push(r);
+          total++;
+        }
+      });
+      rows.push({
+        module: mod,
+        moduleLabel: BUSINESS_CONFIG[mod]?.label || mod,
+        domainId: col.id,
+        domainTitle: col.title,
+        cells,
+        total,
+        gap: total === 0,
+      });
+    }
+  }
+  return { systemModules, rows };
+}
+
+/** The resolved link pairs in one matrix cell (business domain × system module). */
+export function cellPairs(domainId, systemModule) {
+  return allResolvedLinks().filter(r =>
+    r.b.domain && r.b.domain.domainId === domainId && r.s.module === systemModule);
 }

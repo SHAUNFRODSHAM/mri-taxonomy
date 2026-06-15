@@ -7,6 +7,7 @@ import { openAddModal, closeAddModal, confirmAdd, openAddTabModal, closeAddTabMo
 import { openGenModal, closeGenModal, buildDoc, downloadWord, downloadPDF } from './components/genModal.js';
 import { renderVersionPanel } from './components/versionMenu.js';
 import { renderBusiness, initBusinessView, setBusinessLinkRenderer, showBusinessPanel } from './components/businessView.js';
+import { renderMapping, initMappingView } from './components/mappingView.js';
 import { systemLinksFor, businessLinksFor, systemItemModule } from './data/links.js';
 import { findBusinessItem } from './data/business/index.js';
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData } from './versions.js';
@@ -59,26 +60,27 @@ function removeItem(type, colId, procId, subId) {
 const VIEW_HINTS = {
   system:   'How the system supports the work · click any item for MRI detail',
   business: 'What the business does & how it varies by market and sector',
+  mapping:  'Where business processes tie into the system · click a cell for the linked pairs',
 };
 
 function switchView(mode) {
-  if (mode !== 'system' && mode !== 'business') return;
+  if (!['system', 'business', 'mapping'].includes(mode)) return;
   state.viewMode = mode;
   closePanel();
 
   document.body.classList.toggle('mode-business', mode === 'business');
+  document.body.classList.toggle('mode-mapping', mode === 'mapping');
   document.querySelectorAll('.view-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.view === mode));
   const hint = document.getElementById('view-switcher-hint');
   if (hint) hint.textContent = VIEW_HINTS[mode];
 
-  if (mode === 'business') {
-    // Leaving edit mode when switching away from the system view keeps things clean
-    if (state.editMode) toggleEdit();
-    renderBusiness();
-  } else {
-    render(gridCallbacks);
-  }
+  // Leaving the system view drops edit mode so chrome stays clean
+  if (mode !== 'system' && state.editMode) toggleEdit();
+
+  if (mode === 'business')      renderBusiness();
+  else if (mode === 'mapping')  renderMapping();
+  else                          render(gridCallbacks);
 }
 
 function switchBusinessTab(mod) {
@@ -661,6 +663,7 @@ document.querySelectorAll('.view-btn').forEach(btn => {
   btn.addEventListener('click', () => switchView(btn.dataset.view));
 });
 initBusinessView({ onTabSwitch: switchBusinessTab });
+initMappingView({ navigate: navigateToLinked });
 
 // Cross-view linkage: inject link-section renderers into both panels and wire
 // click-through navigation (delegated, since panel bodies are re-rendered).

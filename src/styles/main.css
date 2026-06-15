@@ -1189,3 +1189,90 @@ body {
 .xlink-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .xlink-title { font-size: 0.76rem; font-weight: 700; color: var(--ink); }
 .xlink-bc { font-size: 0.64rem; color: var(--ink3); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAPPING VIEW — Business ⇄ System coverage matrix
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Mode toggling: mapping hides system + business chrome (read-only matrix) */
+.mode-mapping .tab-bar,
+.mode-mapping .business-tabbar,
+.mode-mapping .business-filterbar,
+.mode-mapping #scope-filter-bar { display: none; }
+.mode-mapping .topbar-actions,
+.mode-mapping .ver-badge,
+.mode-mapping #burger-btn { display: none; }
+
+.map-header { background: #2a2a3a; }
+
+/* The grid container is flex by default; the matrix needs block flow */
+.grid-mapping {
+  display: block; min-width: 900px; background: var(--surface);
+  border: 1px solid var(--border2); border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius); box-shadow: var(--elev1);
+  padding: 14px;
+}
+
+.map-legend {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 4px 4px 14px; font-size: 0.7rem; color: var(--ink2);
+}
+.map-legend-item { display: inline-flex; align-items: center; gap: 7px; }
+.map-cell-demo {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 22px; border-radius: 4px; font-size: 0.7rem; font-weight: 700;
+}
+.map-cell-demo.has-links { background: var(--green); color: #fff; }
+.map-cell-demo.gap-demo { background: var(--surface3); color: var(--ink3); }
+.map-legend-stat { margin-left: auto; font-weight: 700; color: var(--ink); }
+
+.map-scroll { overflow-x: auto; }
+.map-table { border-collapse: collapse; width: 100%; font-family: var(--font); }
+.map-corner {
+  text-align: left; font-size: 0.6rem; font-weight: 700; color: var(--ink3);
+  text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 10px;
+  background: var(--surface2); border-bottom: 2px solid var(--border2); white-space: nowrap;
+}
+.map-col-head {
+  font-size: 0.62rem; font-weight: 700; color: var(--ink2); text-transform: uppercase;
+  letter-spacing: 0.04em; padding: 8px 6px; background: var(--surface2);
+  border-bottom: 2px solid var(--border2); border-left: 1px solid var(--border);
+  text-align: center; vertical-align: bottom; min-width: 64px;
+}
+.map-group-row td {
+  background: #eef2e6; color: var(--green-dk); font-weight: 700; font-size: 0.7rem;
+  padding: 7px 10px; letter-spacing: 0.03em; border-bottom: 1px solid var(--border);
+}
+.map-group-icon { margin-right: 5px; }
+.map-group-tag {
+  font-size: 0.5rem; background: #4a6a2a; color: #fff; padding: 1px 6px;
+  border-radius: 8px; vertical-align: middle; margin-left: 6px; letter-spacing: 0.06em;
+}
+.map-row-head {
+  text-align: left; font-size: 0.74rem; font-weight: 600; color: var(--ink);
+  padding: 7px 10px; border-bottom: 1px solid var(--border-light, var(--border));
+  white-space: nowrap; background: var(--surface);
+}
+.map-cell {
+  text-align: center; font-size: 0.78rem; font-weight: 700;
+  padding: 6px; border-bottom: 1px solid var(--border); border-left: 1px solid var(--border);
+  color: var(--ink3);
+}
+.map-cell.empty { color: var(--border2); font-weight: 400; }
+.map-cell.has-links {
+  background: var(--green); color: #fff; cursor: pointer; transition: background var(--dur);
+}
+.map-cell.has-links:hover { background: var(--green-dk); }
+.map-row-gap .map-row-head { color: var(--ink3); font-style: italic; }
+.map-gap-badge {
+  margin-left: 8px; font-size: 0.54rem; font-weight: 700; text-transform: uppercase;
+  background: #fbe9c8; color: #8a6a20; border: 1px solid #e9cf94;
+  border-radius: 8px; padding: 1px 7px; font-style: normal; letter-spacing: 0.04em;
+}
+
+/* Cell-detail pair list (in the detail panel) */
+.map-pair-list { display: flex; flex-direction: column; gap: 10px; }
+.map-pair { display: flex; flex-direction: column; gap: 4px; }
+.map-pair .xlink { border-left-color: var(--blue); }
+.map-pair .xlink[data-xview="business"] { border-left-color: #4a6a2a; }
+.map-pair-link { text-align: center; color: var(--ink3); font-size: 0.8rem; }
