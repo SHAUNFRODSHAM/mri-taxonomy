@@ -1,4 +1,24 @@
-import { state, ALL_DATA, MODULE_CONFIG } from '../state.js';
+import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible } from '../state.js';
+
+// ── Module scope helpers ─────────────────────────────────────────────────────
+// "All Modules" respects the per-version visibility selection: hidden modules
+// are excluded from the generated document, the same as they are from the tab
+// bar. "Current Tab" is always a visible module.
+
+/** The tabs to include in the document, in registration order. */
+function getDocTabs(scopeAll) {
+  return scopeAll
+    ? Object.keys(ALL_DATA).filter(isModuleVisible)
+    : [state.currentTab];
+}
+
+/** Human-readable scope label for the document header. */
+function getScopeStr(scopeAll) {
+  if (!scopeAll) return MODULE_CONFIG[state.currentTab]?.label || state.currentTab;
+  const total   = Object.keys(ALL_DATA).length;
+  const visible = Object.keys(ALL_DATA).filter(isModuleVisible).length;
+  return visible === total ? 'All Modules' : `Visible Modules (${visible} of ${total})`;
+}
 
 export function openGenModal() {
   document.getElementById('gen-overlay').classList.add('open');
@@ -87,11 +107,11 @@ export function buildDoc() {
   const scopeAll        = document.getElementById('gscope-all').checked;
   const includes        = getScopeIncludes();
 
-  const tabs      = scopeAll ? Object.keys(ALL_DATA) : [state.currentTab];
+  const tabs      = getDocTabs(scopeAll);
   const colClasses = { cm: '', gl: 'gl-col', ap: 'ap-col' };
 
   const dateStr   = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-  const scopeStr  = scopeAll ? 'All Modules' : MODULE_CONFIG[state.currentTab]?.label || state.currentTab;
+  const scopeStr  = getScopeStr(scopeAll);
 
   let html = `<h1>MRI ERP Implementation — Process Summary Document</h1>
     <p style="color:#888;font-size:0.72rem;margin-bottom:8px;">
@@ -170,9 +190,9 @@ export function downloadWord() {
   const inclAssoc       = document.getElementById('gopt-assoc').checked;
   const scopeAll        = document.getElementById('gscope-all').checked;
   const includes        = getScopeIncludes();
-  const tabs            = scopeAll ? Object.keys(ALL_DATA) : [state.currentTab];
+  const tabs            = getDocTabs(scopeAll);
   const dateStr         = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-  const scopeStr        = scopeAll ? 'All Modules' : MODULE_CONFIG[state.currentTab]?.label || state.currentTab;
+  const scopeStr        = getScopeStr(scopeAll);
 
   const e = s => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const bullets = items => items.map(i => `<li>${e(i)}</li>`).join('');
@@ -292,7 +312,7 @@ export function downloadPDF() {
 
   const dateStr   = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
   const scopeAll  = document.getElementById('gscope-all').checked;
-  const scopeStr  = scopeAll ? 'All Modules' : MODULE_CONFIG[state.currentTab]?.label || state.currentTab;
+  const scopeStr  = getScopeStr(scopeAll);
   const previewHTML = document.getElementById('doc-out').innerHTML;
 
   const win = window.open('', '_blank', 'width=960,height=800');

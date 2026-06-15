@@ -9,6 +9,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.5.1] — 2026-06-15
+
+### Changed — Document Generation Respects Module Visibility
+
+- The Generate Doc **"All Modules"** option now excludes hidden modules — it generates only the modules visible in the current version, matching the tab bar and the client's scope
+  - Renamed the option to **"All Visible Modules"** so the behaviour is clear at the point of selection
+  - Document header scope label reads `All Modules` when every module is visible, or `Visible Modules (N of M)` when some are hidden
+  - The scope summary table now tallies only the included (visible) modules
+- Applies consistently across the on-screen preview, Word export, and PDF export
+- `src/components/genModal.js` — added `getDocTabs()` / `getScopeStr()` helpers; `buildDoc`, `downloadWord`, `downloadPDF` now filter by `isModuleVisible`
+
+---
+
 ## [1.5.0] — 2026-06-15
 
 ### Added — Per-Module Visibility (Client Scoping)
