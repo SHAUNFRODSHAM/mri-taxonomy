@@ -3,9 +3,9 @@ import { ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA } from './data/index.js';
 export { ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA };
 
 export const state = {
-  // View mode — 'system' (MRI PMX taxonomy) | 'business' (business-process view).
-  // 'mapping' (matrix) arrives in a later phase.
-  viewMode: 'system',
+  // View mode — 'business' (business-process taxonomy, the default starting
+  // point of the methodology) | 'system' (MRI PMX) | 'mapping' (matrix).
+  viewMode: 'business',
   // Business-view state (independent of the system view)
   businessTab: 'bgl',
   market:      'UK',     // 'UK' | 'US' | 'EU'

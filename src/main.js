@@ -890,4 +890,5 @@ initLinks();
 updateUndoBtn();
 updateVersionBadge();
 applyModuleVisibility();
-render(gridCallbacks);
+// Boot into the default view (Business Process first, per the methodology)
+switchView(state.viewMode);
