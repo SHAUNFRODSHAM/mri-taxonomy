@@ -41,7 +41,18 @@
     </div>
   </div>
 
-  <!-- ── TAB BAR ── -->
+  <!-- ── VIEW SWITCHER ── -->
+  <div class="view-switcher" id="view-switcher">
+    <button class="view-btn active" data-view="system">🗂️ MRI PMX System View</button>
+    <button class="view-btn"        data-view="business">💼 Business Process View</button>
+    <span class="view-switcher-hint" id="view-switcher-hint">How the system supports the work · click any item for MRI detail</span>
+  </div>
+
+  <!-- ── BUSINESS CHROME (shown only in Business view) ── -->
+  <div class="business-tabbar" id="business-tabbar"></div>
+  <div class="business-filterbar" id="business-filterbar"></div>
+
+  <!-- ── TAB BAR (System view) ── -->
   <div class="tab-bar" id="tab-bar">
     <button class="tab-btn active" data-tab="cm"><span class="tab-icon">🏢</span>Commercial Management</button>
     <button class="tab-btn"        data-tab="gl"><span class="tab-icon">📒</span>General Ledger</button>

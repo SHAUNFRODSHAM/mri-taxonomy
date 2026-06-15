@@ -3,6 +3,13 @@ import { ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA } from './data/index.js';
 export { ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA };
 
 export const state = {
+  // View mode — 'system' (MRI PMX taxonomy) | 'business' (business-process view).
+  // 'mapping' (matrix) arrives in a later phase.
+  viewMode: 'system',
+  // Business-view state (independent of the system view)
+  businessTab: 'bgl',
+  market:      'UK',     // 'UK' | 'US' | 'EU'
+  vertical:    'All',    // 'All' | 'Retail' | 'Industrial' | 'Office' | 'Residential'
   currentTab: 'cm',
   editMode: false,
   addTarget: null,

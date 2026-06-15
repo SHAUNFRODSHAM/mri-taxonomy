@@ -6,6 +6,7 @@ import { openEditModal, closeEditModal, saveEditModal } from './components/editM
 import { openAddModal, closeAddModal, confirmAdd, openAddTabModal, closeAddTabModal, confirmAddTab } from './components/addModal.js';
 import { openGenModal, closeGenModal, buildDoc, downloadWord, downloadPDF } from './components/genModal.js';
 import { renderVersionPanel } from './components/versionMenu.js';
+import { renderBusiness, initBusinessView } from './components/businessView.js';
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData } from './versions.js';
 
 // ── CALLBACKS passed to grid renderer ─────────────────────────────────────────
@@ -49,6 +50,39 @@ function removeItem(type, colId, procId, subId) {
   }
   render(gridCallbacks);
   updateVersionBadge();
+}
+
+// ── VIEW SWITCHING (System ⇄ Business) ────────────────────────────────────────
+
+const VIEW_HINTS = {
+  system:   'How the system supports the work · click any item for MRI detail',
+  business: 'What the business does & how it varies by market and sector',
+};
+
+function switchView(mode) {
+  if (mode !== 'system' && mode !== 'business') return;
+  state.viewMode = mode;
+  closePanel();
+
+  document.body.classList.toggle('mode-business', mode === 'business');
+  document.querySelectorAll('.view-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === mode));
+  const hint = document.getElementById('view-switcher-hint');
+  if (hint) hint.textContent = VIEW_HINTS[mode];
+
+  if (mode === 'business') {
+    // Leaving edit mode when switching away from the system view keeps things clean
+    if (state.editMode) toggleEdit();
+    renderBusiness();
+  } else {
+    render(gridCallbacks);
+  }
+}
+
+function switchBusinessTab(mod) {
+  state.businessTab = mod;
+  closePanel();
+  renderBusiness();
 }
 
 // ── TAB SWITCHING ─────────────────────────────────────────────────────────────
@@ -575,6 +609,12 @@ document.querySelectorAll('.scope-filter-btn').forEach(btn => {
 document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.tab));
 });
+
+// View switcher (System ⇄ Business)
+document.querySelectorAll('.view-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchView(btn.dataset.view));
+});
+initBusinessView({ onTabSwitch: switchBusinessTab });
 
 // Cross-component events
 document.addEventListener('mri:switchTab',     e => switchTab(e.detail));

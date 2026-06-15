@@ -1050,3 +1050,117 @@ body {
 }
 .scope-summary-table td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
 .scope-summary-table tr:last-child td { font-weight: 700; border-top: 2px solid var(--border); border-bottom: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DUAL VIEW — View switcher + Business-process view
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── View switcher bar ── */
+.view-switcher {
+  background: #1f2a1f; display: flex; align-items: center; gap: 4px;
+  padding: 6px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.view-btn {
+  background: transparent; border: 1px solid transparent; color: rgba(255,255,255,0.55);
+  font-family: var(--font); font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.04em; padding: 7px 16px; border-radius: 6px; cursor: pointer;
+  transition: all var(--dur);
+}
+.view-btn:hover { color: #fff; background: rgba(255,255,255,0.06); }
+.view-btn.active { color: #fff; background: var(--green); box-shadow: var(--elev1); }
+.view-switcher-hint {
+  margin-left: 12px; color: rgba(255,255,255,0.4);
+  font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+/* ── Mode toggling: show system vs business chrome ── */
+.business-tabbar, .business-filterbar { display: none; }
+.mode-business .tab-bar { display: none; }
+.mode-business #scope-filter-bar { display: none; }
+.mode-business .business-tabbar { display: flex; }
+.mode-business .business-filterbar { display: flex; }
+/* System-only topbar controls are hidden in the (read-only) business view */
+.mode-business .topbar-actions,
+.mode-business .ver-badge,
+.mode-business #burger-btn { display: none; }
+
+/* ── Business module tab bar ── */
+.business-tabbar {
+  background: #2e3d2e; padding: 0 16px; align-items: flex-end;
+  box-shadow: 0 2px 0 rgba(143,184,58,0.4);
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: thin; scrollbar-color: rgba(143,184,58,0.55) transparent;
+}
+.biz-tab-btn {
+  flex-shrink: 0; padding: 0 20px; height: 48px;
+  background: transparent; border: none; color: rgba(255,255,255,0.55);
+  font-family: var(--font); font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  border-bottom: 3px solid transparent; cursor: pointer; transition: all var(--dur);
+  display: flex; align-items: center; gap: 8px; white-space: nowrap;
+}
+.biz-tab-btn:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.06); }
+.biz-tab-btn.active { color: #fff; border-bottom-color: var(--green); }
+
+/* ── Business filter bar (market + vertical) ── */
+.business-filterbar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  align-items: center; gap: 20px; padding: 8px 18px; flex-wrap: wrap;
+}
+.biz-market-wrap, .biz-vert-wrap { display: flex; align-items: center; gap: 6px; }
+.biz-filter-label {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink3); margin-right: 2px;
+}
+.biz-market-btn, .biz-vert-btn {
+  background: var(--surface2); border: 1px solid var(--border2); color: var(--ink2);
+  font-family: var(--font); font-size: 0.68rem; font-weight: 600;
+  padding: 5px 11px; border-radius: 16px; cursor: pointer; transition: all var(--dur);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.biz-market-btn:hover, .biz-vert-btn:hover { border-color: var(--green); color: var(--ink); }
+.biz-market-btn.active { background: var(--green); border-color: var(--green); color: #fff; }
+.biz-vert-btn.active { background: var(--ink); border-color: var(--ink); color: #fff; }
+.vert-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border2); }
+.vert-retail .vert-dot      { background: #c0440e; }
+.vert-industrial .vert-dot  { background: #1a5fa8; }
+.vert-office .vert-dot      { background: #5b4acb; }
+.vert-residential .vert-dot { background: #1a8a4a; }
+.vert-all .vert-dot         { background: var(--green); }
+
+/* ── Business module banners (mirror system colours) ── */
+.bgl-header { background: #2d4a0a; }
+.bap-header { background: #1a3f6a; }
+.bar-header { background: #5a3a1a; }
+.biz-col-header { background: #4a6a2a; }
+
+/* ── Business cards ── */
+.biz-card { cursor: pointer; }
+.biz-std-count {
+  display: inline-block; margin-left: 6px; font-size: 8.5px; font-weight: 700;
+  color: var(--ink3); background: var(--surface3); border-radius: 8px;
+  padding: 1px 6px; vertical-align: middle;
+}
+
+/* ── Business detail panel ── */
+.badge-business { background: #4a6a2a; color: #fff; }
+.biz-market-block, .biz-vert-block {
+  font-size: 0.78rem; line-height: 1.5; color: var(--ink2);
+  background: var(--surface2); border-left: 3px solid var(--green);
+  border-radius: 0 6px 6px 0; padding: 9px 12px;
+}
+.biz-vert-row { display: flex; gap: 9px; align-items: flex-start; margin-bottom: 8px; font-size: 0.76rem; line-height: 1.45; color: var(--ink2); }
+.biz-vert-tag {
+  flex-shrink: 0; font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 4px; color: #fff; min-width: 74px; text-align: center;
+}
+.biz-vert-tag.vert-retail      { background: #c0440e; }
+.biz-vert-tag.vert-industrial  { background: #1a5fa8; }
+.biz-vert-tag.vert-office      { background: #5b4acb; }
+.biz-vert-tag.vert-residential { background: #1a8a4a; }
+.biz-std-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.biz-std-chip {
+  font-size: 0.66rem; font-weight: 600; color: #5a7a1e;
+  background: var(--green-lt); border: 1px solid #c5de8a;
+  border-radius: 12px; padding: 3px 10px;
+}
