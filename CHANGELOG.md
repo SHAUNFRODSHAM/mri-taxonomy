@@ -9,6 +9,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.5.0] — 2026-06-15
+
+### Added — Per-Module Visibility (Client Scoping)
+
+- **Visible Modules** checklist at the top of the Versions panel — toggle any module on/off
+  - Hidden modules are removed from the tab bar; the selection is **saved as part of each version**, so a client version can be scoped to just the modules in that client's engagement
+  - Toggling a module marks the version dirty (so it can be saved via Save Changes / Save As)
+  - At least one module must remain visible — the last visible module's checkbox is disabled
+  - If the active tab is hidden, the app automatically switches to the first visible module
+  - Loading **Original** resets all modules to visible
+- `state.moduleVisibility` added to central state (map of `tabId → boolean`; missing = visible)
+- `moduleVisibility` persisted in saved versions (`versions.js`) and restored on load
+
+### Changed — Tab Bar Overflow
+
+- Tab bar now scrolls **horizontally** when modules exceed the available width (previously the last tab, B&F, could be cut off)
+  - Slim styled scrollbar (green accent); tabs no longer compress (`flex-shrink: 0`)
+- `index.html` / `src/components/versionMenu.js` / `src/main.js` / `src/state.js` / `src/versions.js` / `src/styles/main.css` updated
+
+---
+
 ## [1.4.0] — 2026-06-15
 
 ### Added — Budgeting & Forecasting (B&F) Module (Placeholder)

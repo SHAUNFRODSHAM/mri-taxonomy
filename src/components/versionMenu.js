@@ -4,7 +4,7 @@
    main.js for all state mutations (no circular imports).
    ═══════════════════════════════════════════════════════════════════════════ */
 
-import { state }                         from '../state.js';
+import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible } from '../state.js';
 import { listVersions, formatDate }      from '../versions.js';
 
 /**
@@ -18,7 +18,15 @@ export function renderVersionPanel() {
   const versions = listVersions();
   body.innerHTML = '';
 
+  // ── Module visibility section ──────────────────────────────────────────
+  body.appendChild(buildModuleVisibilitySection());
+
   // ── Original card (always first, locked) ───────────────────────────────
+  const verSep = document.createElement('div');
+  verSep.className = 'ver-sep';
+  verSep.textContent = 'Versions';
+  body.appendChild(verSep);
+
   body.appendChild(buildOrigCard());
 
   // ── Saved versions ─────────────────────────────────────────────────────
@@ -40,6 +48,65 @@ export function renderVersionPanel() {
       '<div>No saved versions yet.<br>Use <strong>+ Save As</strong> below<br>to create a named snapshot.</div>';
     body.appendChild(empty);
   }
+}
+
+// ── Module visibility ────────────────────────────────────────────────────────
+
+/**
+ * Builds the "Visible Modules" checklist. Toggling a module hides/shows its tab
+ * and marks the current version dirty; the visibility map is saved with the
+ * version, so a client version can be scoped to just the modules they use.
+ */
+function buildModuleVisibilitySection() {
+  const wrap = document.createElement('div');
+  wrap.className = 'ver-modules';
+
+  const sep = document.createElement('div');
+  sep.className = 'ver-sep';
+  sep.textContent = 'Visible Modules';
+  wrap.appendChild(sep);
+
+  const hint = document.createElement('div');
+  hint.className = 'ver-modules-hint';
+  hint.textContent = 'Hidden modules are removed from the tab bar. Save a version to keep this selection for a client.';
+  wrap.appendChild(hint);
+
+  const tabIds = Object.keys(ALL_DATA);
+  const visibleCount = tabIds.filter(isModuleVisible).length;
+
+  tabIds.forEach(tab => {
+    const cfg = MODULE_CONFIG[tab] || {};
+    const visible = isModuleVisible(tab);
+    const isLastVisible = visible && visibleCount === 1;
+
+    const row = document.createElement('label');
+    row.className = 'ver-module-row' + (visible ? '' : ' ver-module-off');
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = visible;
+    // Don't allow hiding the last visible module — there must always be one tab.
+    cb.disabled = isLastVisible;
+    cb.title = isLastVisible ? 'At least one module must stay visible' : '';
+    cb.addEventListener('change', () => {
+      document.dispatchEvent(new CustomEvent('mri:toggleModule', { detail: tab }));
+    });
+
+    const icon = document.createElement('span');
+    icon.className = 'ver-module-icon';
+    icon.textContent = cfg.icon || '📋';
+
+    const name = document.createElement('span');
+    name.className = 'ver-module-name';
+    name.textContent = cfg.label || tab;
+
+    row.appendChild(cb);
+    row.appendChild(icon);
+    row.appendChild(name);
+    wrap.appendChild(row);
+  });
+
+  return wrap;
 }
 
 // ── Card builders ──────────────────────────────────────────────────────────

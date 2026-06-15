@@ -16,7 +16,16 @@ export const state = {
   // Scope filter — 'all' | 'core' | 'custom' | 'out-of-scope' | 'untagged'
   // Resets to 'all' on every tab switch.
   scopeFilter: 'all',
+  // Per-module visibility. Map of tabId -> boolean. A tab is visible unless
+  // explicitly set to false. Persisted as part of each saved version so a
+  // client version can show only the modules in that client's scope.
+  moduleVisibility: {},
 };
+
+/** A module is visible unless explicitly hidden. */
+export function isModuleVisible(tab) {
+  return state.moduleVisibility[tab] !== false;
+}
 
 export const MAX_HIST = 20;
 

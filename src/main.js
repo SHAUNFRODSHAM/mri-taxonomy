@@ -1,5 +1,5 @@
 import './styles/main.css';
-import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, currentData, triggerRender, registerRender } from './state.js';
+import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, currentData, triggerRender, registerRender, isModuleVisible } from './state.js';
 import { render }         from './components/grid.js';
 import { showPanel, closePanel } from './components/panel.js';
 import { openEditModal, closeEditModal, saveEditModal } from './components/editModal.js';
@@ -108,6 +108,36 @@ function syncTabBar() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === state.currentTab);
   });
+
+  applyModuleVisibility();
+}
+
+// ── MODULE VISIBILITY ───────────────────────────────────────────────────────
+
+/**
+ * Show/hide each module tab button per state.moduleVisibility.
+ * If the active tab has been hidden, switch to the first visible module.
+ */
+function applyModuleVisibility() {
+  document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+    btn.classList.toggle('tab-hidden', !isModuleVisible(btn.dataset.tab));
+  });
+
+  // If current tab got hidden, move to the first visible module.
+  if (!isModuleVisible(state.currentTab)) {
+    const firstVisible = Object.keys(ALL_DATA).find(isModuleVisible);
+    if (firstVisible) switchTab(firstVisible);
+  }
+}
+
+/** Toggle a module's visibility, mark dirty, and re-sync the UI. */
+function toggleModuleVisible(tab) {
+  const nowVisible = !isModuleVisible(tab);
+  state.moduleVisibility[tab] = nowVisible;
+  state.isDirty = true;
+  applyModuleVisibility();
+  updateVersionBadge();
+  renderVersionPanel();
 }
 
 // ── EDIT MODE ─────────────────────────────────────────────────────────────────
@@ -142,7 +172,7 @@ function saveChangesToVersion() {
   const customModules = Object.keys(MODULE_CONFIG)
     .filter(k => !builtIn.has(k))
     .map(k => ({ id: k, config: MODULE_CONFIG[k] }));
-  updateVersionData(state.activeVersionId, dataSnapshot, customModules);
+  updateVersionData(state.activeVersionId, dataSnapshot, customModules, { ...state.moduleVisibility });
   state.isDirty = false;
   updateVersionBadge();
   updateSaveChangesBtn();
@@ -287,7 +317,7 @@ function confirmSaveAs() {
     .filter(k => !builtIn.has(k))
     .map(k => ({ id: k, config: MODULE_CONFIG[k] }));
 
-  const id = saveNewVersion(name, dataSnapshot, customModules);
+  const id = saveNewVersion(name, dataSnapshot, customModules, { ...state.moduleVisibility });
 
   // Set this as the active version, now clean
   state.activeVersionId   = id;
@@ -333,6 +363,7 @@ function loadVersion(id) {
     state.activeVersionId   = 'original';
     state.activeVersionName = 'Original';
     state.isDirty           = false;
+    state.moduleVisibility  = {}; // original shows all modules
     if (!ALL_DATA[state.currentTab]) state.currentTab = 'cm';
 
   } else {
@@ -363,6 +394,7 @@ function loadVersion(id) {
     state.activeVersionId   = id;
     state.activeVersionName = v.name;
     state.isDirty           = false;
+    state.moduleVisibility  = { ...(v.moduleVisibility || {}) };
     if (!ALL_DATA[state.currentTab]) state.currentTab = Object.keys(ALL_DATA)[0] || 'cm';
   }
 
@@ -491,6 +523,7 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
 
 // Cross-component events
 document.addEventListener('mri:switchTab',     e => switchTab(e.detail));
+document.addEventListener('mri:toggleModule',  e => toggleModuleVisible(e.detail));
 document.addEventListener('mri:loadVersion',   e => loadVersion(e.detail));
 document.addEventListener('mri:deleteVersion', e => handleDeleteVersion(e.detail));
 document.addEventListener('mri:renameVersion', e => {
@@ -528,4 +561,5 @@ document.addEventListener('keydown', e => {
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 updateUndoBtn();
 updateVersionBadge();
+applyModuleVisibility();
 render(gridCallbacks);

@@ -137,9 +137,24 @@ body {
   padding: 0 16px;
   display: flex; align-items: flex-end; gap: 0;
   box-shadow: 0 2px 0 rgba(143,184,58,0.4);
+  overflow-x: auto;          /* horizontal scroll when tabs exceed width */
+  overflow-y: hidden;
+  scrollbar-width: thin;     /* Firefox */
+  scrollbar-color: rgba(143,184,58,0.55) transparent;
 }
+/* Slim styled scrollbar for the tab bar (WebKit/Chromium) */
+.tab-bar::-webkit-scrollbar { height: 6px; }
+.tab-bar::-webkit-scrollbar-track { background: transparent; }
+.tab-bar::-webkit-scrollbar-thumb {
+  background: rgba(143,184,58,0.45); border-radius: 3px;
+}
+.tab-bar::-webkit-scrollbar-thumb:hover { background: rgba(143,184,58,0.75); }
+
+/* Module tab hidden via visibility toggle */
+.tab-btn.tab-hidden { display: none; }
 
 .tab-btn {
+  flex-shrink: 0;            /* never compress tabs — scroll instead */
   padding: 0 20px; height: 48px;
   background: transparent; border: none;
   color: rgba(255,255,255,0.55);
@@ -159,6 +174,7 @@ body {
 .tab-btn-placeholder.active { border-bottom-color: #f5c842 !important; }
 
 .tab-add-btn {
+  flex-shrink: 0;
   padding: 0 14px; height: 48px;
   background: transparent; border: none;
   color: rgba(255,255,255,0.4);
@@ -750,6 +766,29 @@ body {
   padding: 14px 2px 8px; margin-bottom: 4px;
   border-bottom: 1px solid var(--border);
 }
+
+/* ── Module visibility checklist (version panel) ───────────────────────────── */
+.ver-modules { margin-bottom: 6px; }
+.ver-modules-hint {
+  font-size: 0.66rem; color: var(--ink3); line-height: 1.4;
+  padding: 0 2px 8px;
+}
+.ver-module-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 8px; border-radius: var(--radius);
+  cursor: pointer; transition: background var(--dur);
+  font-size: 0.8rem; color: var(--ink);
+}
+.ver-module-row:hover { background: var(--surface2); }
+.ver-module-row input[type="checkbox"] {
+  width: 15px; height: 15px; cursor: pointer; flex-shrink: 0;
+  accent-color: var(--green);
+}
+.ver-module-row input[type="checkbox"]:disabled { cursor: not-allowed; }
+.ver-module-icon { font-size: 14px; flex-shrink: 0; }
+.ver-module-name { font-weight: 600; }
+.ver-module-off { opacity: 0.5; }
+.ver-module-off .ver-module-name { text-decoration: line-through; }
 
 .ver-empty {
   text-align: center; padding: 36px 20px;
