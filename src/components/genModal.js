@@ -1,4 +1,5 @@
 import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible } from '../state.js';
+import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS } from '../data/business/index.js';
 
 // ── Module scope helpers ─────────────────────────────────────────────────────
 // "All Modules" respects the per-version visibility selection: hidden modules
@@ -99,7 +100,76 @@ function tallyItem(item, counts, included, includes) {
 
 // ── BUILD PREVIEW ──────────────────────────────────────────────────────────────
 
+// ── Business document helpers ────────────────────────────────────────────────
+
+const eB = s => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function businessDocTabs(scopeAll) {
+  return scopeAll ? BUSINESS_MODULES : [state.businessTab];
+}
+function businessScopeStr(scopeAll) {
+  if (!scopeAll) return BUSINESS_CONFIG[state.businessTab]?.label || state.businessTab;
+  return 'All Business Modules';
+}
+
+/** Shared body HTML for the business document (preview + PDF share this). */
+function buildBusinessBody(inclOverview, inclActivities) {
+  const tabs   = businessDocTabs(document.getElementById('gscope-all').checked);
+  const market = state.market;
+  const marketLabel = (MARKETS.find(m => m.key === market) || {}).label || market;
+  const sectors = VERTICALS.filter(v => v !== 'All');
+  let html = '';
+
+  tabs.forEach(tab => {
+    const cfg = BUSINESS_CONFIG[tab];
+    html += `<h1>${eB(cfg?.label || tab)}</h1>`;
+    (BUSINESS_DATA[tab] || []).forEach(col => {
+      html += `<h2>${eB(col.title)}</h2>`;
+      col.processes.forEach(proc => {
+        html += `<h3>${eB(proc.title)}</h3>`;
+        if (inclOverview && proc.desc) html += `<p>${eB(proc.desc)}</p>`;
+        (proc.subs || []).forEach(sub => {
+          html += `<h4>${eB(sub.title)}</h4>`;
+          if (inclOverview && sub.desc) html += `<p>${eB(sub.desc)}</p>`;
+          if (inclActivities && sub.activities?.length) {
+            html += `<ul>${sub.activities.map(a => `<li>${eB(a)}</li>`).join('')}</ul>`;
+          }
+          if (sub.market && sub.market[market]) {
+            html += `<div class="prereq-sec"><div class="prereq-sec-title">Market Variation — ${eB(marketLabel)}</div>
+              <p>${eB(sub.market[market])}</p></div>`;
+          }
+          if (sub.vertical) {
+            const rows = sectors.filter(s => sub.vertical[s])
+              .map(s => `<div class="assoc-row"><strong>${s}:</strong> ${eB(sub.vertical[s])}</div>`).join('');
+            if (rows) html += `<div class="assoc-sec"><div class="assoc-sec-title">Vertical Detail</div>${rows}</div>`;
+          }
+          if (sub.standards?.length) {
+            html += `<p style="font-size:0.72rem;color:#5a7a1e;"><strong>Standards:</strong> ${eB(sub.standards.join(' · '))}</p>`;
+          }
+        });
+      });
+    });
+  });
+  return html;
+}
+
+function buildBusinessPreview() {
+  const inclOverview   = document.getElementById('gopt-overview').checked;
+  const inclActivities = document.getElementById('gopt-activities').checked;
+  const scopeAll = document.getElementById('gscope-all').checked;
+  const dateStr  = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  const marketLabel = (MARKETS.find(m => m.key === state.market) || {}).label || state.market;
+
+  const html = `<h1>Business Process Taxonomy — Summary</h1>
+    <p style="color:#888;font-size:0.72rem;margin-bottom:8px;">
+      Generated: ${dateStr} · Scope: ${businessScopeStr(scopeAll)} · Market: ${marketLabel}
+    </p>
+    ${buildBusinessBody(inclOverview, inclActivities)}`;
+  document.getElementById('doc-out').innerHTML = html;
+}
+
 export function buildDoc() {
+  if (state.viewMode === 'business') return buildBusinessPreview();
   const inclOverview    = document.getElementById('gopt-overview').checked;
   const inclActivities  = document.getElementById('gopt-activities').checked;
   const inclPrereqs     = document.getElementById('gopt-prereqs').checked;
@@ -177,12 +247,52 @@ function scopeTextColor(scope) {
 
 // ── DOWNLOAD WORD ──────────────────────────────────────────────────────────────
 
+function downloadBusinessWord() {
+  const inclOverview   = document.getElementById('gopt-overview').checked;
+  const inclActivities = document.getElementById('gopt-activities').checked;
+  const scopeAll = document.getElementById('gscope-all').checked;
+  const dateStr  = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  const marketLabel = (MARKETS.find(m => m.key === state.market) || {}).label || state.market;
+  const body = buildBusinessBody(inclOverview, inclActivities);
+
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8">
+<style>
+  body { font-family:Calibri,sans-serif;font-size:11pt;color:#1a1a1a;margin:2.5cm;line-height:1.5; }
+  h1 { font-size:18pt;font-weight:bold;color:#2a2a2a;border-bottom:2pt solid #8fb83a;padding-bottom:4pt;margin-top:24pt;page-break-before:always; }
+  h1:first-of-type { page-break-before:avoid; }
+  h2 { font-size:14pt;font-weight:bold;color:#4a7a1e;margin-top:18pt; }
+  h3 { font-size:12pt;font-weight:bold;color:#c8a85a;margin-top:14pt;border-left:4pt solid #c8a85a;padding-left:8pt; }
+  h4 { font-size:11pt;font-weight:bold;color:#3a5a10;margin-top:10pt;padding-left:16pt; }
+  p { margin:4pt 0 6pt; } ul { margin:2pt 0 8pt 20pt; } li { font-size:10pt; }
+  .prereq-sec,.assoc-sec { margin:6pt 0;padding:6pt 10pt;border-radius:4pt; }
+  .prereq-sec { background:#fff7ed;border:1pt solid #fce4bb; }
+  .assoc-sec { background:#f0f7e6;border:1pt solid #c5de8a; }
+  .prereq-sec-title,.assoc-sec-title { font-size:8pt;font-weight:bold;text-transform:uppercase; }
+  @page { margin:2.5cm;size:A4 portrait; }
+</style></head>
+<body>
+<h1 style="page-break-before:avoid;border-bottom:3pt solid #2a2a2a;">Business Process Taxonomy &mdash; Summary</h1>
+<p style="font-size:9pt;color:#888;">Generated: ${dateStr} &nbsp;&bull;&nbsp; Scope: ${eB(businessScopeStr(scopeAll))} &nbsp;&bull;&nbsp; Market: ${eB(marketLabel)}</p>
+${body}
+</body></html>`;
+
+  const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-word;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `Business_Process_Taxonomy_${new Date().toISOString().slice(0, 10)}.doc`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export function downloadWord() {
   const preview = document.getElementById('doc-out').innerHTML;
   if (preview.includes('Select your options') || preview.includes('click Generate')) {
     alert('Please click Generate Preview first, then Download Word.');
     return;
   }
+  if (state.viewMode === 'business') return downloadBusinessWord();
 
   const inclOverview    = document.getElementById('gopt-overview').checked;
   const inclActivities  = document.getElementById('gopt-activities').checked;
@@ -312,7 +422,7 @@ export function downloadPDF() {
 
   const dateStr   = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
   const scopeAll  = document.getElementById('gscope-all').checked;
-  const scopeStr  = getScopeStr(scopeAll);
+  const scopeStr  = state.viewMode === 'business' ? businessScopeStr(scopeAll) : getScopeStr(scopeAll);
   const previewHTML = document.getElementById('doc-out').innerHTML;
 
   const win = window.open('', '_blank', 'width=960,height=800');

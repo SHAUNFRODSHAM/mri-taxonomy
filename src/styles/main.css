@@ -1082,8 +1082,7 @@ body {
 /* Business view keeps the topbar (versions, edit, undo) but hides controls that
    are specific to the system view */
 .mode-business #add-col-btn,
-.mode-business #mod-vis-wrap,
-.mode-business #gen-btn { display: none !important; }
+.mode-business #mod-vis-wrap { display: none !important; }
 .col-add-domain { min-width: 150px; justify-content: center; padding-top: 12px; }
 .add-domain-btn { margin: 0 8px; }
 
