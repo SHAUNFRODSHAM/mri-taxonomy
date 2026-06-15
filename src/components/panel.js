@@ -1,5 +1,10 @@
 import { state } from '../state.js';
 
+// Phase-2 hook: main.js injects a function returning link-section HTML for a
+// system item id (cross-references to the business view). Null = no link UI.
+let linkRenderer = null;
+export function setSystemLinkRenderer(fn) { linkRenderer = fn; }
+
 export function showPanel(item, bc, isPro) {
   state.openPanelId = item.id;
 
@@ -57,6 +62,12 @@ export function showPanel(item, bc, isPro) {
             </div>`).join('')}</div>`
         : '<p class="psec-text" style="opacity:0.45;font-style:italic;font-size:0.74rem">No associated processes configured.</p>'}
     </div>`;
+
+  // Cross-references to the business view (Phase 2)
+  if (linkRenderer) {
+    const linkHtml = linkRenderer(item.id, 'system');
+    if (linkHtml) document.getElementById('panel-body').insertAdjacentHTML('beforeend', linkHtml);
+  }
 
   document.getElementById('overlay').classList.add('open');
   document.getElementById('panel').classList.add('open');

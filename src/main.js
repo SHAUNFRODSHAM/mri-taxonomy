@@ -1,12 +1,14 @@
 import './styles/main.css';
 import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, currentData, triggerRender, registerRender, isModuleVisible } from './state.js';
 import { render }         from './components/grid.js';
-import { showPanel, closePanel } from './components/panel.js';
+import { showPanel, closePanel, setSystemLinkRenderer } from './components/panel.js';
 import { openEditModal, closeEditModal, saveEditModal } from './components/editModal.js';
 import { openAddModal, closeAddModal, confirmAdd, openAddTabModal, closeAddTabModal, confirmAddTab } from './components/addModal.js';
 import { openGenModal, closeGenModal, buildDoc, downloadWord, downloadPDF } from './components/genModal.js';
 import { renderVersionPanel } from './components/versionMenu.js';
-import { renderBusiness, initBusinessView } from './components/businessView.js';
+import { renderBusiness, initBusinessView, setBusinessLinkRenderer, showBusinessPanel } from './components/businessView.js';
+import { systemLinksFor, businessLinksFor, systemItemModule } from './data/links.js';
+import { findBusinessItem } from './data/business/index.js';
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData } from './versions.js';
 
 // ── CALLBACKS passed to grid renderer ─────────────────────────────────────────
@@ -83,6 +85,50 @@ function switchBusinessTab(mod) {
   state.businessTab = mod;
   closePanel();
   renderBusiness();
+}
+
+// ── CROSS-VIEW LINKAGE (Phase 2) ──────────────────────────────────────────────
+
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * Build the cross-reference section for a detail panel.
+ * side === 'business' → show the MRI PMX system processes that deliver it.
+ * side === 'system'   → show the business processes it supports.
+ */
+function renderLinkSection(id, side) {
+  const links = side === 'business' ? systemLinksFor(id) : businessLinksFor(id);
+  if (!links.length) return '';
+  const label = side === 'business' ? 'Delivered in MRI PMX by' : 'Supports Business Processes';
+  const rows = links.map(l => `
+    <button class="xlink" data-xview="${l.view}" data-xid="${esc(l.id)}">
+      <span class="xlink-mod">${esc(l.moduleLabel)}</span>
+      <span class="xlink-arrow">→</span>
+      <span class="xlink-body">
+        <span class="xlink-title">${esc(l.title)}</span>
+        <span class="xlink-bc">${esc(l.breadcrumb)}</span>
+      </span>
+    </button>`).join('');
+  return `
+    <div class="psec xlink-sec">
+      <div class="psec-label">${label} <span class="xlink-count">${links.length}</span></div>
+      <div class="xlink-list">${rows}</div>
+    </div>`;
+}
+
+/** Navigate to a linked item in the opposite view and open its detail panel. */
+function navigateToLinked(view, id) {
+  if (view === 'system') {
+    const mod = systemItemModule(id);
+    if (state.viewMode !== 'system') switchView('system');
+    if (mod && mod !== state.currentTab) switchTab(mod);
+    handleClick(id);
+  } else {
+    const f = findBusinessItem(id);
+    if (state.viewMode !== 'business') switchView('business');
+    if (f && f.module !== state.businessTab) switchBusinessTab(f.module);
+    showBusinessPanel(id);
+  }
 }
 
 // ── TAB SWITCHING ─────────────────────────────────────────────────────────────
@@ -615,6 +661,16 @@ document.querySelectorAll('.view-btn').forEach(btn => {
   btn.addEventListener('click', () => switchView(btn.dataset.view));
 });
 initBusinessView({ onTabSwitch: switchBusinessTab });
+
+// Cross-view linkage: inject link-section renderers into both panels and wire
+// click-through navigation (delegated, since panel bodies are re-rendered).
+setSystemLinkRenderer(renderLinkSection);
+setBusinessLinkRenderer(renderLinkSection);
+document.getElementById('panel-body').addEventListener('click', e => {
+  const x = e.target.closest('.xlink');
+  if (!x) return;
+  navigateToLinked(x.dataset.xview, x.dataset.xid);
+});
 
 // Cross-component events
 document.addEventListener('mri:switchTab',     e => switchTab(e.detail));
