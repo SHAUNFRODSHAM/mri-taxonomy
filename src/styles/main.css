@@ -191,6 +191,8 @@ body {
 .jc-header { background: #3a2060; }
 /* ⚠️ CAR — placeholder module, red banner signals content review required */
 .car-header { background: #7a1a1a; }
+/* ⚠️ B&F — placeholder module, teal banner */
+.bf-header { background: #0e5b5b; }
 
 /* ── GRID ──────────────────────────────────────────────────────────────────── */
 .grid {
@@ -223,6 +225,7 @@ body {
 .ap-header-col { background: var(--blue); }
 .gl-header-col { background: #3b6d11; }
 .car-header-col { background: #a02828; }
+.bf-header-col { background: #127070; }
 
 .col-del-btn {
   position: absolute; top: 50%; right: 8px; transform: translateY(-50%);

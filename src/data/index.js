@@ -4,8 +4,9 @@ import { ap } from './ap.js';
 import { rm } from './rm.js';
 import { jc } from './jc.js';
 import { car } from './car.js';
+import { bf } from './bf.js';
 
-export const ALL_DATA = { cm, gl, ap, rm, jc, car };
+export const ALL_DATA = { cm, gl, ap, rm, jc, car, bf };
 
 // Deep-frozen snapshot taken at module-load time, BEFORE any user edits.
 // This is the source of truth for "Reset to Original".
@@ -16,6 +17,7 @@ export const ORIGINAL_DATA = Object.freeze({
   rm: JSON.parse(JSON.stringify(rm)),
   jc: JSON.parse(JSON.stringify(jc)),
   car: JSON.parse(JSON.stringify(car)),
+  bf: JSON.parse(JSON.stringify(bf)),
 });
 
 export const MODULE_CONFIG = {
@@ -62,5 +64,13 @@ export const MODULE_CONFIG = {
     headerText: 'Corporate Accounts Receivable ⚠️ Placeholder Content',
     colHeaderClass: 'car-header-col',
     icon: '📥',
+  },
+  // ⚠️ PLACEHOLDER MODULE — content requires review before client use
+  bf: {
+    label: 'Budgeting & Forecasting',
+    headerClass: 'bf-header',
+    headerText: 'Budgeting & Forecasting ⚠️ Placeholder Content',
+    colHeaderClass: 'bf-header-col',
+    icon: '📊',
   },
 };

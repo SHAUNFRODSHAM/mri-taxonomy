@@ -9,6 +9,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.4.0] — 2026-06-15
+
+### Added — Budgeting & Forecasting (B&F) Module (Placeholder)
+
+- New **Budgeting & Forecasting (B&F)** module tab (`src/data/bf.js`)
+- 8 columns mirroring the B&F functional taxonomy (§3.1–§3.8 of the source document):
+  1. Budget Process & Ownership
+  2. Budget Structure & Granularity
+  3. Budget Creation & Management
+  4. Budget Assumptions & Methodology
+  5. Variance Reporting & Analysis
+  6. Reporting & Distribution
+  7. Integration & System Impact
+  8. Setup & Configuration
+- 49 processes total, with sub-processes under CM Workbook Views (Enhanced Suite View, Calculation View)
+- MRI screen references use the real PMX menu paths from the source document (App Menu > Budgeting and Forecasting > …)
+- Teal (`#0e5b5b`) module banner — visually distinct from existing modules
+- **Placeholder treatment** (same as CAR and JC): amber `⚠️` tab styling, `⚠️ Placeholder Content` in the banner, source-code warning block, and `[PLACEHOLDER]` prefix on every content field — pending human review
+- B&F registered in `src/data/index.js` — included in `ALL_DATA`, `ORIGINAL_DATA`, and `MODULE_CONFIG`
+
+### Changed
+
+- `index.html` — added B&F tab button with `tab-btn-placeholder` class and `⚠️` suffix
+- `src/data/index.js` — B&F import, `ALL_DATA`/`ORIGINAL_DATA` entries, and `MODULE_CONFIG.bf`
+- `src/styles/main.css` — `.bf-header` and `.bf-header-col` banner colours added
+
+> **Note:** Source content compiled from *MRI PMX Budgeting & Forecasting (B&F) Module Taxonomy* (Open Box Software, June 2026). All content is placeholder pending SME review.
+
+---
+
 ## [1.3.0] — 2026-06-09
 
 ### Added — Job Cost (JC) Placeholder Treatment
