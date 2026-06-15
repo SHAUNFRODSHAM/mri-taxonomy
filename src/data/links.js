@@ -1,14 +1,18 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   links.js — Business ⇄ System (MRI PMX) link registry
+   links.js — Business ⇄ System (MRI PMX) link registry + mutable store
 
-   Single source of truth for how a business process ties into the system
-   processes that deliver it. Each entry pairs a Business item id with a System
-   item id; the reverse direction is computed at runtime, so links are only
-   maintained in one place.
+   SEED_LINKS is the shared default template: how a business process ties into
+   the system process(es) that deliver it. At runtime these seed the editable
+   store in state.links, where each link carries a COVERAGE status and optional
+   note captured during client discovery:
 
-   Phase 2 seeds the General Ledger (bgl ⇄ gl) mappings. Other modules are added
-   as their content is curated. Many-to-many is expected: several business
-   processes can be delivered by the same system process, and vice-versa.
+     full     — fully delivered by the system process
+     partial  — only part of the process touches the system
+     outside  — largely managed outside the system (manual / spreadsheet / 3rd-party)
+
+   Edits are per client: the store is saved into the version snapshot, so each
+   engagement diverges from the seed independently. The reverse direction is
+   always computed at runtime, so a link lives as a single {b,s} record.
 
    ids:  business → b<mod>-<domain>-<rawId>   (see data/business/index.js)
          system   → <module>-<area>-<topic>   (see data/<module>.js)
@@ -16,9 +20,17 @@
 
 import { ALL_DATA, MODULE_CONFIG } from './index.js';
 import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, findBusinessItem } from './business/index.js';
+import { state } from '../state.js';
 
-/** @type {{b: string, s: string}[]}  business id ⇄ system id */
-export const LINKS = [
+export const COVERAGE = {
+  full:    { label: 'Fully in system', short: 'Full',    color: '#5a7a1e' },
+  partial: { label: 'Partial — touches part of the process', short: 'Partial', color: '#b8860b' },
+  outside: { label: 'Outside system — managed manually', short: 'Outside', color: '#8a8a8a' },
+};
+export const COVERAGE_ORDER = ['full', 'partial', 'outside'];
+
+/** @type {{b: string, s: string}[]}  seed template — business id ⇄ system id */
+export const SEED_LINKS = [
   // ── GL Setup → Financial Structure & Entity Governance ──
   { b: 'bgl-setup-es1',  s: 'gl-framework-entity' },
   { b: 'bgl-setup-es2',  s: 'gl-framework-entity' },
@@ -115,6 +127,56 @@ export const LINKS = [
   { b: 'bgl-compliance-am3', s: 'gl-reporting-schedule' },
 ];
 
+// ── Mutable per-version store ───────────────────────────────────────────────
+
+/** Seed the editable store from SEED_LINKS (coverage defaults to 'full'). */
+export function seedLinks() {
+  return SEED_LINKS.map(l => ({ b: l.b, s: l.s, coverage: 'full', note: '' }));
+}
+
+/** Initialise state.links from the seed if it hasn't been populated yet. */
+export function initLinks() {
+  if (!Array.isArray(state.links) || state.links.length === 0) {
+    state.links = seedLinks();
+  }
+}
+
+/** The active (editable) link set. */
+export function getLinks() {
+  return Array.isArray(state.links) ? state.links : [];
+}
+
+function findLinkIndex(b, s) {
+  return getLinks().findIndex(l => l.b === b && l.s === s);
+}
+
+/** Add a link (no-op if it already exists). Returns true if added. */
+export function addLink(b, s, coverage = 'full', note = '') {
+  if (findLinkIndex(b, s) !== -1) return false;
+  getLinks().push({ b, s, coverage, note });
+  return true;
+}
+
+/** Remove a link. Returns true if one was removed. */
+export function removeLink(b, s) {
+  const i = findLinkIndex(b, s);
+  if (i === -1) return false;
+  getLinks().splice(i, 1);
+  return true;
+}
+
+/** Set a link's coverage status. */
+export function setLinkCoverage(b, s, coverage) {
+  const l = getLinks().find(x => x.b === b && x.s === s);
+  if (l) l.coverage = coverage;
+}
+
+/** Set a link's free-text note. */
+export function setLinkNote(b, s, note) {
+  const l = getLinks().find(x => x.b === b && x.s === s);
+  if (l) l.note = note;
+}
+
 // ── Resolvers ─────────────────────────────────────────────────────────────────
 
 /** Resolve a system item id to display metadata, searching every module. */
@@ -146,14 +208,18 @@ function resolveBusiness(id) {
            title: f.item.title, breadcrumb: f.breadcrumb };
 }
 
-/** System processes that deliver a given business item. */
+/** System processes that deliver a given business item (with coverage). */
 export function systemLinksFor(businessId) {
-  return LINKS.filter(l => l.b === businessId).map(l => resolveSystem(l.s)).filter(Boolean);
+  return getLinks().filter(l => l.b === businessId)
+    .map(l => { const r = resolveSystem(l.s); return r ? { ...r, coverage: l.coverage, note: l.note } : null; })
+    .filter(Boolean);
 }
 
-/** Business processes supported by a given system item. */
+/** Business processes supported by a given system item (with coverage). */
 export function businessLinksFor(systemId) {
-  return LINKS.filter(l => l.s === systemId).map(l => resolveBusiness(l.b)).filter(Boolean);
+  return getLinks().filter(l => l.s === systemId)
+    .map(l => { const r = resolveBusiness(l.b); return r ? { ...r, coverage: l.coverage, note: l.note } : null; })
+    .filter(Boolean);
 }
 
 /** The module a system item belongs to (for tab switching on navigation). */
@@ -179,11 +245,11 @@ function businessDomainOf(bid) {
 
 /** Every link, fully resolved (business side incl. its domain + system side). */
 export function allResolvedLinks() {
-  return LINKS.map(l => {
+  return getLinks().map(l => {
     const b = resolveBusiness(l.b);
     const s = resolveSystem(l.s);
     if (!b || !s) return null;
-    return { b: { ...b, domain: businessDomainOf(l.b) }, s };
+    return { b: { ...b, domain: businessDomainOf(l.b) }, s, coverage: l.coverage, note: l.note };
   }).filter(Boolean);
 }
 

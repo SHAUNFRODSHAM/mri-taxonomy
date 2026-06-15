@@ -1276,3 +1276,79 @@ body {
 .map-pair .xlink { border-left-color: var(--blue); }
 .map-pair .xlink[data-xview="business"] { border-left-color: #4a6a2a; }
 .map-pair-link { text-align: center; color: var(--ink3); font-size: 0.8rem; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LINK EDITING (Phase 4) — coverage badges, edit controls, picker
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Edit Links toggle — shown in Business + Mapping views only */
+.link-edit-btn { display: none; }
+.mode-business .link-edit-btn,
+.mode-mapping  .link-edit-btn {
+  display: inline-flex; align-items: center;
+  margin-left: 10px; padding: 6px 13px; border-radius: 6px; cursor: pointer;
+  background: transparent; border: 1px solid rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.8); font-family: var(--font);
+  font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; transition: all var(--dur);
+}
+.link-edit-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.link-edit-btn.active { background: var(--amber); border-color: var(--amber); color: #fff; }
+
+/* Coverage badge */
+.cov-badge {
+  flex-shrink: 0; font-size: 0.58rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.03em; padding: 3px 8px; border-radius: 10px;
+  color: #fff; background: var(--cov, #5a7a1e); white-space: nowrap;
+}
+.cov-badge.cov-editable { cursor: pointer; box-shadow: 0 0 0 2px rgba(0,0,0,0.06); }
+.cov-badge.cov-editable:hover { filter: brightness(1.1); box-shadow: 0 0 0 2px rgba(0,0,0,0.18); }
+
+/* Link rows with controls */
+.xlink-row { display: flex; align-items: center; gap: 8px; }
+.xlink-row .xlink { flex: 1; min-width: 0; }
+.xlink-del {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+  border: 1px solid var(--border2); background: var(--surface); color: var(--red);
+  cursor: pointer; font-size: 14px; line-height: 1; font-weight: 700;
+}
+.xlink-del:hover { background: var(--red); color: #fff; border-color: var(--red); }
+.xlink-add {
+  margin-top: 8px; width: 100%; padding: 8px; border-radius: 6px;
+  border: 1px dashed var(--green-dk); background: var(--green-lt); color: var(--green-dk);
+  font-family: var(--font); font-size: 0.72rem; font-weight: 700; cursor: pointer;
+  transition: all var(--dur);
+}
+.xlink-add:hover { background: #e6f0d0; }
+
+/* Mapping pair head (coverage + delete above the pair) */
+.map-pair-head { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+
+/* Link picker overlay */
+.linkpick-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(2px);
+  z-index: 400; display: flex; align-items: flex-start; justify-content: center; padding-top: 8vh;
+}
+.linkpick {
+  width: 540px; max-width: 92vw; max-height: 70vh; display: flex; flex-direction: column;
+  background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--elev3); overflow: hidden;
+}
+.linkpick-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; background: var(--surface2); border-bottom: 1px solid var(--border);
+}
+.linkpick-hdr h3 { font-size: 0.92rem; color: var(--ink); }
+.linkpick-search {
+  margin: 12px 18px; padding: 10px 12px; border: 1px solid var(--border2); border-radius: 6px;
+  font-family: var(--font); font-size: 0.82rem;
+}
+.linkpick-search:focus { outline: none; border-color: var(--green); }
+.linkpick-list { overflow-y: auto; padding: 0 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.linkpick-row {
+  text-align: left; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 11px; cursor: pointer; font-family: var(--font);
+  display: flex; flex-direction: column; gap: 2px; transition: all var(--dur);
+}
+.linkpick-row:hover { background: var(--green-lt); border-color: var(--green); }
+.linkpick-title { font-size: 0.78rem; font-weight: 700; color: var(--ink); }
+.linkpick-bc { font-size: 0.66rem; color: var(--ink3); }
+.linkpick-empty { text-align: center; color: var(--ink3); padding: 24px; font-style: italic; font-size: 0.8rem; }

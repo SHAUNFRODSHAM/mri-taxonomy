@@ -12,10 +12,28 @@
 
 import { state } from '../state.js';
 import { BUSINESS_CONFIG } from '../data/business/index.js';
-import { buildMappingMatrix, cellPairs } from '../data/links.js';
+import { buildMappingMatrix, cellPairs, COVERAGE } from '../data/links.js';
 
 let onNavigate = () => {};
 export function initMappingView({ navigate }) { onNavigate = navigate || (() => {}); }
+
+let lastCell = null;
+/** Re-render the currently-open cell panel (after a coverage edit). */
+export function refreshMappingPanel() {
+  if (lastCell) showCell(lastCell.domainId, lastCell.sysMod);
+}
+
+/** Dominant coverage colour for a set of links in a cell. */
+function cellCoverage(links) {
+  const set = new Set(links.map(l => l.coverage || 'full'));
+  if (set.size === 1) return COVERAGE[[...set][0]]?.color || COVERAGE.full.color;
+  return '#b8860b'; // mixed → amber
+}
+function covCounts(links) {
+  const c = { full: 0, partial: 0, outside: 0 };
+  links.forEach(l => { c[l.coverage || 'full'] = (c[l.coverage || 'full'] || 0) + 1; });
+  return c;
+}
 
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -68,10 +86,16 @@ export function renderMapping() {
         ${row.gap ? '<span class="map-gap-badge">unmapped</span>' : ''}
       </th>`;
     systemModules.forEach(sm => {
-      const n = row.cells[sm.id].length;
-      html += n
-        ? `<td class="map-cell has-links" data-domain="${esc(row.domainId)}" data-sysmod="${esc(sm.id)}" title="${n} link${n > 1 ? 's' : ''} — click to view">${n}</td>`
-        : `<td class="map-cell empty">·</td>`;
+      const cellLinks = row.cells[sm.id];
+      const n = cellLinks.length;
+      if (n) {
+        const cc = covCounts(cellLinks);
+        const tip = `${n} link${n > 1 ? 's' : ''} — Full ${cc.full} · Partial ${cc.partial} · Outside ${cc.outside} (click to view)`;
+        html += `<td class="map-cell has-links" data-domain="${esc(row.domainId)}" data-sysmod="${esc(sm.id)}"
+          style="--cov:${cellCoverage(cellLinks)}" title="${esc(tip)}">${n}</td>`;
+      } else {
+        html += `<td class="map-cell empty">·</td>`;
+      }
     });
     html += `</tr>`;
   });
@@ -87,7 +111,8 @@ export function renderMapping() {
 
 function showCell(domainId, sysMod) {
   const pairs = cellPairs(domainId, sysMod);
-  if (!pairs.length) return;
+  if (!pairs.length) { lastCell = null; document.getElementById('panel').classList.remove('open'); return; }
+  lastCell = { domainId, sysMod };
   const domainTitle = pairs[0].b.domain.domainTitle;
   const sysLabel    = pairs[0].s.moduleLabel;
 
@@ -98,8 +123,20 @@ function showCell(domainId, sysMod) {
     `<span class="badge badge-business">Business</span><span class="badge badge-mri">MRI PMX</span>
      <span class="badge">${pairs.length} link${pairs.length > 1 ? 's' : ''}</span>`;
 
+  const editable = state.linkEditMode;
+  const covBadge = (cov, b, s) => {
+    const c = COVERAGE[cov] || COVERAGE.full;
+    return `<span class="cov-badge${editable ? ' cov-editable' : ''}" style="--cov:${c.color}"
+      data-cov-b="${esc(b)}" data-cov-s="${esc(s)}"
+      title="${editable ? 'Click to cycle coverage · ' : ''}${esc(c.label)}">${esc(c.short)}</span>`;
+  };
+
   const rows = pairs.map(p => `
     <div class="map-pair">
+      <div class="map-pair-head">
+        ${covBadge(p.coverage, p.b.id, p.s.id)}
+        ${editable ? `<button class="xlink-del" data-del-b="${esc(p.b.id)}" data-del-s="${esc(p.s.id)}" title="Remove link">×</button>` : ''}
+      </div>
       <button class="xlink" data-xview="business" data-xid="${esc(p.b.id)}">
         <span class="xlink-mod">Business</span><span class="xlink-arrow">→</span>
         <span class="xlink-body"><span class="xlink-title">${esc(p.b.title)}</span>

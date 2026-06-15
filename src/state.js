@@ -27,6 +27,11 @@ export const state = {
   // explicitly set to false. Persisted as part of each saved version so a
   // client version can show only the modules in that client's scope.
   moduleVisibility: {},
+  // Business ⇄ system links: [{ b, s, coverage, note }]. Seeded from
+  // SEED_LINKS at boot, editable during discovery, persisted per version.
+  links: [],
+  // Whether the mapping/link edit affordances are active
+  linkEditMode: false,
 };
 
 /** A module is visible unless explicitly hidden. */

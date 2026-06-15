@@ -7,9 +7,11 @@ import { openAddModal, closeAddModal, confirmAdd, openAddTabModal, closeAddTabMo
 import { openGenModal, closeGenModal, buildDoc, downloadWord, downloadPDF } from './components/genModal.js';
 import { renderVersionPanel } from './components/versionMenu.js';
 import { renderBusiness, initBusinessView, setBusinessLinkRenderer, showBusinessPanel } from './components/businessView.js';
-import { renderMapping, initMappingView } from './components/mappingView.js';
-import { systemLinksFor, businessLinksFor, systemItemModule } from './data/links.js';
-import { findBusinessItem } from './data/business/index.js';
+import { renderMapping, initMappingView, refreshMappingPanel } from './components/mappingView.js';
+import { systemLinksFor, businessLinksFor, systemItemModule,
+         initLinks, seedLinks, addLink, removeLink, setLinkCoverage,
+         COVERAGE, COVERAGE_ORDER } from './data/links.js';
+import { findBusinessItem, BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES } from './data/business/index.js';
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData } from './versions.js';
 
 // ── CALLBACKS passed to grid renderer ─────────────────────────────────────────
@@ -98,23 +100,49 @@ const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(
  * side === 'business' → show the MRI PMX system processes that deliver it.
  * side === 'system'   → show the business processes it supports.
  */
+function covBadge(coverage, b, s) {
+  const c = COVERAGE[coverage] || COVERAGE.full;
+  const editable = state.linkEditMode;
+  return `<span class="cov-badge${editable ? ' cov-editable' : ''}" style="--cov:${c.color}"
+    data-cov-b="${esc(b)}" data-cov-s="${esc(s)}"
+    title="${editable ? 'Click to cycle coverage · ' : ''}${esc(c.label)}">${esc(c.short)}</span>`;
+}
+
 function renderLinkSection(id, side) {
   const links = side === 'business' ? systemLinksFor(id) : businessLinksFor(id);
-  if (!links.length) return '';
   const label = side === 'business' ? 'Delivered in MRI PMX by' : 'Supports Business Processes';
-  const rows = links.map(l => `
-    <button class="xlink" data-xview="${l.view}" data-xid="${esc(l.id)}">
-      <span class="xlink-mod">${esc(l.moduleLabel)}</span>
-      <span class="xlink-arrow">→</span>
-      <span class="xlink-body">
-        <span class="xlink-title">${esc(l.title)}</span>
-        <span class="xlink-bc">${esc(l.breadcrumb)}</span>
-      </span>
-    </button>`).join('');
+
+  // In link-edit mode, always show the section (with an Add control) even when empty.
+  if (!links.length && !state.linkEditMode) return '';
+
+  const rows = links.map(l => {
+    // coverage badge needs the link's two endpoint ids (business id + system id)
+    const bId = side === 'business' ? id : l.id;
+    const sId = side === 'business' ? l.id : id;
+    return `
+    <div class="xlink-row">
+      <button class="xlink" data-xview="${l.view}" data-xid="${esc(l.id)}">
+        <span class="xlink-mod">${esc(l.moduleLabel)}</span>
+        <span class="xlink-arrow">→</span>
+        <span class="xlink-body">
+          <span class="xlink-title">${esc(l.title)}</span>
+          <span class="xlink-bc">${esc(l.breadcrumb)}</span>
+        </span>
+      </button>
+      ${covBadge(l.coverage, bId, sId)}
+      ${state.linkEditMode ? `<button class="xlink-del" data-del-b="${esc(bId)}" data-del-s="${esc(sId)}" title="Remove link">×</button>` : ''}
+    </div>`;
+  }).join('');
+
+  const addBtn = state.linkEditMode
+    ? `<button class="xlink-add" data-add-side="${side}" data-add-id="${esc(id)}">+ Link a ${side === 'business' ? 'system' : 'business'} process</button>`
+    : '';
+
   return `
     <div class="psec xlink-sec">
       <div class="psec-label">${label} <span class="xlink-count">${links.length}</span></div>
-      <div class="xlink-list">${rows}</div>
+      <div class="xlink-list">${rows || '<p class="psec-text" style="opacity:0.5;font-style:italic;font-size:0.74rem">No links yet.</p>'}</div>
+      ${addBtn}
     </div>`;
 }
 
@@ -131,6 +159,143 @@ function navigateToLinked(view, id) {
     if (f && f.module !== state.businessTab) switchBusinessTab(f.module);
     showBusinessPanel(id);
   }
+}
+
+// ── LINK EDITING (Phase 4) ────────────────────────────────────────────────────
+
+function markLinksDirty() {
+  state.isDirty = true;
+  updateVersionBadge();
+  updateSaveChangesBtn();
+}
+
+/** Re-open whichever detail panel is currently showing, to reflect link edits. */
+function refreshOpenPanel() {
+  const id = state.openPanelId;
+  if (!id) return;
+  if (state.viewMode === 'business') showBusinessPanel(id);
+  else if (state.viewMode === 'system') handleClick(id);
+}
+
+/** After a link edit, refresh whichever panel is open (incl. the mapping cell). */
+function refreshAfterLinkEdit() {
+  if (state.viewMode === 'mapping') { renderMapping(); refreshMappingPanel(); }
+  else refreshOpenPanel();
+}
+
+function toggleLinkEdit() {
+  state.linkEditMode = !state.linkEditMode;
+  const btn = document.getElementById('link-edit-btn');
+  if (btn) {
+    btn.classList.toggle('active', state.linkEditMode);
+    btn.textContent = state.linkEditMode ? '✓ Done Editing Links' : '✎ Edit Links';
+  }
+  if (state.viewMode === 'mapping') renderMapping();
+  refreshOpenPanel();
+}
+
+/** Delegated handler for coverage-cycle / remove / add controls in a panel. */
+function handleLinkControlClick(e) {
+  const cov = e.target.closest('.cov-badge.cov-editable');
+  if (cov) {
+    e.stopPropagation();
+    const b = cov.dataset.covB, s = cov.dataset.covS;
+    const links = state.links;
+    const link = links.find(l => l.b === b && l.s === s);
+    if (link) {
+      const i = COVERAGE_ORDER.indexOf(link.coverage);
+      link.coverage = COVERAGE_ORDER[(i + 1) % COVERAGE_ORDER.length];
+      markLinksDirty();
+      refreshAfterLinkEdit();
+    }
+    return true;
+  }
+  const del = e.target.closest('.xlink-del');
+  if (del) {
+    e.stopPropagation();
+    removeLink(del.dataset.delB, del.dataset.delS);
+    markLinksDirty();
+      refreshAfterLinkEdit();
+    return true;
+  }
+  const add = e.target.closest('.xlink-add');
+  if (add) {
+    e.stopPropagation();
+    openLinkPicker(add.dataset.addSide, add.dataset.addId);
+    return true;
+  }
+  return false;
+}
+
+// ── Link picker (add a link from a detail panel) ──────────────────────────────
+
+function systemCandidates() {
+  const out = [];
+  Object.keys(ALL_DATA).forEach(mod => ALL_DATA[mod].forEach(col => col.processes.forEach(p => {
+    out.push({ id: p.id, label: `${MODULE_CONFIG[mod]?.label || mod} › ${col.title}`, title: p.title });
+    (p.subs || []).forEach(s => out.push({ id: s.id, label: `${MODULE_CONFIG[mod]?.label || mod} › ${col.title} › ${p.title}`, title: s.title }));
+  })));
+  return out;
+}
+function businessCandidates() {
+  const out = [];
+  BUSINESS_MODULES.forEach(mod => BUSINESS_DATA[mod].forEach(col => col.processes.forEach(p => {
+    out.push({ id: p.id, label: `${BUSINESS_CONFIG[mod]?.label || mod} › ${col.title}`, title: p.title });
+    (p.subs || []).forEach(s => out.push({ id: s.id, label: `${BUSINESS_CONFIG[mod]?.label || mod} › ${col.title} › ${p.title}`, title: s.title }));
+  })));
+  return out;
+}
+
+/** Open a searchable picker to add a link from the current item to the other view. */
+function openLinkPicker(side, anchorId) {
+  // side === 'business' → anchor is a business item, pick a SYSTEM target.
+  const pickSystem  = side === 'business';
+  const candidates  = pickSystem ? systemCandidates() : businessCandidates();
+  const heading     = pickSystem ? 'Link to an MRI PMX system process' : 'Link to a business process';
+
+  const ov = document.createElement('div');
+  ov.className = 'linkpick-overlay';
+  ov.innerHTML = `
+    <div class="linkpick">
+      <div class="linkpick-hdr">
+        <h3>${heading}</h3>
+        <button class="modal-x" id="linkpick-close">✕</button>
+      </div>
+      <input type="text" class="linkpick-search" id="linkpick-search" placeholder="Search processes…" autocomplete="off">
+      <div class="linkpick-list" id="linkpick-list"></div>
+    </div>`;
+  document.body.appendChild(ov);
+
+  const listEl   = ov.querySelector('#linkpick-list');
+  const searchEl = ov.querySelector('#linkpick-search');
+
+  const draw = (q) => {
+    const term = q.trim().toLowerCase();
+    const rows = candidates
+      .filter(c => !term || c.title.toLowerCase().includes(term) || c.label.toLowerCase().includes(term))
+      .slice(0, 60);
+    listEl.innerHTML = rows.length
+      ? rows.map(c => `<button class="linkpick-row" data-pick="${esc(c.id)}">
+          <span class="linkpick-title">${esc(c.title)}</span>
+          <span class="linkpick-bc">${esc(c.label)}</span></button>`).join('')
+      : '<div class="linkpick-empty">No matches</div>';
+  };
+  draw('');
+
+  const close = () => ov.remove();
+  ov.addEventListener('click', e => { if (e.target === ov) close(); });
+  ov.querySelector('#linkpick-close').addEventListener('click', close);
+  searchEl.addEventListener('input', () => draw(searchEl.value));
+  listEl.addEventListener('click', e => {
+    const row = e.target.closest('.linkpick-row');
+    if (!row) return;
+    const picked = row.dataset.pick;
+    const b = pickSystem ? anchorId : picked;
+    const s = pickSystem ? picked : anchorId;
+    if (addLink(b, s, 'full')) { markLinksDirty(); refreshAfterLinkEdit(); }
+    close();
+  });
+  setTimeout(() => searchEl.focus(), 50);
 }
 
 // ── TAB SWITCHING ─────────────────────────────────────────────────────────────
@@ -304,7 +469,7 @@ function saveChangesToVersion() {
   const customModules = Object.keys(MODULE_CONFIG)
     .filter(k => !builtIn.has(k))
     .map(k => ({ id: k, config: MODULE_CONFIG[k] }));
-  updateVersionData(state.activeVersionId, dataSnapshot, customModules, { ...state.moduleVisibility });
+  updateVersionData(state.activeVersionId, dataSnapshot, customModules, { ...state.moduleVisibility }, JSON.parse(JSON.stringify(state.links)));
   state.isDirty = false;
   updateVersionBadge();
   updateSaveChangesBtn();
@@ -449,7 +614,7 @@ function confirmSaveAs() {
     .filter(k => !builtIn.has(k))
     .map(k => ({ id: k, config: MODULE_CONFIG[k] }));
 
-  const id = saveNewVersion(name, dataSnapshot, customModules, { ...state.moduleVisibility });
+  const id = saveNewVersion(name, dataSnapshot, customModules, { ...state.moduleVisibility }, JSON.parse(JSON.stringify(state.links)));
 
   // Set this as the active version, now clean
   state.activeVersionId   = id;
@@ -496,6 +661,7 @@ function loadVersion(id) {
     state.activeVersionName = 'Original';
     state.isDirty           = false;
     state.moduleVisibility  = {}; // original shows all modules
+    state.links             = seedLinks(); // original = the seed mapping
     if (!ALL_DATA[state.currentTab]) state.currentTab = 'cm';
 
   } else {
@@ -527,6 +693,7 @@ function loadVersion(id) {
     state.activeVersionName = v.name;
     state.isDirty           = false;
     state.moduleVisibility  = { ...(v.moduleVisibility || {}) };
+    state.links             = (v.links && v.links.length) ? JSON.parse(JSON.stringify(v.links)) : seedLinks();
     if (!ALL_DATA[state.currentTab]) state.currentTab = Object.keys(ALL_DATA)[0] || 'cm';
   }
 
@@ -670,10 +837,15 @@ initMappingView({ navigate: navigateToLinked });
 setSystemLinkRenderer(renderLinkSection);
 setBusinessLinkRenderer(renderLinkSection);
 document.getElementById('panel-body').addEventListener('click', e => {
+  if (handleLinkControlClick(e)) return;   // coverage cycle / remove / add
   const x = e.target.closest('.xlink');
   if (!x) return;
   navigateToLinked(x.dataset.xview, x.dataset.xid);
 });
+
+// Link edit toggle (shown in Business + Mapping views)
+const linkEditBtn = document.getElementById('link-edit-btn');
+if (linkEditBtn) linkEditBtn.addEventListener('click', toggleLinkEdit);
 
 // Cross-component events
 document.addEventListener('mri:switchTab',     e => switchTab(e.detail));
@@ -714,6 +886,7 @@ document.addEventListener('keydown', e => {
 });
 
 // ── BOOT ──────────────────────────────────────────────────────────────────────
+initLinks();
 updateUndoBtn();
 updateVersionBadge();
 applyModuleVisibility();
