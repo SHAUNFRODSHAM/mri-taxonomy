@@ -138,6 +138,54 @@ function toggleModuleVisible(tab) {
   applyModuleVisibility();
   updateVersionBadge();
   renderVersionPanel();
+  // Keep the edit-mode dropdown in sync if it's open
+  if (document.getElementById('mod-vis-menu').classList.contains('open')) {
+    buildModuleVisMenu();
+  }
+}
+
+// ── EDIT-MODE MODULE VISIBILITY DROPDOWN ──────────────────────────────────────
+
+/** Populate the topbar Modules dropdown with a checkbox per module. */
+function buildModuleVisMenu() {
+  const menu = document.getElementById('mod-vis-menu');
+  const tabIds = Object.keys(ALL_DATA);
+  const visibleCount = tabIds.filter(isModuleVisible).length;
+
+  let html = '<div class="mod-vis-menu-title">Visible Modules</div>';
+  tabIds.forEach(tab => {
+    const cfg = MODULE_CONFIG[tab] || {};
+    const visible = isModuleVisible(tab);
+    const lastVisible = visible && visibleCount === 1;
+    html += `<label class="mod-vis-row${visible ? '' : ' off'}">
+      <input type="checkbox" data-mod="${tab}" ${visible ? 'checked' : ''} ${lastVisible ? 'disabled' : ''}
+        ${lastVisible ? 'title="At least one module must stay visible"' : ''}>
+      <span class="mod-vis-icon">${cfg.icon || '📋'}</span>
+      <span class="mod-vis-name">${cfg.label || tab}</span>
+    </label>`;
+  });
+  html += '<div class="mod-vis-hint">Use Save Changes (or Save As) to commit this selection to the version.</div>';
+  menu.innerHTML = html;
+
+  menu.querySelectorAll('input[data-mod]').forEach(cb => {
+    cb.addEventListener('change', () => toggleModuleVisible(cb.dataset.mod));
+  });
+}
+
+function openModuleVisMenu() {
+  buildModuleVisMenu();
+  document.getElementById('mod-vis-menu').classList.add('open');
+  document.getElementById('mod-vis-btn').classList.add('active');
+}
+
+function closeModuleVisMenu() {
+  document.getElementById('mod-vis-menu').classList.remove('open');
+  document.getElementById('mod-vis-btn').classList.remove('active');
+}
+
+function toggleModuleVisMenu() {
+  const open = document.getElementById('mod-vis-menu').classList.contains('open');
+  if (open) closeModuleVisMenu(); else openModuleVisMenu();
 }
 
 // ── EDIT MODE ─────────────────────────────────────────────────────────────────
@@ -149,6 +197,8 @@ function toggleEdit() {
   btn.classList.toggle('active', state.editMode);
   document.getElementById('add-col-btn').style.display     = state.editMode ? 'inline-flex' : 'none';
   document.getElementById('reset-btn').style.display       = state.editMode ? 'inline-flex' : 'none';
+  document.getElementById('mod-vis-wrap').style.display    = state.editMode ? 'inline-block' : 'none';
+  if (!state.editMode) closeModuleVisMenu();
   document.getElementById('tab-bar').classList.toggle('edit-active-tabs', state.editMode);
   updateSaveChangesBtn();
   if (state.editMode) closePanel();
@@ -458,6 +508,11 @@ function bulkTagColumn(colId, scope) {
 document.getElementById('edit-btn').addEventListener('click', toggleEdit);
 document.getElementById('undo-btn').addEventListener('click', undo);
 document.getElementById('add-col-btn').addEventListener('click', () => openAddModal('col', null));
+document.getElementById('mod-vis-btn').addEventListener('click', e => { e.stopPropagation(); toggleModuleVisMenu(); });
+// Close the Modules dropdown on any outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('#mod-vis-wrap')) closeModuleVisMenu();
+});
 document.getElementById('gen-btn').addEventListener('click', openGenModal);
 document.getElementById('reset-btn').addEventListener('click', openResetModal);
 document.getElementById('save-changes-btn').addEventListener('click', saveChangesToVersion);
@@ -547,6 +602,7 @@ document.addEventListener('keydown', e => {
     closeResetModal();
     closeSaveAsModal();
     closeVersionPanel();
+    closeModuleVisMenu();
   }
   if (e.key === 'Enter') {
     if (document.getElementById('add-modal-overlay').classList.contains('open'))  confirmAdd();

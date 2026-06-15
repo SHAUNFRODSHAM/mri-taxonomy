@@ -995,6 +995,43 @@ body {
 .col-scope-menu button:hover { background: rgba(255,255,255,0.09); }
 .col-scope-menu button.scope-menu-clear { color: rgba(255,255,255,0.45); }
 
+/* ── Module visibility dropdown (topbar, edit mode only) ── */
+.mod-vis-wrap { position: relative; }
+.mod-vis-btn.active { background: rgba(255,255,255,0.12); color: #fff; }
+.mod-vis-menu {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  min-width: 250px;
+  background: #263238; border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px; padding: 8px;
+  z-index: 250; box-shadow: var(--elev3);
+  display: none;
+}
+.mod-vis-menu.open { display: block; }
+.mod-vis-menu-title {
+  font-size: 0.55rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: rgba(255,255,255,0.45);
+  padding: 4px 8px 8px;
+}
+.mod-vis-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 8px; border-radius: var(--radius);
+  cursor: pointer; transition: background var(--dur);
+  font-size: 0.78rem; color: rgba(255,255,255,0.88); font-weight: 600;
+}
+.mod-vis-row:hover { background: rgba(255,255,255,0.08); }
+.mod-vis-row input[type="checkbox"] {
+  width: 15px; height: 15px; cursor: pointer; flex-shrink: 0;
+  accent-color: var(--green);
+}
+.mod-vis-row input[type="checkbox"]:disabled { cursor: not-allowed; }
+.mod-vis-icon { font-size: 14px; flex-shrink: 0; }
+.mod-vis-row.off { opacity: 0.5; }
+.mod-vis-row.off .mod-vis-name { text-decoration: line-through; }
+.mod-vis-hint {
+  font-size: 0.62rem; color: rgba(255,255,255,0.4); line-height: 1.4;
+  padding: 8px 8px 2px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 4px;
+}
+
 /* ── Scope badge in detail panel ── */
 .badge-scope-core        { background: rgba(143,184,58,0.15); color: #3a6010; border: 1px solid rgba(143,184,58,0.4); }
 .badge-scope-custom      { background: rgba(200,168,90,0.15); color: #7a5818; border: 1px solid rgba(200,168,90,0.4); }

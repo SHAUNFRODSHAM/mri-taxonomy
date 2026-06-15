@@ -9,6 +9,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.5.2] — 2026-06-15
+
+### Added — Module Visibility Dropdown in Edit Mode
+
+- New **▾ Modules** dropdown in the topbar, shown only in **Edit Mode**, giving a second entry point to toggle which modules are visible (alongside the existing checklist in the Versions panel)
+  - Checkbox per module; toggling hides/shows its tab immediately and marks the version dirty
+  - At least one module must stay visible (the last visible module's checkbox is disabled)
+  - Closes on outside click, on Escape, and when leaving Edit Mode
+  - Stays in sync with the Versions-panel checklist (both drive the same `state.moduleVisibility`)
+- Selection is committed to the client version via **Save Changes** (or **Save As**) — no new persistence path; reuses the existing version-save flow
+- `index.html` / `src/main.js` / `src/styles/main.css` updated
+
+---
+
 ## [1.5.1] — 2026-06-15
 
 ### Changed — Document Generation Respects Module Visibility
