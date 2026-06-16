@@ -135,7 +135,7 @@ export function renderBusiness() {
     header.className = 'main-header';
     header.style.background = cfg.color || '#2d4a0a';
   }
-  if (headerText) headerText.textContent = `${cfg.label} · Business Process View`;
+  if (headerText) headerText.textContent = cfg.label;
 
   const grid = document.getElementById('grid');
   grid.className = 'grid' + (state.editMode ? ' edit-active' : '');
