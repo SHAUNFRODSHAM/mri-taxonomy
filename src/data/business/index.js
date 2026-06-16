@@ -15,6 +15,9 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 import { MODULE_DATA } from './raw.js';
+import { EXTENDED_AREAS, CATEGORIES, ENTITY_TYPES } from './extended.js';
+
+export { ENTITY_TYPES };
 
 // Prototype module key → our internal business-module key
 const MOD_KEYS = { GL: 'bgl', AP: 'bap', AR: 'bar' };
@@ -49,15 +52,45 @@ function normalise() {
 
 export const BUSINESS_DATA = normalise();
 
+export const BUSINESS_CONFIG = {
+  bgl: { label: 'General Ledger',      icon: '📒', headerClass: 'bgl-header', color: '#2d4a0a', category: 'Core Financial', entities: { reit: 'core', pm: 'core', dev: 'core' } },
+  bap: { label: 'Accounts Payable',    icon: '📤', headerClass: 'bap-header', color: '#1a3f6a', category: 'Core Financial', entities: { reit: 'core', pm: 'core', dev: 'core' } },
+  bar: { label: 'Accounts Receivable — Tenant', icon: '📥', headerClass: 'bar-header', color: '#5a3a1a', category: 'Core Financial', entities: { reit: 'core', pm: 'core', dev: 'conditional' } },
+};
+
+// ── Merge the expanded CRE areas (from extended.js) ──────────────────────────
+// Each area → a business module (tab) with one column whose processes are the
+// doc bullets, flagged needsEnrichment until Market/Vertical/Standards are added.
+EXTENDED_AREAS.forEach((area, ai) => {
+  BUSINESS_DATA[area.id] = [{
+    id: `${area.id}-main`,
+    title: area.label,
+    processes: area.bullets.map((b, i) => ({
+      id: `${area.id}-p${i + 1}`,
+      title: b,
+      type: 'process',
+      desc: '',
+      activities: [],
+      market: null,
+      vertical: null,
+      standards: [],
+      needsEnrichment: true,
+    })),
+  }];
+  BUSINESS_CONFIG[area.id] = {
+    label: area.label,
+    icon: area.icon,
+    headerClass: `bx-header-${ai}`,           // dynamic per-area class (see injected styles)
+    color: (CATEGORIES[area.category] || {}).color || '#444',
+    category: area.category,
+    entities: area.entities,
+  };
+});
+
 // Deep-frozen factory baseline (mirrors ORIGINAL_DATA for the system view) — the
 // source of truth for "Reset" and for the Original version of the business view.
+// Taken AFTER the extended areas are merged so they reset/version correctly.
 export const BUSINESS_ORIGINAL = Object.freeze(JSON.parse(JSON.stringify(BUSINESS_DATA)));
-
-export const BUSINESS_CONFIG = {
-  bgl: { label: 'General Ledger',      icon: '📒', headerClass: 'bgl-header', color: '#2d4a0a' },
-  bap: { label: 'Accounts Payable',    icon: '📤', headerClass: 'bap-header', color: '#1a3f6a' },
-  bar: { label: 'Accounts Receivable', icon: '📥', headerClass: 'bar-header', color: '#5a3a1a' },
-};
 
 export const BUSINESS_MODULES = Object.keys(BUSINESS_DATA);
 

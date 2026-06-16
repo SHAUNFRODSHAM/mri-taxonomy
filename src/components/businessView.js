@@ -90,10 +90,13 @@ export function renderBusiness() {
   const cfg  = BUSINESS_CONFIG[state.businessTab] || {};
   const data = BUSINESS_DATA[state.businessTab] || [];
 
-  // Banner
+  // Banner — colour comes from the module config (covers the expanded areas too)
   const header     = document.getElementById('main-header');
   const headerText = document.getElementById('main-header-text');
-  if (header)     header.className = 'main-header ' + (cfg.headerClass || 'bgl-header');
+  if (header) {
+    header.className = 'main-header';
+    header.style.background = cfg.color || '#2d4a0a';
+  }
   if (headerText) headerText.textContent = `${cfg.label} · Business Process View`;
 
   const grid = document.getElementById('grid');

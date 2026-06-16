@@ -43,7 +43,7 @@ export function renderMapping() {
   // Banner
   const header     = document.getElementById('main-header');
   const headerText = document.getElementById('main-header-text');
-  if (header)     header.className = 'main-header map-header';
+  if (header)     { header.className = 'main-header map-header'; header.style.background = ''; }
   if (headerText) headerText.textContent = 'Business ⇄ MRI PMX System — Coverage Map';
 
   const grid = document.getElementById('grid');

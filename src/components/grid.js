@@ -25,7 +25,7 @@ export function render(callbacks) {
   // Update canvas header
   const header     = document.getElementById('main-header');
   const headerText = document.getElementById('main-header-text');
-  if (header)     header.className = 'main-header ' + (cfg.headerClass || 'cm-header');
+  if (header)     { header.className = 'main-header ' + (cfg.headerClass || 'cm-header'); header.style.background = ''; }
   if (headerText) headerText.textContent = cfg.headerText || cfg.label || state.currentTab;
 
   const filter = state.scopeFilter || 'all';
