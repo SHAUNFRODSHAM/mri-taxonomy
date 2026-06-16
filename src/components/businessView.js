@@ -11,8 +11,18 @@
 
 import { state } from '../state.js';
 import {
-  BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, findBusinessItem,
+  BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, ENTITY_TYPES, findBusinessItem,
 } from '../data/business/index.js';
+
+/** Applicability of a business module to the active entity-type filter. */
+function entityApplicability(mod) {
+  if (state.entity === 'all') return 'core';   // no filter → treat as shown
+  return (BUSINESS_CONFIG[mod]?.entities || {})[state.entity] || null; // 'core' | 'conditional' | null
+}
+/** Modules visible under the current entity filter (null applicability hidden). */
+export function entityVisibleModules() {
+  return BUSINESS_MODULES.filter(m => entityApplicability(m) !== null);
+}
 
 // Phase-2 hook: main.js injects a function that returns link-section HTML for an
 // item id (and wires click handlers). Null = no link UI yet.
@@ -39,15 +49,20 @@ function matchesVertical(item, vertical) {
 
 /** Render the business tab bar (modules), market bar, and vertical bar. */
 export function renderBusinessChrome() {
-  // ── Module tabs ──
+  // ── Module tabs (filtered by entity-type applicability) ──
   const tabBar = document.getElementById('business-tabbar');
   tabBar.innerHTML = '';
   BUSINESS_MODULES.forEach(mod => {
+    const applic = entityApplicability(mod);
+    if (applic === null) return; // not applicable to the selected entity → hide tab
     const cfg = BUSINESS_CONFIG[mod];
     const btn = document.createElement('button');
-    btn.className = 'biz-tab-btn' + (mod === state.businessTab ? ' active' : '');
+    btn.className = 'biz-tab-btn' + (mod === state.businessTab ? ' active' : '')
+      + (applic === 'conditional' ? ' biz-tab-conditional' : '');
     btn.dataset.btab = mod;
-    btn.innerHTML = `<span class="tab-icon">${cfg.icon}</span>${cfg.label}`;
+    btn.title = applic === 'conditional' ? 'Conditionally applicable to this entity type' : '';
+    btn.innerHTML = `<span class="tab-icon">${cfg.icon}</span>${cfg.label}`
+      + (applic === 'conditional' ? '<span class="biz-cond-dot" title="Conditional">⚪</span>' : '');
     btn.addEventListener('click', () => onSwitchBusinessTab(mod));
     tabBar.appendChild(btn);
   });
@@ -81,6 +96,29 @@ export function renderBusinessChrome() {
     vertWrap.appendChild(b);
   });
   bar.appendChild(vertWrap);
+
+  // ── Entity-type lens (REIT / Property Manager / Developer) ──
+  const entWrap = document.createElement('div');
+  entWrap.className = 'biz-entity-wrap';
+  entWrap.innerHTML = '<span class="biz-filter-label">Entity:</span>';
+  const entOptions = [{ key: 'all', label: 'All Entities' }, ...ENTITY_TYPES];
+  entOptions.forEach(e => {
+    const b = document.createElement('button');
+    b.className = 'biz-entity-btn' + (e.key === state.entity ? ' active' : '');
+    b.dataset.entity = e.key;
+    b.textContent = e.label;
+    b.addEventListener('click', () => {
+      state.entity = e.key;
+      // If the active tab is no longer applicable, jump to the first one that is.
+      if (entityApplicability(state.businessTab) === null) {
+        const first = entityVisibleModules()[0];
+        if (first) state.businessTab = first;
+      }
+      renderBusiness();
+    });
+    entWrap.appendChild(b);
+  });
+  bar.appendChild(entWrap);
 }
 
 /** Render the business taxonomy grid for the active business module. */
@@ -202,12 +240,20 @@ function makeBizCard(item, baseClass, isProcess, colId, procId) {
   el.appendChild(title);
 
   // Standards chips give an at-a-glance signal of the regulatory weight
-  if (!isProcess && item.standards && item.standards.length) {
+  if (item.standards && item.standards.length) {
     const chip = document.createElement('span');
     chip.className = 'biz-std-count';
     chip.textContent = item.standards.length + ' std';
     chip.title = item.standards.join(' · ');
     el.appendChild(chip);
+  }
+  // Flag cards seeded from the reference guide that still need enrichment
+  if (item.needsEnrichment) {
+    const flag = document.createElement('span');
+    flag.className = 'biz-enrich-flag';
+    flag.textContent = 'enrich';
+    flag.title = 'Seeded from the reference guide — Market / Vertical / Standards detail to be added';
+    el.appendChild(flag);
   }
 
   if (state.editMode) {
@@ -238,7 +284,8 @@ export function showBusinessPanel(id) {
   document.getElementById('panel-title').textContent = item.title;
   document.getElementById('panel-badges').innerHTML =
     `<span class="badge ${isProcess ? 'badge-process' : 'badge-sub'}">${isProcess ? 'Process' : 'Sub-Process'}</span>
-     <span class="badge badge-business">Business</span>`;
+     <span class="badge badge-business">Business</span>`
+     + (item.needsEnrichment ? '<span class="badge badge-enrich">Needs enrichment</span>' : '');
 
   const market   = item.market   && item.market[state.market];
   const vertical = item.vertical && (state.vertical !== 'All' ? item.vertical[state.vertical] : null);
@@ -290,6 +337,23 @@ export function showBusinessPanel(id) {
       <div class="psec-label">Standards &amp; Frameworks</div>
       <div class="biz-std-grid">${item.standards.map(s => `<span class="biz-std-chip">${s}</span>`).join('')}</div>
     </div>`;
+  }
+
+  // Entity-type applicability (from the reference-guide matrix)
+  const ents = (BUSINESS_CONFIG[found.module] || {}).entities;
+  if (ents) {
+    const rows = ENTITY_TYPES.map(e => {
+      const v = ents[e.key];
+      const mark = v === 'core' ? '<span class="appl-core">✅ Core</span>'
+        : v === 'conditional' ? '<span class="appl-cond">⚪ Conditional</span>'
+        : '<span class="appl-na">— n/a</span>';
+      return `<div class="appl-row"><span class="appl-name">${e.label}</span>${mark}</div>`;
+    }).join('');
+    html += `<div class="psec"><div class="psec-label">Entity Applicability</div>${rows}</div>`;
+  }
+
+  if (item.needsEnrichment) {
+    html += `<div class="psec"><div class="biz-enrich-note">⚠ Seeded from the reference guide — Market, Vertical and Standards detail still to be added during discovery. Use Edit Mode to enrich.</div></div>`;
   }
 
   // Phase-2 linkage section (system cross-references)

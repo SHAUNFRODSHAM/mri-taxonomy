@@ -1354,3 +1354,36 @@ body {
 .linkpick-title { font-size: 0.78rem; font-weight: 700; color: var(--ink); }
 .linkpick-bc { font-size: 0.66rem; color: var(--ink3); }
 .linkpick-empty { text-align: center; color: var(--ink3); padding: 24px; font-style: italic; font-size: 0.8rem; }
+
+/* ── Business entity-type lens + enrichment + applicability (CRE expansion) ── */
+.biz-entity-wrap { display: flex; align-items: center; gap: 6px; }
+.biz-entity-btn {
+  background: var(--surface2); border: 1px solid var(--border2); color: var(--ink2);
+  font-family: var(--font); font-size: 0.68rem; font-weight: 600;
+  padding: 5px 11px; border-radius: 16px; cursor: pointer; transition: all var(--dur);
+}
+.biz-entity-btn:hover { border-color: #4a2a6a; color: var(--ink); }
+.biz-entity-btn.active { background: #4a2a6a; border-color: #4a2a6a; color: #fff; }
+
+/* Conditional tabs under an entity lens */
+.biz-tab-conditional { opacity: 0.78; }
+.biz-cond-dot { font-size: 9px; margin-left: 5px; opacity: 0.8; }
+
+/* "needs enrichment" flag on cards */
+.biz-enrich-flag {
+  margin-left: 6px; font-size: 8px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.04em; color: #8a6a20; background: var(--amber-lt);
+  border: 1px solid #e9cf94; border-radius: 8px; padding: 1px 6px; vertical-align: middle;
+}
+.badge-enrich { background: var(--amber-lt); color: #8a6a20; border: 1px solid #e9cf94; }
+.biz-enrich-note {
+  font-size: 0.74rem; line-height: 1.45; color: #8a6a20;
+  background: var(--amber-lt); border: 1px solid #e9cf94; border-radius: 6px; padding: 9px 12px;
+}
+
+/* Entity applicability rows in the detail panel */
+.appl-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 2px; border-bottom: 1px solid var(--border-light, var(--border)); font-size: 0.78rem; }
+.appl-name { color: var(--ink); font-weight: 600; }
+.appl-core { color: #4a7010; font-weight: 700; font-size: 0.72rem; }
+.appl-cond { color: #8a6a20; font-weight: 700; font-size: 0.72rem; }
+.appl-na   { color: var(--ink3); font-size: 0.72rem; }

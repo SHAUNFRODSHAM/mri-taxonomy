@@ -11,6 +11,7 @@ export const state = {
   businessTab: 'bgl',
   market:      'UK',     // 'UK' | 'US' | 'EU'
   vertical:    'All',    // 'All' | 'Retail' | 'Industrial' | 'Office' | 'Residential'
+  entity:      'all',    // 'all' | 'reit' | 'pm' | 'dev' — CRE entity-type lens
   currentTab: 'cm',
   editMode: false,
   addTarget: null,
