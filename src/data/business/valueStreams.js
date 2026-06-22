@@ -36,6 +36,17 @@ export const VALUE_STREAMS = [
     ],
   },
   {
+    id: 'vs-q2c', label: 'Quote to Cash', icon: '🧾', tag: 'official', color: '#2a6f97',
+    note: 'Generic non-tenant revenue stream — billing management-fee, corporate-client and other non-tenant customers. Complements the tenant-focused Lease to Cash.',
+    groups: [
+      { title: 'Customer & Contract Management', items: ['Customer master-data management', 'Service / management-agreement setup', 'Pricing & rate cards', 'Contract / SOW management'] },
+      { title: 'Quote & Order Management', items: ['Quotation & proposal', 'Order capture', 'Order approval & acceptance'] },
+      { title: 'Billing & Invoicing (Non-Tenant)', items: ['Management-fee billing', 'Corporate / client invoicing', 'Sundry & ad-hoc income billing', 'Inter-entity recharges & internal cost recovery', 'Milestone / fee-based billing'] },
+      { title: 'Service Revenue Recognition', items: ['Service revenue recognition (ASC 606 / IFRS 15)', 'Deferred & accrued revenue', 'Performance-obligation tracking'] },
+      { title: 'Collections & Cash Application', items: ['Cash application', 'Non-tenant AR aging', 'Collections & dunning', 'Dispute management', 'Bad-debt provisioning & write-offs'] },
+    ],
+  },
+  {
     id: 'vs-a2r', label: 'Acquire to Retire', icon: '🏢', tag: 'official', color: '#4a2a6a',
     note: 'Investment & asset lifecycle — sourcing through disposition.',
     groups: [
