@@ -67,58 +67,60 @@ export function renderBusinessChrome() {
     tabBar.appendChild(btn);
   });
 
-  // ── Market + vertical filter bar ──
+  // ── Filter bar — compact dropdowns (Market / Vertical / Entity) ──
   const bar = document.getElementById('business-filterbar');
   bar.innerHTML = '';
 
-  const marketWrap = document.createElement('div');
-  marketWrap.className = 'biz-market-wrap';
-  marketWrap.innerHTML = '<span class="biz-filter-label">Market:</span>';
-  MARKETS.forEach(m => {
-    const b = document.createElement('button');
-    b.className = 'biz-market-btn' + (m.key === state.market ? ' active' : '');
-    b.dataset.market = m.key;
-    b.textContent = m.label;
-    b.addEventListener('click', () => { state.market = m.key; renderBusiness(); });
-    marketWrap.appendChild(b);
-  });
-  bar.appendChild(marketWrap);
+  // Helper: build a labelled <select> dropdown
+  const makeSelect = (label, options, current, onChange) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'biz-filter-group';
+    const lab = document.createElement('span');
+    lab.className = 'biz-filter-label';
+    lab.textContent = label + ':';
+    const sel = document.createElement('select');
+    sel.className = 'biz-filter-select';
+    options.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.label;
+      if (o.value === current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => onChange(sel.value));
+    wrap.appendChild(lab);
+    wrap.appendChild(sel);
+    return wrap;
+  };
 
-  const vertWrap = document.createElement('div');
-  vertWrap.className = 'biz-vert-wrap';
-  vertWrap.innerHTML = '<span class="biz-filter-label">Vertical:</span>';
-  VERTICALS.forEach(v => {
-    const b = document.createElement('button');
-    b.className = 'biz-vert-btn vert-' + v.toLowerCase() + (v === state.vertical ? ' active' : '');
-    b.dataset.vert = v;
-    b.innerHTML = `<span class="vert-dot"></span>${v === 'All' ? 'All Verticals' : v}`;
-    b.addEventListener('click', () => { state.vertical = v; renderBusiness(); });
-    vertWrap.appendChild(b);
-  });
-  bar.appendChild(vertWrap);
+  bar.appendChild(makeSelect(
+    'Market',
+    MARKETS.map(m => ({ value: m.key, label: m.label })),
+    state.market,
+    v => { state.market = v; renderBusiness(); },
+  ));
 
-  // ── Entity-type lens (REIT / Property Manager / Developer) ──
-  const entWrap = document.createElement('div');
-  entWrap.className = 'biz-entity-wrap';
-  entWrap.innerHTML = '<span class="biz-filter-label">Entity:</span>';
-  const entOptions = [{ key: 'all', label: 'All Entities' }, ...ENTITY_TYPES];
-  entOptions.forEach(e => {
-    const b = document.createElement('button');
-    b.className = 'biz-entity-btn' + (e.key === state.entity ? ' active' : '');
-    b.dataset.entity = e.key;
-    b.textContent = e.label;
-    b.addEventListener('click', () => {
-      state.entity = e.key;
+  bar.appendChild(makeSelect(
+    'Vertical',
+    VERTICALS.map(v => ({ value: v, label: v === 'All' ? 'All Verticals' : v })),
+    state.vertical,
+    v => { state.vertical = v; renderBusiness(); },
+  ));
+
+  bar.appendChild(makeSelect(
+    'Entity',
+    [{ value: 'all', label: 'All Entities' }, ...ENTITY_TYPES.map(e => ({ value: e.key, label: e.label }))],
+    state.entity,
+    v => {
+      state.entity = v;
       // If the active tab is no longer applicable, jump to the first one that is.
       if (entityApplicability(state.businessTab) === null) {
         const first = entityVisibleModules()[0];
         if (first) state.businessTab = first;
       }
       renderBusiness();
-    });
-    entWrap.appendChild(b);
-  });
-  bar.appendChild(entWrap);
+    },
+  ));
 }
 
 /** Render the business taxonomy grid for the active business module. */

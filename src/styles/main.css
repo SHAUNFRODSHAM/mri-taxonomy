@@ -1387,3 +1387,17 @@ body {
 .appl-core { color: #4a7010; font-weight: 700; font-size: 0.72rem; }
 .appl-cond { color: #8a6a20; font-weight: 700; font-size: 0.72rem; }
 .appl-na   { color: var(--ink3); font-size: 0.72rem; }
+
+/* ── Business filter bar — compact dropdowns (Market / Vertical / Entity) ── */
+.business-filterbar { gap: 22px; padding: 7px 18px; }
+.biz-filter-group { display: inline-flex; align-items: center; gap: 7px; }
+.biz-filter-select {
+  font-family: var(--font); font-size: 0.72rem; font-weight: 600; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--border2); border-radius: 6px;
+  padding: 5px 26px 5px 10px; cursor: pointer; transition: border-color var(--dur);
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2012%2012'%3E%3Cpath%20fill%3D'%23718096'%20d%3D'M3%204.5L6%207.5L9%204.5'%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat; background-position: right 8px center; background-size: 11px;
+}
+.biz-filter-select:hover  { border-color: var(--green); }
+.biz-filter-select:focus  { outline: none; border-color: var(--green); box-shadow: 0 0 0 2px rgba(143,184,58,0.25); }
