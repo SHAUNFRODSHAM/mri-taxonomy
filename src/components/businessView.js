@@ -20,14 +20,34 @@ const VERTICAL_COLOURS = {
   Office: '#5b4acb', Residential: '#1a8a4a',
 };
 
-/** Applicability of a business module to the active entity-type filter. */
+const SECTORS = VERTICALS.filter(v => v !== 'All'); // Retail/Industrial/Office/Residential
+
+/**
+ * Applicability of a module across the selected entity types:
+ *   'core' if core for any selected entity, else 'conditional' if conditional
+ *   for any, else null (n/a for all selected). Empty selection → treat as core.
+ */
 function entityApplicability(mod) {
-  if (state.entity === 'all') return 'core';   // no filter → treat as shown
-  return (BUSINESS_CONFIG[mod]?.entities || {})[state.entity] || null; // 'core' | 'conditional' | null
+  const sel = state.entities;
+  if (!sel || !sel.length) return 'core';
+  const ents = BUSINESS_CONFIG[mod]?.entities || {};
+  const vals = sel.map(e => ents[e] || null);
+  if (vals.includes('core')) return 'core';
+  if (vals.includes('conditional')) return 'conditional';
+  return null;
 }
-/** Modules visible under the current entity filter (null applicability hidden). */
+/** Modules visible under the current entity selection (null applicability hidden). */
 export function entityVisibleModules() {
   return BUSINESS_MODULES.filter(m => entityApplicability(m) !== null);
+}
+
+/** Does an item match the selected verticals? Vertical-agnostic items always show. */
+function matchesVerticals(item) {
+  if (!item.vertical) return true;                    // no sector data → always relevant
+  const sel = state.verticals;
+  if (!sel || !sel.length) return true;               // nothing selected → don't hide
+  if (sel.length === SECTORS.length) return true;      // all selected → show all
+  return sel.some(v => item.vertical[v]);
 }
 
 // Phase-2 hook: main.js injects a function that returns link-section HTML for an
@@ -46,108 +66,150 @@ export function initBusinessView({ onTabSwitch, onEdit, onRemove, onAdd }) {
   onAddItem    = onAdd    || (() => {});
 }
 
-/** Does a sub-process have content for the active vertical filter? */
-function matchesVertical(item, vertical) {
-  if (vertical === 'All') return true;
-  // Show the item if it carries vertical-specific guidance for the selected sector.
-  return !!(item.vertical && item.vertical[vertical]);
-}
-
-/** Render the business tab bar (modules), market bar, and vertical bar. */
-export function renderBusinessChrome() {
-  // ── Module tabs (filtered by entity-type applicability) ──
+/** Render the business module tab bar (filtered/flagged by entity selection). */
+function renderBusinessTabs() {
   const tabBar = document.getElementById('business-tabbar');
   tabBar.innerHTML = '';
   BUSINESS_MODULES.forEach(mod => {
     const applic = entityApplicability(mod);
-    if (applic === null) return; // not applicable to the selected entity → hide tab
+    if (applic === null) return; // not applicable to any selected entity → hide tab
     const cfg = BUSINESS_CONFIG[mod];
     const btn = document.createElement('button');
     btn.className = 'biz-tab-btn' + (mod === state.businessTab ? ' active' : '')
       + (applic === 'conditional' ? ' biz-tab-conditional' : '');
     btn.dataset.btab = mod;
-    btn.title = applic === 'conditional' ? 'Conditionally applicable to this entity type' : '';
+    btn.title = applic === 'conditional' ? 'Conditionally applicable to the selected entity type(s)' : '';
     btn.innerHTML = `<span class="tab-icon">${cfg.icon}</span>${cfg.label}`
       + (applic === 'conditional' ? '<span class="biz-cond-dot" title="Conditional">⚪</span>' : '');
     btn.addEventListener('click', () => onSwitchBusinessTab(mod));
     tabBar.appendChild(btn);
   });
+}
 
-  // ── Filter bar — compact dropdowns (Market / Vertical / Entity) ──
+/**
+ * A compact multi-select dropdown: a summary button that opens a checkbox
+ * popover. Toggling updates `state[stateKey]` and refreshes the view without
+ * rebuilding the filter bar (so the popover stays open). `swatch` optionally
+ * colours a chip per option.
+ */
+function makeMultiSelect(label, options, stateKey, opts = {}) {
+  const { swatch, onChange } = opts;
+  const wrap = document.createElement('div');
+  wrap.className = 'biz-filter-group biz-ms';
+
+  const lab = document.createElement('span');
+  lab.className = 'biz-filter-label';
+  lab.textContent = label + ':';
+  wrap.appendChild(lab);
+
+  const btn = document.createElement('button');
+  btn.className = 'biz-ms-btn';
+  wrap.appendChild(btn);
+
+  const menu = document.createElement('div');
+  menu.className = 'biz-ms-menu';
+  wrap.appendChild(menu);
+
+  const selected = () => state[stateKey];
+  const summarise = () => {
+    const sel = selected();
+    if (!sel.length) return 'None';
+    if (sel.length === options.length) return `All (${options.length})`;
+    if (sel.length <= 2) return sel.map(v => (options.find(o => o.value === v) || {}).short || v).join(', ');
+    return `${sel.length} selected`;
+  };
+  const paintBtn = () => {
+    const sel = selected();
+    let chip = '';
+    if (swatch && sel.length === 1) chip = `<span class="biz-filter-swatch" style="background:${swatch(sel[0])}"></span>`;
+    btn.innerHTML = `${chip}<span class="biz-ms-summary">${summarise()}</span><span class="biz-ms-caret">▾</span>`;
+  };
+  paintBtn();
+
+  options.forEach(o => {
+    const row = document.createElement('label');
+    row.className = 'biz-ms-row';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = selected().includes(o.value);
+    cb.addEventListener('change', () => {
+      const sel = selected();
+      if (cb.checked) { if (!sel.includes(o.value)) sel.push(o.value); }
+      else { const i = sel.indexOf(o.value); if (i !== -1) sel.splice(i, 1); }
+      paintBtn();
+      if (onChange) onChange();
+      refreshBusinessAfterFilter();
+    });
+    row.appendChild(cb);
+    if (swatch) {
+      const sw = document.createElement('span');
+      sw.className = 'biz-ms-swatch'; sw.style.background = swatch(o.value);
+      row.appendChild(sw);
+    }
+    const txt = document.createElement('span');
+    txt.textContent = o.label;
+    row.appendChild(txt);
+    menu.appendChild(row);
+  });
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    document.querySelectorAll('.biz-ms-menu.open').forEach(m => { if (m !== menu) m.classList.remove('open'); });
+    menu.classList.toggle('open');
+  });
+
+  return wrap;
+}
+
+/** Render the Market / Vertical / Entity multi-select filter bar. */
+function renderBusinessFilters() {
   const bar = document.getElementById('business-filterbar');
   bar.innerHTML = '';
 
-  // Helper: build a labelled <select> dropdown. `swatch` (optional) is a
-  // value→colour function; when given, a colour chip sits before the select and
-  // updates with the selection (native <option>s can't be reliably coloured).
-  const makeSelect = (label, options, current, onChange, swatch) => {
-    const wrap = document.createElement('div');
-    wrap.className = 'biz-filter-group';
-    const lab = document.createElement('span');
-    lab.className = 'biz-filter-label';
-    lab.textContent = label + ':';
-    wrap.appendChild(lab);
+  bar.appendChild(makeMultiSelect('Market',
+    MARKETS.map(m => ({ value: m.key, label: m.label, short: m.key })),
+    'markets'));
 
-    let chip = null;
-    if (swatch) {
-      chip = document.createElement('span');
-      chip.className = 'biz-filter-swatch';
-      chip.style.background = swatch(current);
-      wrap.appendChild(chip);
-    }
+  bar.appendChild(makeMultiSelect('Vertical',
+    SECTORS.map(v => ({ value: v, label: v, short: v })),
+    'verticals',
+    { swatch: v => VERTICAL_COLOURS[v] || 'var(--border2)' }));
 
-    const sel = document.createElement('select');
-    sel.className = 'biz-filter-select';
-    options.forEach(o => {
-      const opt = document.createElement('option');
-      opt.value = o.value;
-      opt.textContent = o.label;
-      if (o.value === current) opt.selected = true;
-      sel.appendChild(opt);
-    });
-    sel.addEventListener('change', () => {
-      if (chip && swatch) chip.style.background = swatch(sel.value);
-      onChange(sel.value);
-    });
-    wrap.appendChild(sel);
-    return wrap;
-  };
-
-  bar.appendChild(makeSelect(
-    'Market',
-    MARKETS.map(m => ({ value: m.key, label: m.label })),
-    state.market,
-    v => { state.market = v; renderBusiness(); },
-  ));
-
-  bar.appendChild(makeSelect(
-    'Vertical',
-    VERTICALS.map(v => ({ value: v, label: v === 'All' ? 'All Verticals' : v })),
-    state.vertical,
-    v => { state.vertical = v; renderBusiness(); },
-    v => VERTICAL_COLOURS[v] || 'var(--border2)',
-  ));
-
-  bar.appendChild(makeSelect(
-    'Entity',
-    [{ value: 'all', label: 'All Entities' }, ...ENTITY_TYPES.map(e => ({ value: e.key, label: e.label }))],
-    state.entity,
-    v => {
-      state.entity = v;
-      // If the active tab is no longer applicable, jump to the first one that is.
-      if (entityApplicability(state.businessTab) === null) {
-        const first = entityVisibleModules()[0];
-        if (first) state.businessTab = first;
-      }
-      renderBusiness();
-    },
-  ));
+  bar.appendChild(makeMultiSelect('Entity',
+    ENTITY_TYPES.map(e => ({ value: e.key, label: e.label, short: e.label })),
+    'entities',
+    { onChange: () => {
+        // If the active tab is no longer applicable, jump to the first one that is.
+        if (entityApplicability(state.businessTab) === null) {
+          const first = entityVisibleModules()[0];
+          if (first) state.businessTab = first;
+        }
+      } }));
 }
 
-/** Render the business taxonomy grid for the active business module. */
-export function renderBusiness() {
-  renderBusinessChrome();
+/** Refresh tabs + grid + any open panel after a filter change (popover stays). */
+function refreshBusinessAfterFilter() {
+  renderBusinessTabs();
+  renderBusinessGrid();
+  if (state.openPanelId) showBusinessPanel(state.openPanelId);
+}
 
+// Close any open filter popover on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.biz-ms')) {
+    document.querySelectorAll('.biz-ms-menu.open').forEach(m => m.classList.remove('open'));
+  }
+});
+
+/** Render the full business view (tabs + filters + grid). */
+export function renderBusiness() {
+  renderBusinessTabs();
+  renderBusinessFilters();
+  renderBusinessGrid();
+}
+
+/** Render the taxonomy grid + banner for the active business module. */
+function renderBusinessGrid() {
   const cfg  = BUSINESS_CONFIG[state.businessTab] || {};
   const data = BUSINESS_DATA[state.businessTab] || [];
 
@@ -164,7 +226,6 @@ export function renderBusiness() {
   grid.className = 'grid' + (state.editMode ? ' edit-active' : '');
   grid.innerHTML = '';
 
-  const vertical = state.vertical;
   const edit = state.editMode;
 
   data.forEach(col => {
@@ -189,16 +250,17 @@ export function renderBusiness() {
     let visible = 0;
 
     col.processes.forEach(proc => {
-      // A process shows if any of its subs match the vertical filter.
-      const matchingSubs = (proc.subs || []).filter(s => matchesVertical(s, vertical));
+      // A process shows if it (or any of its subs) matches the vertical selection.
+      const procMatches = matchesVerticals(proc);
+      const matchingSubs = (proc.subs || []).filter(matchesVerticals);
       // In edit mode show everything (so empty processes can be edited/filled).
-      if (!edit && vertical !== 'All' && matchingSubs.length === 0) return;
+      if (!edit && !procMatches && matchingSubs.length === 0) return;
 
       colBody.appendChild(makeBizCard(proc, 'process-box biz-card', true, col.id));
       visible++;
 
       (proc.subs || []).forEach(sub => {
-        if (!edit && !matchesVertical(sub, vertical)) return;
+        if (!edit && !matchesVerticals(sub)) return;
         colBody.appendChild(makeBizCard(sub, 'sub-box biz-card', false, col.id, proc.id));
         visible++;
       });
@@ -310,10 +372,6 @@ export function showBusinessPanel(id) {
      <span class="badge badge-business">Business</span>`
      + (item.needsEnrichment ? '<span class="badge badge-enrich">Needs enrichment</span>' : '');
 
-  const market   = item.market   && item.market[state.market];
-  const vertical = item.vertical && (state.vertical !== 'All' ? item.vertical[state.vertical] : null);
-  const marketLabel = (MARKETS.find(m => m.key === state.market) || {}).label || state.market;
-
   let html = `
     <div class="psec">
       <div class="psec-label">Overview</div>
@@ -328,33 +386,31 @@ export function showBusinessPanel(id) {
     </div>`;
   }
 
-  if (market) {
-    html += `
+  // Market Variation — one block per selected market that has content
+  if (item.market) {
+    (state.markets || []).forEach(k => {
+      if (!item.market[k]) return;
+      const label = (MARKETS.find(m => m.key === k) || {}).label || k;
+      html += `
     <div class="psec">
-      <div class="psec-label">Market Variation — ${marketLabel}</div>
-      <div class="biz-market-block">${market}</div>
+      <div class="psec-label">Market Variation — ${label}</div>
+      <div class="biz-market-block">${item.market[k]}</div>
     </div>`;
+    });
   }
 
-  if (vertical) {
-    const vColour = VERTICAL_COLOURS[state.vertical] || 'var(--green)';
-    html += `
+  // Vertical Detail — one colour-tagged row per selected sector that has content
+  if (item.vertical) {
+    const sel = (state.verticals && state.verticals.length) ? state.verticals : SECTORS;
+    const rows = sel.filter(v => item.vertical[v]).map(v =>
+      `<div class="biz-vert-row"><span class="biz-vert-tag vert-${v.toLowerCase()}">${v}</span><span>${item.vertical[v]}</span></div>`).join('');
+    if (rows) {
+      html += `
     <div class="psec">
-      <div class="psec-label">Vertical Detail
-        <span class="biz-vert-tag vert-${state.vertical.toLowerCase()}">${state.vertical}</span>
-      </div>
-      <div class="biz-vert-block" style="border-left-color:${vColour}">${vertical}</div>
-    </div>`;
-  } else if (item.vertical && state.vertical === 'All') {
-    // Show all verticals when no single one is selected
-    const rows = Object.entries(item.vertical)
-      .map(([k, v]) => `<div class="biz-vert-row"><span class="biz-vert-tag vert-${k.toLowerCase()}">${k}</span><span>${v}</span></div>`)
-      .join('');
-    html += `
-    <div class="psec">
-      <div class="psec-label">Vertical Detail — All Sectors</div>
+      <div class="psec-label">Vertical Detail</div>
       ${rows}
     </div>`;
+    }
   }
 
   if (item.standards && item.standards.length) {
@@ -373,7 +429,8 @@ export function showBusinessPanel(id) {
       const mark = v === 'core' ? '<span class="appl-core">✅ Core</span>'
         : v === 'conditional' ? '<span class="appl-cond">⚪ Conditional</span>'
         : '<span class="appl-na">— n/a</span>';
-      return `<div class="appl-row"><span class="appl-name">${e.label}</span>${mark}</div>`;
+      const dim = (state.entities && state.entities.length && !state.entities.includes(e.key)) ? ' appl-row-dim' : '';
+      return `<div class="appl-row${dim}"><span class="appl-name">${e.label}</span>${mark}</div>`;
     }).join('');
     html += `<div class="psec"><div class="psec-label">Entity Applicability</div>${rows}</div>`;
   }

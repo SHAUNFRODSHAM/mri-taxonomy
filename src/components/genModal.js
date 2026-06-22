@@ -112,12 +112,16 @@ function businessScopeStr(scopeAll) {
   return 'All Business Modules';
 }
 
+function selectedMarketLabels() {
+  return (state.markets || []).map(k => (MARKETS.find(m => m.key === k) || {}).label || k);
+}
+
 /** Shared body HTML for the business document (preview + PDF share this). */
 function buildBusinessBody(inclOverview, inclActivities) {
-  const tabs   = businessDocTabs(document.getElementById('gscope-all').checked);
-  const market = state.market;
-  const marketLabel = (MARKETS.find(m => m.key === market) || {}).label || market;
-  const sectors = VERTICALS.filter(v => v !== 'All');
+  const tabs    = businessDocTabs(document.getElementById('gscope-all').checked);
+  const markets = state.markets || [];
+  const sectors = (state.verticals && state.verticals.length)
+    ? state.verticals : VERTICALS.filter(v => v !== 'All');
   let html = '';
 
   tabs.forEach(tab => {
@@ -134,9 +138,12 @@ function buildBusinessBody(inclOverview, inclActivities) {
           if (inclActivities && sub.activities?.length) {
             html += `<ul>${sub.activities.map(a => `<li>${eB(a)}</li>`).join('')}</ul>`;
           }
-          if (sub.market && sub.market[market]) {
-            html += `<div class="prereq-sec"><div class="prereq-sec-title">Market Variation — ${eB(marketLabel)}</div>
-              <p>${eB(sub.market[market])}</p></div>`;
+          if (sub.market) {
+            markets.filter(k => sub.market[k]).forEach(k => {
+              const label = (MARKETS.find(m => m.key === k) || {}).label || k;
+              html += `<div class="prereq-sec"><div class="prereq-sec-title">Market Variation — ${eB(label)}</div>
+                <p>${eB(sub.market[k])}</p></div>`;
+            });
           }
           if (sub.vertical) {
             const rows = sectors.filter(s => sub.vertical[s])
@@ -158,11 +165,11 @@ function buildBusinessPreview() {
   const inclActivities = document.getElementById('gopt-activities').checked;
   const scopeAll = document.getElementById('gscope-all').checked;
   const dateStr  = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-  const marketLabel = (MARKETS.find(m => m.key === state.market) || {}).label || state.market;
+  const marketLabel = selectedMarketLabels().join(', ') || '—';
 
   const html = `<h1>Business Process Taxonomy — Summary</h1>
     <p style="color:#888;font-size:0.72rem;margin-bottom:8px;">
-      Generated: ${dateStr} · Scope: ${businessScopeStr(scopeAll)} · Market: ${marketLabel}
+      Generated: ${dateStr} · Scope: ${businessScopeStr(scopeAll)} · Markets: ${marketLabel}
     </p>
     ${buildBusinessBody(inclOverview, inclActivities)}`;
   document.getElementById('doc-out').innerHTML = html;
@@ -252,7 +259,7 @@ function downloadBusinessWord() {
   const inclActivities = document.getElementById('gopt-activities').checked;
   const scopeAll = document.getElementById('gscope-all').checked;
   const dateStr  = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-  const marketLabel = (MARKETS.find(m => m.key === state.market) || {}).label || state.market;
+  const marketLabel = selectedMarketLabels().join(', ') || '—';
   const body = buildBusinessBody(inclOverview, inclActivities);
 
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">

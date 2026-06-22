@@ -9,9 +9,11 @@ export const state = {
   viewMode: 'business',
   // Business-view state (independent of the system view)
   businessTab: 'bgl',
-  market:      'UK',     // 'UK' | 'US' | 'EU'
-  vertical:    'All',    // 'All' | 'Retail' | 'Industrial' | 'Office' | 'Residential'
-  entity:      'all',    // 'all' | 'reit' | 'pm' | 'dev' — CRE entity-type lens
+  // Business-view filters are multi-select sets; the selection drives what the
+  // detail panel shows (markets/verticals) and which areas are in scope (entity).
+  markets:   ['UK', 'US', 'EU'],                              // subset of MARKETS
+  verticals: ['Retail', 'Industrial', 'Office', 'Residential'], // subset of sectors
+  entities:  ['reit', 'pm', 'dev'],                           // subset of ENTITY_TYPES
   currentTab: 'cm',
   editMode: false,
   addTarget: null,

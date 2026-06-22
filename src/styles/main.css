@@ -1407,3 +1407,31 @@ body {
   width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0;
   display: inline-block; box-shadow: 0 0 0 1px rgba(0,0,0,0.12);
 }
+
+/* ── Multi-select filter dropdown (Market / Vertical / Entity) ── */
+.biz-ms { position: relative; }
+.biz-ms-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font); font-size: 0.72rem; font-weight: 600; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--border2); border-radius: 6px;
+  padding: 5px 10px; cursor: pointer; min-width: 92px; transition: border-color var(--dur);
+}
+.biz-ms-btn:hover { border-color: var(--green); }
+.biz-ms-summary { flex: 1; text-align: left; }
+.biz-ms-caret { color: var(--ink3); font-size: 0.7rem; }
+.biz-ms-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 120;
+  background: var(--surface); border: 1px solid var(--border2); border-radius: 8px;
+  box-shadow: var(--elev3); padding: 5px; min-width: 180px; display: none;
+}
+.biz-ms-menu.open { display: block; }
+.biz-ms-row {
+  display: flex; align-items: center; gap: 8px; padding: 6px 9px; border-radius: 5px;
+  cursor: pointer; font-size: 0.76rem; color: var(--ink); transition: background var(--dur);
+}
+.biz-ms-row:hover { background: var(--surface2); }
+.biz-ms-row input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--green); cursor: pointer; }
+.biz-ms-swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 1px rgba(0,0,0,0.12); }
+
+/* Dim entity-applicability rows not in the current selection */
+.appl-row-dim { opacity: 0.4; }
