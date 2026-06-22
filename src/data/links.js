@@ -29,103 +29,87 @@ export const COVERAGE = {
 };
 export const COVERAGE_ORDER = ['full', 'partial', 'outside'];
 
-/** @type {{b: string, s: string}[]}  seed template — business id ⇄ system id */
-export const SEED_LINKS = [
-  // ── GL Setup → Financial Structure & Entity Governance ──
-  { b: 'bgl-setup-es1',  s: 'gl-framework-entity' },
-  { b: 'bgl-setup-es2',  s: 'gl-framework-entity' },
-  { b: 'bgl-setup-es3',  s: 'gl-framework-entity' },
-  { b: 'bgl-setup-es4',  s: 'gl-framework-entity' },
-  { b: 'bgl-setup-es5',  s: 'gl-journals-subledger' },
-  { b: 'bgl-setup-coa1', s: 'gl-framework-coa' },
-  { b: 'bgl-setup-coa2', s: 'gl-framework-coa' },
-  { b: 'bgl-setup-coa3', s: 'gl-framework-coa' },
-  { b: 'bgl-setup-coa4', s: 'gl-framework-coa' },
-  { b: 'bgl-setup-coa5', s: 'gl-framework-coa' },
-  { b: 'bgl-setup-ff1',  s: 'gl-framework-coa-formats' },
-  { b: 'bgl-setup-ff2',  s: 'gl-framework-coa-formats' },
-  { b: 'bgl-setup-ff2',  s: 'gl-reporting-management' },
-  { b: 'bgl-setup-ff3',  s: 'gl-reporting-management' },
+/**
+ * Group-level mapping: value-stream L2 group id → MRI PMX system process ids.
+ * Expanded to per-L3 links at load (every L3 card under a group links to the
+ * listed system processes). First-pass coverage — refine per card via Edit
+ * Links. Groups with no MRI PMX counterpart are intentionally omitted and show
+ * as gaps in the Mapping view.
+ */
+const GROUP_LINKS = {
+  // Lease to Cash → Commercial / Residential Management
+  'vs-l2c-g1': ['cm-lease-origination', 'cm-onboard-prospecting', 'cm-onboard-application', 'rm-leasing-prospects', 'rm-leasing-application', 'rm-leasing-execution'],
+  'vs-l2c-g2': ['cm-lease-admin', 'cm-lease-abstraction', 'cm-lease-docs'],
+  'vs-l2c-g3': ['cm-billing-recurring', 'cm-billing-bulk', 'cm-billing-cpi', 'rm-billing-charges'],
+  'vs-l2c-g4': ['cm-recov-service-charge', 'cm-recov-method', 'cm-recov-apportionment', 'cm-recov-bulk'],
+  'vs-l2c-g5': ['cm-coll-receipts', 'cm-coll-allocation', 'cm-coll-arrears', 'cm-coll-bad-debt', 'rm-billing-receipts', 'rm-billing-delinquency'],
+  'vs-l2c-g6': ['cm-lease-billing-config', 'cm-inc-accounting', 'gl-journals-operational'],
+  'vs-l2c-g7': ['cm-lease-renewal', 'cm-lease-termination', 'cm-lease-vacating', 'rm-residents-renewal', 'rm-residents-moveout'],
 
-  // ── GL Journals → Journal Entry & Period Accounting ──
-  { b: 'bgl-journals-je1', s: 'gl-journals-operational' },
-  { b: 'bgl-journals-je2', s: 'gl-journals-recurring' },
-  { b: 'bgl-journals-je3', s: 'gl-journals-operational' },
-  { b: 'bgl-journals-je4', s: 'gl-journals-operational' },
-  { b: 'bgl-journals-ac1', s: 'gl-journals-operational' },
-  { b: 'bgl-journals-ac2', s: 'gl-journals-operational' },
-  { b: 'bgl-journals-ac3', s: 'gl-journals-operational' },
-  { b: 'bgl-journals-ac4', s: 'gl-journals-operational' },
-  { b: 'bgl-journals-ac5', s: 'gl-journals-operational' },
-  { b: 'bgl-journals-ic1', s: 'gl-journals-operational' },
-  { b: 'bgl-journals-ic1', s: 'gl-framework-entity' },
-  { b: 'bgl-journals-fa1', s: 'gl-journals-operational' },
-  { b: 'bgl-journals-fa2', s: 'gl-journals-operational' },
-  { b: 'bgl-journals-fa3', s: 'gl-journals-operational' },
+  // Quote to Cash → Corporate Accounts Receivable
+  'vs-q2c-g1': ['car-acct-setup', 'car-acct-tracking'],
+  'vs-q2c-g2': ['car-charges-categories'],
+  'vs-q2c-g3': ['car-charges-onetime', 'car-charges-credits', 'car-charges-journals', 'car-vat-charges'],
+  'vs-q2c-g4': ['car-charges-journals', 'car-integration-gl'],
+  'vs-q2c-g5': ['car-payments-receipts', 'car-payments-allocation', 'car-reporting-aged', 'car-close-statements'],
 
-  // ── GL Sub-Ledger Integration → Sub-Ledger Integration & Reconciliation ──
-  { b: 'bgl-subledger-ap1',  s: 'gl-journals-subledger' },
-  { b: 'bgl-subledger-ap2',  s: 'gl-journals-subledger' },
-  { b: 'bgl-subledger-ap3',  s: 'gl-journals-subledger' },
-  { b: 'bgl-subledger-ap4',  s: 'gl-journals-subledger' },
-  { b: 'bgl-subledger-ar1',  s: 'gl-journals-subledger' },
-  { b: 'bgl-subledger-ar2',  s: 'gl-journals-subledger' },
-  { b: 'bgl-subledger-ar3',  s: 'gl-journals-subledger' },
-  { b: 'bgl-subledger-ar4',  s: 'gl-journals-subledger' },
-  { b: 'bgl-subledger-fas1', s: 'gl-journals-subledger' },
-  { b: 'bgl-subledger-fas2', s: 'gl-journals-subledger' },
-  { b: 'bgl-subledger-fas3', s: 'gl-journals-subledger' },
-  { b: 'bgl-subledger-ls1',  s: 'gl-journals-subledger' },
-  { b: 'bgl-subledger-ls2',  s: 'gl-journals-subledger' },
-  { b: 'bgl-subledger-ls3',  s: 'gl-journals-subledger' },
+  // Acquire to Retire → limited GL touchpoints (no investment / fixed-asset module)
+  'vs-a2r-g4': ['gl-framework-entity', 'gl-framework-coa'],
+  'vs-a2r-g6': ['gl-journals-operational'],
 
-  // ── GL Budgeting → Budget Planning & Financial Control ──
-  { b: 'bgl-budget-bm1', s: 'gl-budgets-planning' },
-  { b: 'bgl-budget-bm2', s: 'gl-budgets-variance' },
-  { b: 'bgl-budget-bm3', s: 'gl-budgets-planning' },
-  { b: 'bgl-budget-bm4', s: 'gl-budgets-planning' },
-  { b: 'bgl-budget-fc1', s: 'gl-budgets-revision' },
-  { b: 'bgl-budget-fc2', s: 'gl-budgets-revision' },
-  { b: 'bgl-budget-al1', s: 'gl-journals-operational' },
-  { b: 'bgl-budget-al2', s: 'gl-journals-operational' },
-  { b: 'bgl-budget-al3', s: 'gl-journals-operational' },
+  // Plan to Perform → Budgeting & Forecasting + GL
+  'vs-p2p-plan-g1': ['bf-process-ownership', 'bf-structure-versions'],
+  'vs-p2p-plan-g2': ['bf-creation-create', 'bf-creation-reforecast', 'bf-assumptions-income', 'bf-assumptions-expense', 'gl-budgets-planning', 'gl-budgets-revision'],
+  'vs-p2p-plan-g3': ['bf-variance-budgetactual', 'bf-reporting-board', 'gl-reporting-management'],
 
-  // ── GL Close → Financial Close Management ──
-  { b: 'bgl-close-cp1', s: 'gl-close-period' },
-  { b: 'bgl-close-cp2', s: 'gl-close-period' },
-  { b: 'bgl-close-cp3', s: 'gl-close-period' },
-  { b: 'bgl-close-cp4', s: 'gl-close-period' },
-  { b: 'bgl-close-sc1', s: 'gl-close-period' },
-  { b: 'bgl-close-sc1', s: 'gl-journals-subledger' },
-  { b: 'bgl-close-sc2', s: 'gl-close-period' },
-  { b: 'bgl-close-ye1', s: 'gl-close-year' },
-  { b: 'bgl-close-ye2', s: 'gl-close-year-audit' },
-  { b: 'bgl-close-ye3', s: 'gl-close-year' },
+  // Source to Pay → Accounts Payable (+ RM vendor)
+  'vs-s2p-g1': ['ap_sup_main', 'rm-vendor-onboarding'],
+  'vs-s2p-g2': ['ap_inv_main', 'ap_commit_main', 'ap_pay_main', 'rm-vendor-invoices', 'rm-vendor-expense'],
+  'vs-s2p-g3': ['ap_inv_main', 'cm-recov-municipal', 'cm-recov-insurance'],
 
-  // ── GL Reporting → Financial Reporting & Analysis ──
-  { b: 'bgl-reporting-fr1', s: 'gl-reporting-management' },
-  { b: 'bgl-reporting-fr2', s: 'gl-reporting-management' },
-  { b: 'bgl-reporting-fr3', s: 'gl-reporting-management' },
-  { b: 'bgl-reporting-fr4', s: 'gl-reporting-management' },
-  { b: 'bgl-reporting-ir1', s: 'gl-reporting-management' },
-  { b: 'bgl-reporting-ir2', s: 'gl-reporting-management' },
-  { b: 'bgl-reporting-ir3', s: 'gl-reporting-management' },
-  { b: 'bgl-reporting-sr1', s: 'gl-reporting-management' },
-  { b: 'bgl-reporting-sr2', s: 'gl-reporting-management' },
-  { b: 'bgl-reporting-sr3', s: 'gl-reporting-management' },
+  // Project to Result → Job Cost
+  'vs-p2r-g1': ['jc-setup-config', 'jc-jobs-manage'],
+  'vs-p2r-g2': ['jc-jobs-manage', 'jc-budgets-control', 'jc-contracts-lifecycle', 'jc-payments-draws'],
+  'vs-p2r-g3': ['jc-payments-draws', 'jc-reporting-reports', 'gl-framework-coa'],
 
-  // ── GL Compliance → controls / close / reporting ──
-  { b: 'bgl-compliance-ic1', s: 'gl-journals-operational' },
-  { b: 'bgl-compliance-ic2', s: 'gl-close-period' },
-  { b: 'bgl-compliance-ic3', s: 'gl-close-period' },
-  { b: 'bgl-compliance-ic4', s: 'gl-framework-entity' },
-  { b: 'bgl-compliance-rr1', s: 'gl-reporting-management' },
-  { b: 'bgl-compliance-rr2', s: 'gl-reporting-management' },
-  { b: 'bgl-compliance-rr3', s: 'gl-reporting-management' },
-  { b: 'bgl-compliance-am1', s: 'gl-close-year-audit' },
-  { b: 'bgl-compliance-am2', s: 'gl-close-year-audit' },
-  { b: 'bgl-compliance-am3', s: 'gl-reporting-schedule' },
-];
+  // Record to Report → General Ledger (+ sub-ledger closes / reporting)
+  'vs-r2r-g1': ['gl-journals-operational', 'gl-journals-subledger'],
+  'vs-r2r-g2': ['gl-journals-operational', 'gl-reporting-management'],
+  'vs-r2r-g3': ['gl-close-period', 'gl-close-year', 'rm-close-period', 'car-close-period'],
+  'vs-r2r-g4': ['gl-reporting-management', 'gl-reporting-schedule', 'rm-close-reporting', 'car-reporting-compliance'],
+
+  // Treasury & Debt → limited AP / bank touchpoints (no treasury module)
+  'vs-tdm-g1': ['ap_recon_bank', 'cm-coll-receipts'],
+
+  // Property & Facilities Operations → Residential ops + CM space
+  'vs-pfo-g1': ['rm-residents-admin', 'rm-maintenance-requests'],
+  'vs-pfo-g2': ['rm-maintenance-requests', 'rm-maintenance-makeready'],
+  'vs-pfo-g3': ['cm-lease-suite', 'cm-billing-vacancy'],
+  // vs-pfo-g4 (ESG) and vs-h2r (HR) have no MRI PMX counterpart — gaps.
+};
+
+/** Find a business column (L2 group) by id across all value streams. */
+function businessGroup(groupId) {
+  for (const mod of BUSINESS_MODULES) {
+    const col = BUSINESS_DATA[mod].find(c => c.id === groupId);
+    if (col) return col;
+  }
+  return null;
+}
+
+/** Expand GROUP_LINKS to per-L3 business↔system pairs. */
+function buildSeedLinks() {
+  const out = [];
+  Object.entries(GROUP_LINKS).forEach(([groupId, sysIds]) => {
+    const col = businessGroup(groupId);
+    if (!col) return;
+    col.processes.forEach(card => sysIds.forEach(s => out.push({ b: card.id, s })));
+  });
+  return out;
+}
+
+/** @type {{b: string, s: string}[]}  seed template — business L3 id ⇄ system id */
+export const SEED_LINKS = buildSeedLinks();
 
 // ── Mutable per-version store ───────────────────────────────────────────────
 
