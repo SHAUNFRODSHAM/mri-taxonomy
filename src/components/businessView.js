@@ -71,13 +71,25 @@ export function renderBusinessChrome() {
   const bar = document.getElementById('business-filterbar');
   bar.innerHTML = '';
 
-  // Helper: build a labelled <select> dropdown
-  const makeSelect = (label, options, current, onChange) => {
+  // Helper: build a labelled <select> dropdown. `swatch` (optional) is a
+  // value→colour function; when given, a colour chip sits before the select and
+  // updates with the selection (native <option>s can't be reliably coloured).
+  const makeSelect = (label, options, current, onChange, swatch) => {
     const wrap = document.createElement('div');
     wrap.className = 'biz-filter-group';
     const lab = document.createElement('span');
     lab.className = 'biz-filter-label';
     lab.textContent = label + ':';
+    wrap.appendChild(lab);
+
+    let chip = null;
+    if (swatch) {
+      chip = document.createElement('span');
+      chip.className = 'biz-filter-swatch';
+      chip.style.background = swatch(current);
+      wrap.appendChild(chip);
+    }
+
     const sel = document.createElement('select');
     sel.className = 'biz-filter-select';
     options.forEach(o => {
@@ -87,10 +99,17 @@ export function renderBusinessChrome() {
       if (o.value === current) opt.selected = true;
       sel.appendChild(opt);
     });
-    sel.addEventListener('change', () => onChange(sel.value));
-    wrap.appendChild(lab);
+    sel.addEventListener('change', () => {
+      if (chip && swatch) chip.style.background = swatch(sel.value);
+      onChange(sel.value);
+    });
     wrap.appendChild(sel);
     return wrap;
+  };
+
+  const VERTICAL_COLOURS = {
+    All: 'var(--green)', Retail: '#c0440e', Industrial: '#1a5fa8',
+    Office: '#5b4acb', Residential: '#1a8a4a',
   };
 
   bar.appendChild(makeSelect(
@@ -105,6 +124,7 @@ export function renderBusinessChrome() {
     VERTICALS.map(v => ({ value: v, label: v === 'All' ? 'All Verticals' : v })),
     state.vertical,
     v => { state.vertical = v; renderBusiness(); },
+    v => VERTICAL_COLOURS[v] || 'var(--border2)',
   ));
 
   bar.appendChild(makeSelect(
