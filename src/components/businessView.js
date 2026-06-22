@@ -14,6 +14,12 @@ import {
   BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, ENTITY_TYPES, findBusinessItem,
 } from '../data/business/index.js';
 
+// Per-vertical colour coding (used by the filter swatch and the detail panel)
+const VERTICAL_COLOURS = {
+  All: 'var(--green)', Retail: '#c0440e', Industrial: '#1a5fa8',
+  Office: '#5b4acb', Residential: '#1a8a4a',
+};
+
 /** Applicability of a business module to the active entity-type filter. */
 function entityApplicability(mod) {
   if (state.entity === 'all') return 'core';   // no filter → treat as shown
@@ -105,11 +111,6 @@ export function renderBusinessChrome() {
     });
     wrap.appendChild(sel);
     return wrap;
-  };
-
-  const VERTICAL_COLOURS = {
-    All: 'var(--green)', Retail: '#c0440e', Industrial: '#1a5fa8',
-    Office: '#5b4acb', Residential: '#1a8a4a',
   };
 
   bar.appendChild(makeSelect(
@@ -336,10 +337,13 @@ export function showBusinessPanel(id) {
   }
 
   if (vertical) {
+    const vColour = VERTICAL_COLOURS[state.vertical] || 'var(--green)';
     html += `
     <div class="psec">
-      <div class="psec-label">Vertical Detail — ${state.vertical}</div>
-      <div class="biz-vert-block">${vertical}</div>
+      <div class="psec-label">Vertical Detail
+        <span class="biz-vert-tag vert-${state.vertical.toLowerCase()}">${state.vertical}</span>
+      </div>
+      <div class="biz-vert-block" style="border-left-color:${vColour}">${vertical}</div>
     </div>`;
   } else if (item.vertical && state.vertical === 'All') {
     // Show all verticals when no single one is selected
