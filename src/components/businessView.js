@@ -11,7 +11,7 @@
 
 import { state } from '../state.js';
 import {
-  BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, STREAM_TAGS, findBusinessItem,
+  BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, findBusinessItem,
 } from '../data/business/index.js';
 
 // Per-vertical colour coding (used by the filter swatch and the detail panel)
@@ -59,14 +59,12 @@ function renderBusinessTabs() {
   tabBar.innerHTML = '';
   BUSINESS_MODULES.forEach(mod => {
     const cfg = BUSINESS_CONFIG[mod];
-    const tag = STREAM_TAGS[cfg.tag];
     const btn = document.createElement('button');
     btn.className = 'biz-tab-btn' + (mod === state.businessTab ? ' active' : '')
       + (cfg.supporting ? ' biz-tab-conditional' : '');
     btn.dataset.btab = mod;
-    btn.title = (cfg.note || '') + (tag ? ` · ${tag.label}` : '');
-    btn.innerHTML = `<span class="tab-icon">${cfg.icon}</span>${cfg.label}`
-      + (tag ? `<span class="biz-stream-tag" title="${tag.label}">${tag.mark}</span>` : '');
+    btn.title = cfg.note || '';
+    btn.innerHTML = `<span class="tab-icon">${cfg.icon}</span>${cfg.label}`;
     btn.addEventListener('click', () => onSwitchBusinessTab(mod));
     tabBar.appendChild(btn);
   });
@@ -396,17 +394,15 @@ export function showBusinessPanel(id) {
     </div>`;
   }
 
-  // Value-stream classification (KPMG-official vs CRE overlay) + stream note
+  // Value-stream context (name + note)
   const vsCfg = BUSINESS_CONFIG[found.module] || {};
-  const tag = STREAM_TAGS[vsCfg.tag];
-  if (tag) {
+  if (vsCfg.note || vsCfg.label) {
     html += `<div class="psec">
       <div class="psec-label">Value Stream</div>
       <div class="biz-stream-class">
-        <span class="biz-stream-mark">${tag.mark}</span>
+        <span class="biz-stream-mark">${vsCfg.icon || ''}</span>
         <div>
           <div class="biz-stream-name">${vsCfg.label}${vsCfg.supporting ? ' <span class="biz-stream-supporting">supporting</span>' : ''}</div>
-          <div class="biz-stream-tagline">${tag.label}</div>
           ${vsCfg.note ? `<div class="biz-stream-note">${vsCfg.note}</div>` : ''}
         </div>
       </div>
