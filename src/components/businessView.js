@@ -11,7 +11,7 @@
 
 import { state } from '../state.js';
 import {
-  BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, ENTITY_TYPES, findBusinessItem,
+  BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, STREAM_TAGS, findBusinessItem,
 } from '../data/business/index.js';
 
 // Per-vertical colour coding (used by the filter swatch and the detail panel)
@@ -22,23 +22,9 @@ const VERTICAL_COLOURS = {
 
 const SECTORS = VERTICALS.filter(v => v !== 'All'); // Retail/Industrial/Office/Residential
 
-/**
- * Applicability of a module across the selected entity types:
- *   'core' if core for any selected entity, else 'conditional' if conditional
- *   for any, else null (n/a for all selected). Empty selection → treat as core.
- */
-function entityApplicability(mod) {
-  const sel = state.entities;
-  if (!sel || !sel.length) return 'core';
-  const ents = BUSINESS_CONFIG[mod]?.entities || {};
-  const vals = sel.map(e => ents[e] || null);
-  if (vals.includes('core')) return 'core';
-  if (vals.includes('conditional')) return 'conditional';
-  return null;
-}
-/** Modules visible under the current entity selection (null applicability hidden). */
-export function entityVisibleModules() {
-  return BUSINESS_MODULES.filter(m => entityApplicability(m) !== null);
+/** Ensure the active business tab is valid (value-stream ids). */
+function ensureBusinessTab() {
+  if (!BUSINESS_DATA[state.businessTab]) state.businessTab = BUSINESS_MODULES[0];
 }
 
 /** Does an item match the selected verticals? Vertical-agnostic items always show. */
@@ -66,21 +52,21 @@ export function initBusinessView({ onTabSwitch, onEdit, onRemove, onAdd }) {
   onAddItem    = onAdd    || (() => {});
 }
 
-/** Render the business module tab bar (filtered/flagged by entity selection). */
+/** Render the value-stream tab bar (one tab per value stream, with its tag). */
 function renderBusinessTabs() {
+  ensureBusinessTab();
   const tabBar = document.getElementById('business-tabbar');
   tabBar.innerHTML = '';
   BUSINESS_MODULES.forEach(mod => {
-    const applic = entityApplicability(mod);
-    if (applic === null) return; // not applicable to any selected entity → hide tab
     const cfg = BUSINESS_CONFIG[mod];
+    const tag = STREAM_TAGS[cfg.tag];
     const btn = document.createElement('button');
     btn.className = 'biz-tab-btn' + (mod === state.businessTab ? ' active' : '')
-      + (applic === 'conditional' ? ' biz-tab-conditional' : '');
+      + (cfg.supporting ? ' biz-tab-conditional' : '');
     btn.dataset.btab = mod;
-    btn.title = applic === 'conditional' ? 'Conditionally applicable to the selected entity type(s)' : '';
+    btn.title = (cfg.note || '') + (tag ? ` · ${tag.label}` : '');
     btn.innerHTML = `<span class="tab-icon">${cfg.icon}</span>${cfg.label}`
-      + (applic === 'conditional' ? '<span class="biz-cond-dot" title="Conditional">⚪</span>' : '');
+      + (tag ? `<span class="biz-stream-tag" title="${tag.label}">${tag.mark}</span>` : '');
     btn.addEventListener('click', () => onSwitchBusinessTab(mod));
     tabBar.appendChild(btn);
   });
@@ -174,17 +160,6 @@ function renderBusinessFilters() {
     SECTORS.map(v => ({ value: v, label: v, short: v })),
     'verticals',
     { swatch: v => VERTICAL_COLOURS[v] || 'var(--border2)' }));
-
-  bar.appendChild(makeMultiSelect('Entity',
-    ENTITY_TYPES.map(e => ({ value: e.key, label: e.label, short: e.label })),
-    'entities',
-    { onChange: () => {
-        // If the active tab is no longer applicable, jump to the first one that is.
-        if (entityApplicability(state.businessTab) === null) {
-          const first = entityVisibleModules()[0];
-          if (first) state.businessTab = first;
-        }
-      } }));
 }
 
 /** Refresh tabs + grid + any open panel after a filter change (popover stays). */
@@ -421,22 +396,25 @@ export function showBusinessPanel(id) {
     </div>`;
   }
 
-  // Entity-type applicability (from the reference-guide matrix)
-  const ents = (BUSINESS_CONFIG[found.module] || {}).entities;
-  if (ents) {
-    const rows = ENTITY_TYPES.map(e => {
-      const v = ents[e.key];
-      const mark = v === 'core' ? '<span class="appl-core">✅ Core</span>'
-        : v === 'conditional' ? '<span class="appl-cond">⚪ Conditional</span>'
-        : '<span class="appl-na">— n/a</span>';
-      const dim = (state.entities && state.entities.length && !state.entities.includes(e.key)) ? ' appl-row-dim' : '';
-      return `<div class="appl-row${dim}"><span class="appl-name">${e.label}</span>${mark}</div>`;
-    }).join('');
-    html += `<div class="psec"><div class="psec-label">Entity Applicability</div>${rows}</div>`;
+  // Value-stream classification (KPMG-official vs CRE overlay) + stream note
+  const vsCfg = BUSINESS_CONFIG[found.module] || {};
+  const tag = STREAM_TAGS[vsCfg.tag];
+  if (tag) {
+    html += `<div class="psec">
+      <div class="psec-label">Value Stream</div>
+      <div class="biz-stream-class">
+        <span class="biz-stream-mark">${tag.mark}</span>
+        <div>
+          <div class="biz-stream-name">${vsCfg.label}${vsCfg.supporting ? ' <span class="biz-stream-supporting">supporting</span>' : ''}</div>
+          <div class="biz-stream-tagline">${tag.label}</div>
+          ${vsCfg.note ? `<div class="biz-stream-note">${vsCfg.note}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
   }
 
   if (item.needsEnrichment) {
-    html += `<div class="psec"><div class="biz-enrich-note">⚠ Seeded from the reference guide — Market, Vertical and Standards detail still to be added during discovery. Use Edit Mode to enrich.</div></div>`;
+    html += `<div class="psec"><div class="biz-enrich-note">⚠ Powered L3 process — Market, Vertical and Standards detail to be added during discovery. Use Edit Mode to enrich, and the System view linkage to map it to MRI PMX.</div></div>`;
   }
 
   // Phase-2 linkage section (system cross-references)

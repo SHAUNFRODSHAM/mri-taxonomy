@@ -8,7 +8,7 @@ export const state = {
   // point of the methodology) | 'system' (MRI PMX) | 'mapping' (matrix).
   viewMode: 'business',
   // Business-view state (independent of the system view)
-  businessTab: 'bgl',
+  businessTab: 'vs-l2c',
   // Business-view filters are multi-select sets; the selection drives what the
   // detail panel shows (markets/verticals) and which areas are in scope (entity).
   markets:   ['UK', 'US', 'EU'],                              // subset of MARKETS

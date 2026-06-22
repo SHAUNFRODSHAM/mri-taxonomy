@@ -1435,3 +1435,15 @@ body {
 
 /* Dim entity-applicability rows not in the current selection */
 .appl-row-dim { opacity: 0.4; }
+
+/* ── Value-stream tab tag + panel classification ── */
+.biz-stream-tag { font-size: 9px; margin-left: 5px; vertical-align: middle; }
+.biz-stream-class { display: flex; gap: 11px; align-items: flex-start;
+  background: var(--surface2); border-radius: 6px; padding: 10px 12px; }
+.biz-stream-mark { font-size: 18px; flex-shrink: 0; line-height: 1.2; }
+.biz-stream-name { font-size: 0.82rem; font-weight: 700; color: var(--ink); }
+.biz-stream-supporting { font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--ink3); background: var(--surface3);
+  border-radius: 8px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
+.biz-stream-tagline { font-size: 0.66rem; color: var(--ink3); margin-top: 1px; }
+.biz-stream-note { font-size: 0.74rem; color: var(--ink2); margin-top: 6px; line-height: 1.45; }
