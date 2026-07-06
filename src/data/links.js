@@ -139,6 +139,11 @@ export function linkedSystemIds() {
   return new Set(getLinks().map(l => l.s));
 }
 
+/** True if a business (value-stream) item has ≥1 link to a system process. */
+export function businessHasLink(businessId) {
+  return getLinks().some(l => l.b === businessId);
+}
+
 /** Add a link (no-op if it already exists). Returns true if added. */
 export function addLink(b, s, coverage = 'full', note = '') {
   if (findLinkIndex(b, s) !== -1) return false;
@@ -189,25 +194,25 @@ function resolveSystem(id) {
   return null;
 }
 
-/** Resolve a business item id to display metadata. */
+/** Resolve a business item id to display metadata (incl. its coverage tag). */
 function resolveBusiness(id) {
   const f = findBusinessItem(id);
   if (!f) return null;
   return { id, view: 'business', module: f.module, moduleLabel: BUSINESS_CONFIG[f.module]?.label || f.module,
-           title: f.item.title, breadcrumb: f.breadcrumb };
+           title: f.item.title, breadcrumb: f.breadcrumb, coverage: f.item.coverage || null };
 }
 
-/** System processes that deliver a given business item (with coverage). */
+/** System processes that deliver a given business item. */
 export function systemLinksFor(businessId) {
   return getLinks().filter(l => l.b === businessId)
-    .map(l => { const r = resolveSystem(l.s); return r ? { ...r, coverage: l.coverage, note: l.note } : null; })
+    .map(l => resolveSystem(l.s))
     .filter(Boolean);
 }
 
-/** Business processes supported by a given system item (with coverage). */
+/** Business processes supported by a given system item (incl. item coverage). */
 export function businessLinksFor(systemId) {
   return getLinks().filter(l => l.s === systemId)
-    .map(l => { const r = resolveBusiness(l.b); return r ? { ...r, coverage: l.coverage, note: l.note } : null; })
+    .map(l => resolveBusiness(l.b))
     .filter(Boolean);
 }
 
@@ -238,7 +243,7 @@ export function allResolvedLinks() {
     const b = resolveBusiness(l.b);
     const s = resolveSystem(l.s);
     if (!b || !s) return null;
-    return { b: { ...b, domain: businessDomainOf(l.b) }, s, coverage: l.coverage, note: l.note };
+    return { b: { ...b, domain: businessDomainOf(l.b) }, s, coverage: b.coverage };
   }).filter(Boolean);
 }
 

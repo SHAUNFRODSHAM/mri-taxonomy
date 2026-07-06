@@ -1,4 +1,5 @@
 import { state, findItem, findBreadcrumb, snapshot, triggerRender } from '../state.js';
+import { renderLinkEditor } from './linkEditor.js';
 
 export function openEditModal(id) {
   const item = findItem(id);
@@ -47,7 +48,12 @@ export function openEditModal(id) {
           <button class="dyn-del" data-action="remove-dyn">×</button>
         </div>`).join('')}
     </div>
-    <button class="btn-dyn-add" data-action="add-assoc">+ Add Associated Process</button>`;
+    <button class="btn-dyn-add" data-action="add-assoc">+ Add Associated Process</button>
+    <div class="modal-sec-head">Linked Business Processes</div>
+    <p class="field-hint" style="margin-top:-6px">Value-stream processes this MRI PMX process supports.</p>
+    <div id="em-link-editor"></div>`;
+
+  renderLinkEditor(document.getElementById('em-link-editor'), id, 'system');
 
   // Single delegated listener for the modal body
   const body = document.getElementById('em-body');

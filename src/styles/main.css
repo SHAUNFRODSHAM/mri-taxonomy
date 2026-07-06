@@ -1491,3 +1491,41 @@ body {
   background: #fffdf5; border: 1px solid #e9cf94; border-left: 3px solid var(--amber);
   border-radius: 0 6px 6px 0; padding: 8px 11px; white-space: pre-wrap;
 }
+
+/* ── Coverage tag on value-stream cards (FULL / PARTIAL / OUTSIDE) ── */
+.cov-badge {
+  display: inline-block; margin-left: 6px; vertical-align: middle;
+  font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+  color: #fff; background: var(--cov, #8a8a8a); border-radius: 9px; padding: 1px 7px;
+}
+.cov-badge.cov-editable { cursor: pointer; }
+.cov-badge.cov-badge-untagged {
+  color: var(--ink3); background: transparent; border: 1px dashed var(--border2);
+}
+.cov-warn {
+  display: inline-block; margin-left: 6px; vertical-align: middle;
+  font-size: 8.5px; font-weight: 700; color: #b23b3b; background: #fbe9e9;
+  border: 1px solid #f0c4c4; border-radius: 9px; padding: 1px 7px;
+}
+
+/* ── Link editor (inside edit dialogs) ── */
+.lke-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+.lke-row {
+  display: flex; align-items: center; gap: 8px; padding: 6px 9px;
+  background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--green);
+  border-radius: 0 6px 6px 0; font-size: 0.78rem;
+}
+.lke-title { flex: 1; min-width: 0; color: var(--ink); }
+.lke-del {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+  border: 1px solid var(--border2); background: var(--surface); color: var(--red);
+  cursor: pointer; font-size: 14px; line-height: 1; font-weight: 700;
+}
+.lke-del:hover { background: var(--red); color: #fff; border-color: var(--red); }
+.lke-empty { font-size: 0.76rem; color: var(--ink3); font-style: italic; padding: 4px 2px; }
+.lke-add {
+  width: 100%; padding: 8px; border-radius: 6px;
+  border: 1px dashed var(--green-dk); background: var(--green-lt); color: var(--green-dk);
+  font-family: var(--font); font-size: 0.74rem; font-weight: 700; cursor: pointer;
+}
+.lke-add:hover { background: #e6f0d0; }

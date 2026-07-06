@@ -9,6 +9,7 @@
 
 import { state, snapshot } from '../state.js';
 import { findBusinessItem, MARKETS, VERTICALS } from '../data/business/index.js';
+import { renderLinkEditor } from './linkEditor.js';
 
 let onSaved = () => {};
 export function initBusinessEditModal({ afterSave }) { onSaved = afterSave || (() => {}); }
@@ -57,7 +58,21 @@ export function openBusinessEditModal(id) {
     <div class="modal-sec-head">Standards &amp; Frameworks</div>
     <label>Standards</label>
     <input type="text" id="bem-standards" value="${esc((item.standards || []).join(', '))}" placeholder="e.g. IFRS 16, ASC 842, EPRA BPR" />
-    <p class="field-hint">Comma-separated.</p>`;
+    <p class="field-hint">Comma-separated.</p>
+
+    <div class="modal-sec-head">System Coverage</div>
+    <label>Coverage tag</label>
+    <select id="bem-coverage">
+      <option value=""        ${!item.coverage ? 'selected' : ''}>— Untagged —</option>
+      <option value="full"    ${item.coverage === 'full' ? 'selected' : ''}>Full — fully in the system</option>
+      <option value="partial" ${item.coverage === 'partial' ? 'selected' : ''}>Partial — touches part of the system</option>
+      <option value="outside" ${item.coverage === 'outside' ? 'selected' : ''}>Outside — managed outside the system</option>
+    </select>
+    <p class="field-hint">Full or Partial should be linked to at least one MRI PMX system process below.</p>
+    <div class="modal-sec-head">Linked MRI PMX System Processes</div>
+    <div id="bem-link-editor"></div>`;
+
+  renderLinkEditor(document.getElementById('bem-link-editor'), id, 'business');
 
   document.getElementById('edit-modal-overlay').classList.add('open');
   setTimeout(() => document.getElementById('bem-name')?.focus(), 80);
@@ -78,6 +93,7 @@ export function saveBusinessEditModal() {
   item.activities = document.getElementById('bem-activities').value
     .split('\n').map(s => s.trim()).filter(Boolean);
   item.clientNote = document.getElementById('bem-client-note').value.trim();
+  item.coverage = document.getElementById('bem-coverage').value || null;
 
   const market = {};
   document.querySelectorAll('.bem-market').forEach(t => {

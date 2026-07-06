@@ -14,6 +14,8 @@ export const state = {
   markets:   ['UK', 'US', 'EU'],                              // subset of MARKETS
   verticals: ['Retail', 'Industrial', 'Office', 'Residential'], // subset of sectors
   entities:  ['reit', 'pm', 'dev'],                           // subset of ENTITY_TYPES
+  // Coverage filter (Value Streams) — multi-select of item coverage tags
+  coverageFilters: ['full', 'partial', 'outside', 'untagged'],
   currentTab: 'cm',
   editMode: false,
   addTarget: null,
@@ -34,8 +36,6 @@ export const state = {
   // Business ⇄ system links: [{ b, s, coverage, note }]. Seeded from
   // SEED_LINKS at boot, editable during discovery, persisted per version.
   links: [],
-  // Whether the mapping/link edit affordances are active
-  linkEditMode: false,
   // Which processes are expanded to reveal their sub-processes (id -> true).
   // Collapsed by default; a scope filter force-expands so matches stay visible.
   expandedProcs: {},

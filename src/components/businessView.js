@@ -9,12 +9,33 @@
    Phase 2 via setLinkRenderer().
    ═══════════════════════════════════════════════════════════════════════════ */
 
-import { state } from '../state.js';
+import { state, snapshot } from '../state.js';
 import { makeMultiSelect } from './multiSelect.js';
 import { clientNoteHTML } from './clientNote.js';
+import { COVERAGE, COVERAGE_ORDER, businessHasLink } from '../data/links.js';
 import {
   BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, findBusinessItem,
 } from '../data/business/index.js';
+
+const COVERAGE_KEYS = ['full', 'partial', 'outside'];
+/** Does an item match the selected coverage filter? Untagged handled explicitly. */
+function matchesCoverage(item) {
+  const sel = state.coverageFilters;
+  if (!sel || !sel.length) return true;
+  return sel.includes(item.coverage || 'untagged');
+}
+/** Cycle an item's coverage tag: none → full → partial → outside → none. */
+function cycleCoverage(item) {
+  const order = [null, 'full', 'partial', 'outside'];
+  snapshot();
+  item.coverage = order[(order.indexOf(item.coverage || null) + 1) % order.length];
+  renderBusinessGrid();
+  document.dispatchEvent(new CustomEvent('mri:versionDirty'));
+}
+/** True when a FULL/PARTIAL item still needs a system link (warn-but-allow). */
+function coverageNeedsLink(item) {
+  return (item.coverage === 'full' || item.coverage === 'partial') && !businessHasLink(item.id);
+}
 
 // Per-vertical colour coding (used by the filter swatch and the detail panel)
 const VERTICAL_COLOURS = {
@@ -85,6 +106,14 @@ function renderBusinessFilters() {
     SECTORS.map(v => ({ value: v, label: v, short: v })),
     'verticals',
     { swatch: v => VERTICAL_COLOURS[v] || 'var(--border2)', onChange: refreshBusinessAfterFilter }));
+
+  bar.appendChild(makeMultiSelect('Coverage',
+    [{ value: 'full', label: 'Full', short: 'Full' },
+     { value: 'partial', label: 'Partial', short: 'Partial' },
+     { value: 'outside', label: 'Outside', short: 'Outside' },
+     { value: 'untagged', label: 'Untagged', short: 'Untagged' }],
+    'coverageFilters',
+    { swatch: v => (COVERAGE[v] ? COVERAGE[v].color : 'var(--border2)'), onChange: refreshBusinessAfterFilter }));
 }
 
 /** Refresh tabs + grid + any open panel after a filter change (popover stays). */
@@ -144,10 +173,11 @@ function renderBusinessGrid() {
     let visible = 0;
 
     col.processes.forEach(proc => {
-      // A process shows if it (or any of its subs) matches the vertical selection.
-      const procMatches = matchesVerticals(proc);
+      // A process shows if it (or any of its subs) matches the vertical +
+      // coverage selection.
+      const procMatches = matchesVerticals(proc) && matchesCoverage(proc);
       const subs = proc.subs || [];
-      const matchingSubs = subs.filter(matchesVerticals);
+      const matchingSubs = subs.filter(s => matchesVerticals(s) && matchesCoverage(s));
       // In edit mode show everything (so empty processes can be edited/filled).
       if (!edit && !procMatches && matchingSubs.length === 0) return;
 
@@ -247,6 +277,40 @@ function makeBizCard(item, baseClass, isProcess, colId, procId, subToggle) {
     el.appendChild(tog);
   }
 
+  // Coverage tag (FULL / PARTIAL / OUTSIDE) — process cards only
+  if (isProcess) {
+    if (item.coverage) {
+      const cov = COVERAGE[item.coverage];
+      const badge = document.createElement('span');
+      badge.className = 'cov-badge';
+      badge.style.setProperty('--cov', cov.color);
+      badge.textContent = cov.short;
+      if (state.editMode) {
+        badge.classList.add('cov-editable');
+        badge.title = 'Click to change coverage';
+        badge.addEventListener('click', e => { e.stopPropagation(); cycleCoverage(item); });
+      } else {
+        badge.title = cov.label;
+      }
+      el.appendChild(badge);
+    } else if (state.editMode) {
+      const badge = document.createElement('span');
+      badge.className = 'cov-badge cov-editable cov-badge-untagged';
+      badge.textContent = '+ Coverage';
+      badge.title = 'Click to set coverage (Full / Partial / Outside)';
+      badge.addEventListener('click', e => { e.stopPropagation(); cycleCoverage(item); });
+      el.appendChild(badge);
+    }
+    // Warn when FULL/PARTIAL but not yet linked to a system process
+    if (coverageNeedsLink(item)) {
+      const warn = document.createElement('span');
+      warn.className = 'cov-warn';
+      warn.textContent = '⚠ link needed';
+      warn.title = 'Tagged Full/Partial but not linked to any MRI PMX system process';
+      el.appendChild(warn);
+    }
+  }
+
   // Standards chips give an at-a-glance signal of the regulatory weight
   if (item.standards && item.standards.length) {
     const chip = document.createElement('span');
@@ -290,10 +354,14 @@ export function showBusinessPanel(id) {
 
   document.getElementById('panel-bc').textContent = breadcrumb;
   document.getElementById('panel-title').textContent = item.title;
+  const covBadge = item.coverage
+    ? `<span class="badge" style="background:${COVERAGE[item.coverage].color};color:#fff">${COVERAGE[item.coverage].short}</span>`
+    : '';
   document.getElementById('panel-badges').innerHTML =
     `<span class="badge ${isProcess ? 'badge-process' : 'badge-sub'}">${isProcess ? 'Process' : 'Sub-Process'}</span>
-     <span class="badge badge-business">Business</span>`
-     + (item.needsEnrichment ? '<span class="badge badge-enrich">Needs enrichment</span>' : '');
+     <span class="badge badge-business">Business</span>${covBadge}`
+     + (item.needsEnrichment ? '<span class="badge badge-enrich">Needs enrichment</span>' : '')
+     + (coverageNeedsLink(item) ? '<span class="badge badge-enrich" title="Tagged Full/Partial but not linked to a system process">⚠ link needed</span>' : '');
 
   let html = `
     <div class="psec">

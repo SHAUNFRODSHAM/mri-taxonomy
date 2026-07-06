@@ -23,15 +23,15 @@ export function refreshMappingPanel() {
   if (lastCell) showCell(lastCell.domainId, lastCell.sysMod);
 }
 
-/** Dominant coverage colour for a set of links in a cell. */
+/** Dominant coverage colour for a set of links in a cell (by item coverage). */
 function cellCoverage(links) {
-  const set = new Set(links.map(l => l.coverage || 'full'));
-  if (set.size === 1) return COVERAGE[[...set][0]]?.color || COVERAGE.full.color;
+  const set = new Set(links.map(l => l.coverage || 'untagged'));
+  if (set.size === 1) { const k = [...set][0]; return COVERAGE[k] ? COVERAGE[k].color : 'var(--border2)'; }
   return '#b8860b'; // mixed → amber
 }
 function covCounts(links) {
-  const c = { full: 0, partial: 0, outside: 0 };
-  links.forEach(l => { c[l.coverage || 'full'] = (c[l.coverage || 'full'] || 0) + 1; });
+  const c = { full: 0, partial: 0, outside: 0, untagged: 0 };
+  links.forEach(l => { const k = l.coverage || 'untagged'; c[k] = (c[k] || 0) + 1; });
   return c;
 }
 
@@ -123,20 +123,15 @@ function showCell(domainId, sysMod) {
     `<span class="badge badge-business">Business</span><span class="badge badge-mri">MRI PMX</span>
      <span class="badge">${pairs.length} link${pairs.length > 1 ? 's' : ''}</span>`;
 
-  const editable = state.linkEditMode;
-  const covBadge = (cov, b, s) => {
-    const c = COVERAGE[cov] || COVERAGE.full;
-    return `<span class="cov-badge${editable ? ' cov-editable' : ''}" style="--cov:${c.color}"
-      data-cov-b="${esc(b)}" data-cov-s="${esc(s)}"
-      title="${editable ? 'Click to cycle coverage · ' : ''}${esc(c.label)}">${esc(c.short)}</span>`;
+  const covBadge = (cov) => {
+    if (!cov || !COVERAGE[cov]) return '';
+    const c = COVERAGE[cov];
+    return `<span class="cov-badge" style="--cov:${c.color}" title="${esc(c.label)}">${esc(c.short)}</span>`;
   };
 
   const rows = pairs.map(p => `
     <div class="map-pair">
-      <div class="map-pair-head">
-        ${covBadge(p.coverage, p.b.id, p.s.id)}
-        ${editable ? `<button class="xlink-del" data-del-b="${esc(p.b.id)}" data-del-s="${esc(p.s.id)}" title="Remove link">×</button>` : ''}
-      </div>
+      ${p.coverage ? `<div class="map-pair-head">${covBadge(p.coverage)}</div>` : ''}
       <button class="xlink" data-xview="business" data-xid="${esc(p.b.id)}">
         <span class="xlink-mod">Business</span><span class="xlink-arrow">→</span>
         <span class="xlink-body"><span class="xlink-title">${esc(p.b.title)}</span>
