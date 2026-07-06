@@ -23,10 +23,24 @@ import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, findBusinessItem } fr
 import { state } from '../state.js';
 
 export const COVERAGE = {
-  full:    { label: 'Fully in system', short: 'Full',    color: '#5a7a1e' },
-  partial: { label: 'Partial — touches part of the process', short: 'Partial', color: '#b8860b' },
-  outside: { label: 'Outside system — managed manually', short: 'Outside', color: '#8a8a8a' },
+  full: {
+    label: 'Fully in system', short: 'Full', color: '#5a7a1e',
+    desc: 'Delivered end-to-end within the MRI PMX system — no manual workarounds. Should be linked to the supporting system process(es).',
+  },
+  partial: {
+    label: 'Partial — touches part of the process', short: 'Partial', color: '#b8860b',
+    desc: 'MRI PMX supports part of this process; the rest is handled manually or in another tool. Should be linked to the system process(es) it touches.',
+  },
+  outside: {
+    label: 'Outside system — managed manually', short: 'Outside', color: '#8a8a8a',
+    desc: 'Managed entirely outside MRI PMX — e.g. spreadsheets, a third-party tool, or a manual procedure. No system link required.',
+  },
 };
+/** Full tooltip text for a coverage tag ("Label — extended context"). */
+export function coverageTooltip(key) {
+  const c = COVERAGE[key];
+  return c ? `${c.label} — ${c.desc}` : '';
+}
 export const COVERAGE_ORDER = ['full', 'partial', 'outside'];
 
 /**

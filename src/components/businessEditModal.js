@@ -10,6 +10,7 @@
 import { state, snapshot } from '../state.js';
 import { findBusinessItem, MARKETS, VERTICALS } from '../data/business/index.js';
 import { renderLinkEditor } from './linkEditor.js';
+import { coverageTooltip } from '../data/links.js';
 
 let onSaved = () => {};
 export function initBusinessEditModal({ afterSave }) { onSaved = afterSave || (() => {}); }
@@ -61,14 +62,14 @@ export function openBusinessEditModal(id) {
     <p class="field-hint">Comma-separated.</p>
 
     <div class="modal-sec-head">System Coverage</div>
-    <label>Coverage tag</label>
+    <label>System coverage tag</label>
     <select id="bem-coverage">
       <option value=""        ${!item.coverage ? 'selected' : ''}>— Untagged —</option>
-      <option value="full"    ${item.coverage === 'full' ? 'selected' : ''}>Full — fully in the system</option>
-      <option value="partial" ${item.coverage === 'partial' ? 'selected' : ''}>Partial — touches part of the system</option>
-      <option value="outside" ${item.coverage === 'outside' ? 'selected' : ''}>Outside — managed outside the system</option>
+      <option value="full"    ${item.coverage === 'full' ? 'selected' : ''} title="${esc(coverageTooltip('full'))}">Full — fully in the system</option>
+      <option value="partial" ${item.coverage === 'partial' ? 'selected' : ''} title="${esc(coverageTooltip('partial'))}">Partial — touches part of the system</option>
+      <option value="outside" ${item.coverage === 'outside' ? 'selected' : ''} title="${esc(coverageTooltip('outside'))}">Outside — managed outside the system</option>
     </select>
-    <p class="field-hint">Full or Partial should be linked to at least one MRI PMX system process below.</p>
+    <p class="field-hint">How much of this value-stream process lives in MRI PMX. Full or Partial should be linked to at least one MRI PMX system process below.</p>
     <div class="modal-sec-head">Linked MRI PMX System Processes</div>
     <div id="bem-link-editor"></div>`;
 

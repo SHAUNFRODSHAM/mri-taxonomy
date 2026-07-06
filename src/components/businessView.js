@@ -12,7 +12,7 @@
 import { state, snapshot } from '../state.js';
 import { makeMultiSelect } from './multiSelect.js';
 import { clientNoteHTML } from './clientNote.js';
-import { COVERAGE, COVERAGE_ORDER, businessHasLink } from '../data/links.js';
+import { COVERAGE, COVERAGE_ORDER, businessHasLink, coverageTooltip } from '../data/links.js';
 import {
   BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, findBusinessItem,
 } from '../data/business/index.js';
@@ -117,7 +117,7 @@ function renderBusinessFilters() {
     'verticals',
     { swatch: v => VERTICAL_COLOURS[v] || 'var(--border2)', onChange: refreshBusinessAfterFilter }));
 
-  bar.appendChild(makeMultiSelect('Coverage',
+  bar.appendChild(makeMultiSelect('System Coverage',
     [{ value: 'full', label: 'Full', short: 'Full' },
      { value: 'partial', label: 'Partial', short: 'Partial' },
      { value: 'outside', label: 'Outside', short: 'Outside' },
@@ -188,6 +188,7 @@ function renderBusinessGrid() {
       ].forEach(({ cov, label, cls }) => {
         const b = document.createElement('button');
         b.textContent = label;
+        b.title = cov ? coverageTooltip(cov) : 'Remove the system-coverage tag from every process in this domain.';
         if (cls) b.className = cls;
         b.addEventListener('click', e => {
           e.stopPropagation();
@@ -340,17 +341,17 @@ function makeBizCard(item, baseClass, isProcess, colId, procId, subToggle) {
       badge.textContent = cov.short;
       if (state.editMode) {
         badge.classList.add('cov-editable');
-        badge.title = 'Click to change coverage';
+        badge.title = coverageTooltip(item.coverage) + '\n\nClick to change system coverage.';
         badge.addEventListener('click', e => { e.stopPropagation(); cycleCoverage(item); });
       } else {
-        badge.title = cov.label;
+        badge.title = coverageTooltip(item.coverage);
       }
       el.appendChild(badge);
     } else if (state.editMode) {
       const badge = document.createElement('span');
       badge.className = 'cov-badge cov-editable cov-badge-untagged';
       badge.textContent = '+ Coverage';
-      badge.title = 'Click to set coverage (Full / Partial / Outside)';
+      badge.title = 'Set system coverage — how much of this process lives in MRI PMX (Full / Partial / Outside). Click to set.';
       badge.addEventListener('click', e => { e.stopPropagation(); cycleCoverage(item); });
       el.appendChild(badge);
     }
@@ -408,7 +409,7 @@ export function showBusinessPanel(id) {
   document.getElementById('panel-bc').textContent = breadcrumb;
   document.getElementById('panel-title').textContent = item.title;
   const covBadge = item.coverage
-    ? `<span class="badge" style="background:${COVERAGE[item.coverage].color};color:#fff">${COVERAGE[item.coverage].short}</span>`
+    ? `<span class="badge" style="background:${COVERAGE[item.coverage].color};color:#fff" title="System coverage: ${coverageTooltip(item.coverage)}">${COVERAGE[item.coverage].short}</span>`
     : '';
   document.getElementById('panel-badges').innerHTML =
     `<span class="badge ${isProcess ? 'badge-process' : 'badge-sub'}">${isProcess ? 'Process' : 'Sub-Process'}</span>

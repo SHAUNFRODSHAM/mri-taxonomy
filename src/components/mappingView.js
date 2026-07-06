@@ -12,7 +12,7 @@
 
 import { state } from '../state.js';
 import { BUSINESS_CONFIG } from '../data/business/index.js';
-import { buildMappingMatrix, cellPairs, COVERAGE } from '../data/links.js';
+import { buildMappingMatrix, cellPairs, COVERAGE, coverageTooltip } from '../data/links.js';
 
 let onNavigate = () => {};
 export function initMappingView({ navigate }) { onNavigate = navigate || (() => {}); }
@@ -122,7 +122,7 @@ function showCell(domainId, sysMod) {
   const covBadge = (cov) => {
     if (!cov || !COVERAGE[cov]) return '';
     const c = COVERAGE[cov];
-    return `<span class="cov-badge" style="--cov:${c.color}" title="${esc(c.label)}">${esc(c.short)}</span>`;
+    return `<span class="cov-badge" style="--cov:${c.color}" title="System coverage: ${esc(coverageTooltip(cov))}">${esc(c.short)}</span>`;
   };
 
   const rows = pairs.map(p => `
