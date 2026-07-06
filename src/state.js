@@ -36,6 +36,9 @@ export const state = {
   links: [],
   // Whether the mapping/link edit affordances are active
   linkEditMode: false,
+  // Which processes are expanded to reveal their sub-processes (id -> true).
+  // Collapsed by default; a scope filter force-expands so matches stay visible.
+  expandedProcs: {},
 };
 
 /** A module is visible unless explicitly hidden. */

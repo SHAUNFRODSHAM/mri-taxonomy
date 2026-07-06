@@ -1,5 +1,12 @@
-import { state, currentData, MODULE_CONFIG } from '../state.js';
+import { state, currentData, MODULE_CONFIG, triggerRender } from '../state.js';
 import { linkedSystemIds } from '../data/links.js';
+
+/** Toggle a process's expanded (sub-processes revealed) state. */
+function toggleExpand(id) {
+  if (state.expandedProcs[id]) delete state.expandedProcs[id];
+  else state.expandedProcs[id] = true;
+  triggerRender();
+}
 
 // ── Scope config ──────────────────────────────────────────────────────────────
 const SCOPE_ORDER  = [null, 'core', 'custom', 'out-of-scope'];
@@ -127,27 +134,40 @@ export function render(callbacks) {
     let visibleCount = 0;
 
     col.processes.forEach(proc => {
+      const subs     = proc.subs || [];
+      const hasSubs  = subs.length > 0;
+      // Collapsed by default; a scope filter force-expands so matches show.
+      const expanded = !!state.expandedProcs[proc.id] || !showingAll;
+      const subToggle = hasSubs
+        ? { count: subs.length, expanded, onToggle: () => toggleExpand(proc.id) }
+        : null;
+
       const procEl = makeItemEl(proc, 'process-box', onItemClick, onEditClick,
         () => onRemoveItem('proc', col.id, proc.id),
-        onScopeChange, filters, null, linkedSet);
+        onScopeChange, filters, null, linkedSet, subToggle);
       colBody.appendChild(procEl);
       if (!procEl.classList.contains('item-hidden')) visibleCount++;
 
-      (proc.subs || []).forEach(sub => {
-        const cls   = sub.type === 'process' ? 'process-box' : 'sub-box';
-        const subEl = makeItemEl(sub, cls, onItemClick, onEditClick,
-          () => onRemoveItem('sub', col.id, proc.id, sub.id),
-          onScopeChange, filters, proc, linkedSet);
-        colBody.appendChild(subEl);
-        if (!subEl.classList.contains('item-hidden')) visibleCount++;
-      });
+      if (expanded) {
+        subs.forEach(sub => {
+          const cls   = sub.type === 'process' ? 'process-box' : 'sub-box';
+          const subEl = makeItemEl(sub, cls + ' is-nested', onItemClick, onEditClick,
+            () => onRemoveItem('sub', col.id, proc.id, sub.id),
+            onScopeChange, filters, proc, linkedSet, null);
+          colBody.appendChild(subEl);
+          if (!subEl.classList.contains('item-hidden')) visibleCount++;
+        });
+      }
 
-      // Add sub-process button (edit mode only, shown via CSS)
-      const addSubBtn = document.createElement('button');
-      addSubBtn.className = 'add-row-btn';
-      addSubBtn.textContent = '+ Add Sub-Process';
-      addSubBtn.addEventListener('click', () => onAddModal('sub', col.id, proc.id));
-      colBody.appendChild(addSubBtn);
+      // Add sub-process button (edit mode) — when expanded, or when there are
+      // no subs yet so the first one can be added.
+      if (state.editMode && (expanded || !hasSubs)) {
+        const addSubBtn = document.createElement('button');
+        addSubBtn.className = 'add-row-btn';
+        addSubBtn.textContent = '+ Add Sub-Process';
+        addSubBtn.addEventListener('click', () => { state.expandedProcs[proc.id] = true; onAddModal('sub', col.id, proc.id); });
+        colBody.appendChild(addSubBtn);
+      }
     });
 
     // Hide a whole column when a scope filter is active and nothing matches
@@ -196,7 +216,7 @@ export function render(callbacks) {
 
 // ── makeItemEl ────────────────────────────────────────────────────────────────
 
-function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScopeChange, filters, parentProcess, linkedSet) {
+function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScopeChange, filters, parentProcess, linkedSet, subToggle) {
   const eff   = effectiveScope(item, parentProcess, linkedSet);
   const scope = eff.scope;   // effective scope (manual tag, or auto Out-of-Scope)
   const auto  = eff.auto;    // true when defaulted because nothing is linked
@@ -217,6 +237,19 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
   titleSpan.className = 'card-title';
   titleSpan.textContent = item.title;
   el.appendChild(titleSpan);
+
+  // Sub-process expand/collapse toggle (processes with subs)
+  if (subToggle) {
+    el.classList.add('has-subs');
+    const tog = document.createElement('span');
+    tog.className = 'sub-toggle' + (subToggle.expanded ? ' open' : '');
+    tog.textContent = (subToggle.expanded ? '− ' : '+ ') + subToggle.count;
+    tog.title = subToggle.expanded
+      ? 'Collapse sub-processes'
+      : `Show ${subToggle.count} sub-process${subToggle.count > 1 ? 'es' : ''}`;
+    tog.addEventListener('click', e => { e.stopPropagation(); subToggle.onToggle(); });
+    el.appendChild(tog);
+  }
 
   // Scope badge — manual tag, or the auto Out-of-Scope default (shown in all modes)
   if (scope) {

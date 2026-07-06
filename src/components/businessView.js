@@ -145,24 +145,33 @@ function renderBusinessGrid() {
     col.processes.forEach(proc => {
       // A process shows if it (or any of its subs) matches the vertical selection.
       const procMatches = matchesVerticals(proc);
-      const matchingSubs = (proc.subs || []).filter(matchesVerticals);
+      const subs = proc.subs || [];
+      const matchingSubs = subs.filter(matchesVerticals);
       // In edit mode show everything (so empty processes can be edited/filled).
       if (!edit && !procMatches && matchingSubs.length === 0) return;
 
-      colBody.appendChild(makeBizCard(proc, 'process-box biz-card', true, col.id));
+      const hasSubs  = subs.length > 0;
+      const expanded = !!state.expandedProcs[proc.id];
+      const subToggle = hasSubs
+        ? { count: subs.length, expanded, onToggle: () => toggleBizExpand(proc.id) }
+        : null;
+
+      colBody.appendChild(makeBizCard(proc, 'process-box biz-card', true, col.id, null, subToggle));
       visible++;
 
-      (proc.subs || []).forEach(sub => {
-        if (!edit && !matchesVerticals(sub)) return;
-        colBody.appendChild(makeBizCard(sub, 'sub-box biz-card', false, col.id, proc.id));
-        visible++;
-      });
+      if (expanded) {
+        subs.forEach(sub => {
+          if (!edit && !matchesVerticals(sub)) return;
+          colBody.appendChild(makeBizCard(sub, 'sub-box biz-card is-nested', false, col.id, proc.id, null));
+          visible++;
+        });
+      }
 
-      if (edit) {
+      if (edit && (expanded || !hasSubs)) {
         const addSub = document.createElement('button');
         addSub.className = 'add-row-btn';
         addSub.textContent = '+ Add Sub-Process';
-        addSub.addEventListener('click', () => onAddItem('sub', col.id, proc.id));
+        addSub.addEventListener('click', () => { state.expandedProcs[proc.id] = true; onAddItem('sub', col.id, proc.id); });
         colBody.appendChild(addSub);
       }
     });
@@ -207,7 +216,14 @@ function renderBusinessGrid() {
   }));
 }
 
-function makeBizCard(item, baseClass, isProcess, colId, procId) {
+/** Toggle a business process's expanded (sub-processes revealed) state. */
+function toggleBizExpand(id) {
+  if (state.expandedProcs[id]) delete state.expandedProcs[id];
+  else state.expandedProcs[id] = true;
+  renderBusinessGrid();
+}
+
+function makeBizCard(item, baseClass, isProcess, colId, procId, subToggle) {
   const el = document.createElement('div');
   el.className = baseClass;
   el.dataset.id = item.id;
@@ -216,6 +232,19 @@ function makeBizCard(item, baseClass, isProcess, colId, procId) {
   title.className = 'card-title';
   title.textContent = item.title;
   el.appendChild(title);
+
+  // Sub-process expand/collapse toggle
+  if (subToggle) {
+    el.classList.add('has-subs');
+    const tog = document.createElement('span');
+    tog.className = 'sub-toggle' + (subToggle.expanded ? ' open' : '');
+    tog.textContent = (subToggle.expanded ? '− ' : '+ ') + subToggle.count;
+    tog.title = subToggle.expanded
+      ? 'Collapse sub-processes'
+      : `Show ${subToggle.count} sub-process${subToggle.count > 1 ? 'es' : ''}`;
+    tog.addEventListener('click', e => { e.stopPropagation(); subToggle.onToggle(); });
+    el.appendChild(tog);
+  }
 
   // Standards chips give an at-a-glance signal of the regulatory weight
   if (item.standards && item.standards.length) {
