@@ -207,6 +207,7 @@ function renderBusinessGrid() {
 
     const colHeader = document.createElement('div');
     colHeader.className = 'col-header biz-col-header';
+    if (col.note) colHeader.title = col.note;   // L2 hover tooltip
     colHeader.innerHTML = `<span class="col-header-title">${col.title}</span>`;
     if (edit) {
       const del = document.createElement('span');

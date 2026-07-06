@@ -30,17 +30,23 @@ VALUE_STREAMS.forEach(vs => {
   BUSINESS_DATA[vs.id] = vs.groups.map((g, gi) => ({
     id: `${vs.id}-g${gi + 1}`,
     title: g.title,
-    processes: g.items.map((item, ii) => ({
-      id: `${vs.id}-g${gi + 1}-p${ii + 1}`,
-      title: item,
-      type: 'process',
-      desc: '',
-      activities: [],
-      market: null,
-      vertical: null,
-      standards: [],
-      needsEnrichment: true,
-    })),
+    note: g.note || '',                 // L2 tooltip
+    processes: g.items.map((item, ii) => {
+      // items may be a plain string (title only) or { title, desc, activities }
+      const it = typeof item === 'string' ? { title: item } : item;
+      const hasDetail = !!(it.desc || (it.activities && it.activities.length));
+      return {
+        id: `${vs.id}-g${gi + 1}-p${ii + 1}`,
+        title: it.title,
+        type: 'process',
+        desc: it.desc || '',
+        activities: it.activities || [],
+        market: null,
+        vertical: null,
+        standards: [],
+        needsEnrichment: !hasDetail,
+      };
+    }),
   }));
   BUSINESS_CONFIG[vs.id] = {
     label: vs.label,
