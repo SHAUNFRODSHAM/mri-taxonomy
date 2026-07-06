@@ -18,10 +18,6 @@ let onNavigate = () => {};
 export function initMappingView({ navigate }) { onNavigate = navigate || (() => {}); }
 
 let lastCell = null;
-/** Re-render the currently-open cell panel (after a coverage edit). */
-export function refreshMappingPanel() {
-  if (lastCell) showCell(lastCell.domainId, lastCell.sysMod);
-}
 
 /** Dominant coverage colour for a set of links in a cell (by item coverage). */
 function cellCoverage(links) {
