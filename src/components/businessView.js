@@ -36,6 +36,16 @@ function cycleCoverage(item) {
 function coverageNeedsLink(item) {
   return (item.coverage === 'full' || item.coverage === 'partial') && !businessHasLink(item.id);
 }
+/** Set the coverage tag on every process + sub in a value-stream column. */
+function bulkTagCoverage(col, coverage) {
+  snapshot();
+  col.processes.forEach(proc => {
+    proc.coverage = coverage;
+    (proc.subs || []).forEach(sub => { sub.coverage = coverage; });
+  });
+  renderBusinessGrid();
+  document.dispatchEvent(new CustomEvent('mri:versionDirty'));
+}
 
 // Per-vertical colour coding (used by the filter swatch and the detail panel)
 const VERTICAL_COLOURS = {
@@ -159,6 +169,44 @@ function renderBusinessGrid() {
     if (col.note) colHeader.title = col.note;   // L2 hover tooltip
     colHeader.innerHTML = `<span class="col-header-title">${col.title}</span>`;
     if (edit) {
+      // Bulk-tag coverage dropdown (mirrors the system view's "Tag all")
+      const scopeWrap = document.createElement('div');
+      scopeWrap.className = 'col-scope-wrap';
+
+      const scopeBtn = document.createElement('button');
+      scopeBtn.className = 'col-scope-btn';
+      scopeBtn.textContent = '⚐ Tag all ▾';
+      scopeWrap.appendChild(scopeBtn);
+
+      const scopeMenu = document.createElement('div');
+      scopeMenu.className = 'col-scope-menu';
+      [
+        { cov: 'full',    label: '● Tag all: FULL' },
+        { cov: 'partial', label: '● Tag all: PARTIAL' },
+        { cov: 'outside', label: '● Tag all: OUTSIDE' },
+        { cov: null,      label: '✕ Clear all tags', cls: 'scope-menu-clear' },
+      ].forEach(({ cov, label, cls }) => {
+        const b = document.createElement('button');
+        b.textContent = label;
+        if (cls) b.className = cls;
+        b.addEventListener('click', e => {
+          e.stopPropagation();
+          scopeMenu.classList.remove('open');
+          bulkTagCoverage(col, cov);
+        });
+        scopeMenu.appendChild(b);
+      });
+      scopeWrap.appendChild(scopeMenu);
+
+      scopeBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        document.querySelectorAll('.col-scope-menu.open').forEach(m => {
+          if (m !== scopeMenu) m.classList.remove('open');
+        });
+        scopeMenu.classList.toggle('open');
+      });
+      colHeader.appendChild(scopeWrap);
+
       const del = document.createElement('span');
       del.className = 'col-del-btn';
       del.textContent = '×';
@@ -236,6 +284,11 @@ function renderBusinessGrid() {
     addColEl.appendChild(btn);
     grid.appendChild(addColEl);
   }
+
+  // Close open bulk-tag menus when clicking elsewhere
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.col-scope-menu.open').forEach(m => m.classList.remove('open'));
+  }, { once: true });
 
   // Equalise column header heights (same as system grid)
   requestAnimationFrame(() => requestAnimationFrame(() => {
