@@ -190,8 +190,8 @@ export function render(callbacks) {
     document.querySelectorAll('.col-scope-menu.open').forEach(m => m.classList.remove('open'));
   }, { once: true });
 
-  // Update filter bar counts and active button state
-  updateFilterBar(filters, showingAll);
+  // Update scope filter counts
+  updateFilterBar();
 }
 
 // ── makeItemEl ────────────────────────────────────────────────────────────────
@@ -257,15 +257,7 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
 
 // ── Filter bar helpers ─────────────────────────────────────────────────────────
 
-function updateFilterBar(filters, showingAll) {
-  // Active-state (multi-select): when everything is on, only "All" is lit;
-  // otherwise the individually selected chips are lit and "All" is not.
-  document.querySelectorAll('.scope-filter-btn').forEach(btn => {
-    const s = btn.dataset.scope;
-    const active = s === 'all' ? showingAll : (!showingAll && filters.includes(s));
-    btn.classList.toggle('active', active);
-  });
-
+function updateFilterBar() {
   // Compute counts from effective scope (incl. auto Out-of-Scope)
   const counts = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0, auto: 0 };
   const linkedSet = linkedSystemIds();

@@ -10,6 +10,7 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 import { state } from '../state.js';
+import { makeMultiSelect } from './multiSelect.js';
 import {
   BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, findBusinessItem,
 } from '../data/business/index.js';
@@ -70,94 +71,19 @@ function renderBusinessTabs() {
   });
 }
 
-/**
- * A compact multi-select dropdown: a summary button that opens a checkbox
- * popover. Toggling updates `state[stateKey]` and refreshes the view without
- * rebuilding the filter bar (so the popover stays open). `swatch` optionally
- * colours a chip per option.
- */
-function makeMultiSelect(label, options, stateKey, opts = {}) {
-  const { swatch, onChange } = opts;
-  const wrap = document.createElement('div');
-  wrap.className = 'biz-filter-group biz-ms';
-
-  const lab = document.createElement('span');
-  lab.className = 'biz-filter-label';
-  lab.textContent = label + ':';
-  wrap.appendChild(lab);
-
-  const btn = document.createElement('button');
-  btn.className = 'biz-ms-btn';
-  wrap.appendChild(btn);
-
-  const menu = document.createElement('div');
-  menu.className = 'biz-ms-menu';
-  wrap.appendChild(menu);
-
-  const selected = () => state[stateKey];
-  const summarise = () => {
-    const sel = selected();
-    if (!sel.length) return 'None';
-    if (sel.length === options.length) return `All (${options.length})`;
-    if (sel.length <= 2) return sel.map(v => (options.find(o => o.value === v) || {}).short || v).join(', ');
-    return `${sel.length} selected`;
-  };
-  const paintBtn = () => {
-    const sel = selected();
-    let chip = '';
-    if (swatch && sel.length === 1) chip = `<span class="biz-filter-swatch" style="background:${swatch(sel[0])}"></span>`;
-    btn.innerHTML = `${chip}<span class="biz-ms-summary">${summarise()}</span><span class="biz-ms-caret">▾</span>`;
-  };
-  paintBtn();
-
-  options.forEach(o => {
-    const row = document.createElement('label');
-    row.className = 'biz-ms-row';
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = selected().includes(o.value);
-    cb.addEventListener('change', () => {
-      const sel = selected();
-      if (cb.checked) { if (!sel.includes(o.value)) sel.push(o.value); }
-      else { const i = sel.indexOf(o.value); if (i !== -1) sel.splice(i, 1); }
-      paintBtn();
-      if (onChange) onChange();
-      refreshBusinessAfterFilter();
-    });
-    row.appendChild(cb);
-    if (swatch) {
-      const sw = document.createElement('span');
-      sw.className = 'biz-ms-swatch'; sw.style.background = swatch(o.value);
-      row.appendChild(sw);
-    }
-    const txt = document.createElement('span');
-    txt.textContent = o.label;
-    row.appendChild(txt);
-    menu.appendChild(row);
-  });
-
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    document.querySelectorAll('.biz-ms-menu.open').forEach(m => { if (m !== menu) m.classList.remove('open'); });
-    menu.classList.toggle('open');
-  });
-
-  return wrap;
-}
-
-/** Render the Market / Vertical / Entity multi-select filter bar. */
+/** Render the Market / Vertical multi-select filter bar (shared component). */
 function renderBusinessFilters() {
   const bar = document.getElementById('business-filterbar');
   bar.innerHTML = '';
 
   bar.appendChild(makeMultiSelect('Market',
     MARKETS.map(m => ({ value: m.key, label: m.label, short: m.key })),
-    'markets'));
+    'markets', { onChange: refreshBusinessAfterFilter }));
 
   bar.appendChild(makeMultiSelect('Vertical',
     SECTORS.map(v => ({ value: v, label: v, short: v })),
     'verticals',
-    { swatch: v => VERTICAL_COLOURS[v] || 'var(--border2)' }));
+    { swatch: v => VERTICAL_COLOURS[v] || 'var(--border2)', onChange: refreshBusinessAfterFilter }));
 }
 
 /** Refresh tabs + grid + any open panel after a filter change (popover stays). */
@@ -166,13 +92,6 @@ function refreshBusinessAfterFilter() {
   renderBusinessGrid();
   if (state.openPanelId) showBusinessPanel(state.openPanelId);
 }
-
-// Close any open filter popover on outside click
-document.addEventListener('click', e => {
-  if (!e.target.closest('.biz-ms')) {
-    document.querySelectorAll('.biz-ms-menu.open').forEach(m => m.classList.remove('open'));
-  }
-});
 
 /** Render the full business view (tabs + filters + grid). */
 export function renderBusiness() {

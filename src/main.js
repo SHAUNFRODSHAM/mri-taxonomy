@@ -9,6 +9,7 @@ import { renderVersionPanel } from './components/versionMenu.js';
 import { renderBusiness, initBusinessView, setBusinessLinkRenderer, showBusinessPanel } from './components/businessView.js';
 import { openBusinessEditModal, saveBusinessEditModal, initBusinessEditModal, isBusinessEditOpen } from './components/businessEditModal.js';
 import { renderMapping, initMappingView, refreshMappingPanel } from './components/mappingView.js';
+import { makeMultiSelect } from './components/multiSelect.js';
 import { systemLinksFor, businessLinksFor, systemItemModule,
          initLinks, seedLinks, addLink, removeLink, setLinkCoverage,
          COVERAGE, COVERAGE_ORDER } from './data/links.js';
@@ -83,7 +84,7 @@ function switchView(mode) {
 
   if (mode === 'business')      renderBusiness();
   else if (mode === 'mapping')  renderMapping();
-  else                          render(gridCallbacks);
+  else                        { renderScopeFilter(); render(gridCallbacks); }
 }
 
 function switchBusinessTab(mod) {
@@ -360,6 +361,7 @@ function switchTab(tabId) {
   });
 
   closePanel();
+  renderScopeFilter();   // rebuild so the dropdown reflects the reset selection
   render(gridCallbacks);
 }
 
@@ -895,21 +897,27 @@ document.getElementById('gen-preview-btn').addEventListener('click', buildDoc);
 document.getElementById('gen-word-btn').addEventListener('click', downloadWord);
 document.getElementById('gen-pdf-btn').addEventListener('click', downloadPDF);
 
-// Scope filter bar (multi-select). "All" resets to everything; other chips toggle.
-const ALL_SCOPE_KEYS = ['core', 'custom', 'out-of-scope', 'untagged'];
-document.querySelectorAll('.scope-filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const s = btn.dataset.scope;
-    if (s === 'all') {
-      state.scopeFilters = [...ALL_SCOPE_KEYS];
-    } else {
-      const set = new Set(state.scopeFilters);
-      set.has(s) ? set.delete(s) : set.add(s);
-      state.scopeFilters = ALL_SCOPE_KEYS.filter(k => set.has(k)); // keep canonical order
-    }
-    render(gridCallbacks);
-  });
-});
+// Scope filter — shared multi-select dropdown (same component as the business
+// Market/Vertical filters). Rebuilt on full renders/tab switches; toggling a
+// scope re-renders only the grid so the popover stays open.
+const SCOPE_FILTER_OPTS = [
+  { value: 'core',         label: '● CORE',          short: 'CORE' },
+  { value: 'custom',       label: '● CUSTOM',        short: 'CUSTOM' },
+  { value: 'out-of-scope', label: '● OUT OF SCOPE',  short: 'OOS' },
+  { value: 'untagged',     label: 'Untagged',        short: 'Untagged' },
+];
+const SCOPE_FILTER_COLOURS = {
+  core: 'var(--green)', custom: 'var(--amber)', 'out-of-scope': '#8a8a8a', untagged: 'var(--border2)',
+};
+function renderScopeFilter() {
+  const mount = document.getElementById('scope-filter-mount');
+  if (!mount) return;
+  mount.innerHTML = '';
+  mount.appendChild(makeMultiSelect('Scope', SCOPE_FILTER_OPTS, 'scopeFilters', {
+    swatch: v => SCOPE_FILTER_COLOURS[v] || 'var(--border2)',
+    onChange: () => render(gridCallbacks),
+  }));
+}
 
 // Static tab buttons
 document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
