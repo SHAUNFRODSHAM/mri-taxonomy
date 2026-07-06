@@ -1,4 +1,5 @@
 import { state, currentData, MODULE_CONFIG } from '../state.js';
+import { linkedSystemIds } from '../data/links.js';
 
 // ── Scope config ──────────────────────────────────────────────────────────────
 const SCOPE_ORDER  = [null, 'core', 'custom', 'out-of-scope'];
@@ -7,6 +8,26 @@ const SCOPE_LABELS = {
   'custom':       '● CUSTOM',
   'out-of-scope': '● OUT OF SCOPE',
 };
+
+// ── Effective scope ─────────────────────────────────────────────────────────────
+// A system item's scope is its manual tag if set; otherwise, if it is NOT linked
+// to any value stream it defaults to "Out of Scope (auto)" pending review. Subs
+// inherit their parent process's link status.
+function isConnected(item, parentProcess, linkedSet) {
+  if (linkedSet.has(item.id)) return true;
+  if (parentProcess) {
+    return linkedSet.has(parentProcess.id) || (parentProcess.subs || []).some(s => linkedSet.has(s.id));
+  }
+  return (item.subs || []).some(s => linkedSet.has(s.id));
+}
+
+/** @returns {{scope: string|null, auto: boolean}} */
+export function effectiveScope(item, parentProcess, linkedSet) {
+  const set = linkedSet || linkedSystemIds();
+  if (item.scope) return { scope: item.scope, auto: false };
+  if (isConnected(item, parentProcess, set)) return { scope: null, auto: false };
+  return { scope: 'out-of-scope', auto: true };
+}
 
 /**
  * render(callbacks)
@@ -29,6 +50,7 @@ export function render(callbacks) {
   if (headerText) headerText.textContent = cfg.headerText || cfg.label || state.currentTab;
 
   const filter = state.scopeFilter || 'all';
+  const linkedSet = linkedSystemIds();   // system ids linked to a value stream
 
   currentData().forEach(col => {
     const colEl = document.createElement('div');
@@ -104,7 +126,7 @@ export function render(callbacks) {
     col.processes.forEach(proc => {
       const procEl = makeItemEl(proc, 'process-box', onItemClick, onEditClick,
         () => onRemoveItem('proc', col.id, proc.id),
-        onScopeChange, filter);
+        onScopeChange, filter, null, linkedSet);
       colBody.appendChild(procEl);
       if (!procEl.classList.contains('item-hidden')) visibleCount++;
 
@@ -112,7 +134,7 @@ export function render(callbacks) {
         const cls   = sub.type === 'process' ? 'process-box' : 'sub-box';
         const subEl = makeItemEl(sub, cls, onItemClick, onEditClick,
           () => onRemoveItem('sub', col.id, proc.id, sub.id),
-          onScopeChange, filter);
+          onScopeChange, filter, proc, linkedSet);
         colBody.appendChild(subEl);
         if (!subEl.classList.contains('item-hidden')) visibleCount++;
       });
@@ -164,20 +186,23 @@ export function render(callbacks) {
 
 // ── makeItemEl ────────────────────────────────────────────────────────────────
 
-function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScopeChange, filter) {
-  const scope = item.scope || null;
+function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScopeChange, filter, parentProcess, linkedSet) {
+  const eff   = effectiveScope(item, parentProcess, linkedSet);
+  const scope = eff.scope;   // effective scope (manual tag, or auto Out-of-Scope)
+  const auto  = eff.auto;    // true when defaulted because nothing is linked
 
-  // Determine visibility
+  // Determine visibility (effective scope drives the scope filter)
   const visible = (() => {
     if (filter === 'all')       return true;
-    if (filter === 'untagged')  return !scope;
-    return scope === filter;
+    if (filter === 'untagged')  return !scope;            // untagged = linked but not tagged
+    return scope === filter;                               // 'out-of-scope' includes auto
   })();
 
   const el = document.createElement('div');
   el.className = baseClass;
   if (!visible) el.classList.add('item-hidden');
   if (scope === 'out-of-scope') el.classList.add('scope-oos');
+  if (auto) el.classList.add('scope-oos-auto');
   el.dataset.id = item.id;
 
   // Title
@@ -186,13 +211,15 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
   titleSpan.textContent = item.title;
   el.appendChild(titleSpan);
 
-  // Scope badge
+  // Scope badge — manual tag, or the auto Out-of-Scope default (shown in all modes)
   if (scope) {
     const badge = document.createElement('span');
-    badge.className = `scope-badge scope-badge-${scope}`;
-    badge.textContent = SCOPE_LABELS[scope] || scope;
+    badge.className = `scope-badge scope-badge-${scope}` + (auto ? ' scope-badge-auto' : '');
+    badge.textContent = auto ? '○ OUT OF SCOPE' : (SCOPE_LABELS[scope] || scope);
+    badge.title = auto
+      ? 'Auto — not yet linked to a value stream. Review & link, or tag manually.'
+      : (state.editMode ? 'Click to cycle scope' : '');
     if (state.editMode) {
-      badge.title = 'Click to cycle scope';
       badge.addEventListener('click', e => { e.stopPropagation(); onScopeChange(item); });
     }
     el.appendChild(badge);
@@ -229,28 +256,31 @@ function updateFilterBar(activeFilter) {
     btn.classList.toggle('active', btn.dataset.scope === activeFilter);
   });
 
-  // Compute counts
-  const counts = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0 };
+  // Compute counts from effective scope (incl. auto Out-of-Scope)
+  const counts = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0, auto: 0 };
+  const linkedSet = linkedSystemIds();
   (currentData() || []).forEach(col => {
     col.processes.forEach(proc => {
-      tally(proc.scope, counts);
-      (proc.subs || []).forEach(sub => tally(sub.scope, counts));
+      tallyEff(effectiveScope(proc, null, linkedSet), counts);
+      (proc.subs || []).forEach(sub => tallyEff(effectiveScope(sub, proc, linkedSet), counts));
     });
   });
 
   const countsEl = document.getElementById('scope-filter-counts');
   if (!countsEl) return;
+  const oosLabel = counts.auto ? `OOS ${counts['out-of-scope']} (${counts.auto} auto)` : `OOS ${counts['out-of-scope']}`;
   countsEl.innerHTML = [
     counts.core         ? `<span class="scope-count-chip scope-count-core">CORE ${counts.core}</span>` : '',
     counts.custom       ? `<span class="scope-count-chip scope-count-custom">CUSTOM ${counts.custom}</span>` : '',
-    counts['out-of-scope'] ? `<span class="scope-count-chip scope-count-oos">OOS ${counts['out-of-scope']}</span>` : '',
+    counts['out-of-scope'] ? `<span class="scope-count-chip scope-count-oos">${oosLabel}</span>` : '',
     counts.untagged     ? `<span class="scope-count-chip scope-count-untag">Untagged ${counts.untagged}</span>` : '',
   ].join('');
 }
 
-function tally(scope, counts) {
-  const key = scope || 'untagged';
+function tallyEff(eff, counts) {
+  const key = eff.scope || 'untagged';
   if (key in counts) counts[key]++;
+  if (eff.auto) counts.auto++;
 }
 
 // ── Public helper: get scope label for exports ─────────────────────────────────

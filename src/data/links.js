@@ -134,6 +134,11 @@ function findLinkIndex(b, s) {
   return getLinks().findIndex(l => l.b === b && l.s === s);
 }
 
+/** Set of system-process ids that currently have ≥1 business (value-stream) link. */
+export function linkedSystemIds() {
+  return new Set(getLinks().map(l => l.s));
+}
+
 /** Add a link (no-op if it already exists). Returns true if added. */
 export function addLink(b, s, coverage = 'full', note = '') {
   if (findLinkIndex(b, s) !== -1) return false;

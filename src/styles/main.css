@@ -1447,3 +1447,14 @@ body {
   border-radius: 8px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
 .biz-stream-tagline { font-size: 0.66rem; color: var(--ink3); margin-top: 1px; }
 .biz-stream-note { font-size: 0.74rem; color: var(--ink2); margin-top: 6px; line-height: 1.45; }
+
+/* ── Auto "Out of Scope" (system item not yet linked to a value stream) ── */
+.scope-badge-auto {
+  background: transparent !important; color: #8a8a8a !important;
+  border: 1px dashed #b4b4b4 !important; font-weight: 700;
+}
+/* lighter dim than a manual out-of-scope decision, and no strikethrough */
+.process-box.scope-oos-auto, .sub-box.scope-oos-auto { opacity: 0.62; }
+.scope-oos-auto .card-title { text-decoration: none; font-style: italic; }
+/* panel badge variant */
+.badge-scope-auto { background: transparent; color: #7a7a7a; border: 1px dashed #b4b4b4; }

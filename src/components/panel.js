@@ -5,7 +5,7 @@ import { state } from '../state.js';
 let linkRenderer = null;
 export function setSystemLinkRenderer(fn) { linkRenderer = fn; }
 
-export function showPanel(item, bc, isPro) {
+export function showPanel(item, bc, isPro, scopeInfo) {
   state.openPanelId = item.id;
 
   document.getElementById('panel-bc').textContent = bc;
@@ -15,8 +15,11 @@ export function showPanel(item, bc, isPro) {
     'custom':       '● CUSTOM',
     'out-of-scope': '● OUT OF SCOPE',
   };
-  const scopeBadge = item.scope
-    ? `<span class="badge badge-scope-${item.scope}">${scopeLabel[item.scope] || item.scope}</span>`
+  // Effective scope (manual tag, or auto Out-of-Scope when not linked to a value stream)
+  const eff = scopeInfo || { scope: item.scope || null, auto: false };
+  const scopeBadge = eff.scope
+    ? `<span class="badge badge-scope-${eff.scope}${eff.auto ? ' badge-scope-auto' : ''}"
+         title="${eff.auto ? 'Auto — not yet linked to a value stream; review & link, or tag manually.' : ''}">${scopeLabel[eff.scope] || eff.scope}${eff.auto ? ' · auto' : ''}</span>`
     : `<span class="badge badge-scope-untagged">Untagged</span>`;
 
   document.getElementById('panel-badges').innerHTML = `

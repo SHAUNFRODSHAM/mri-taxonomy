@@ -1,5 +1,7 @@
 import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible } from '../state.js';
 import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS } from '../data/business/index.js';
+import { effectiveScope } from './grid.js';
+import { linkedSystemIds } from '../data/links.js';
 
 // ── Module scope helpers ─────────────────────────────────────────────────────
 // "All Modules" respects the per-version visibility selection: hidden modules
@@ -48,8 +50,13 @@ function getScopeIncludes() {
   };
 }
 
-function scopeIncluded(item, includes) {
-  const scope = item.scope || null;
+// Effective-scope key for an item (manual tag, or auto Out-of-Scope when unlinked)
+function effKey(item, parentProcess, linkedSet) {
+  return effectiveScope(item, parentProcess, linkedSet).scope || null;
+}
+
+function scopeIncluded(item, includes, parentProcess, linkedSet) {
+  const scope = effKey(item, parentProcess, linkedSet);
   if (!scope)                     return includes.untagged;
   if (scope === 'core')           return includes.core;
   if (scope === 'custom')         return includes.custom;
@@ -60,12 +67,13 @@ function scopeIncluded(item, includes) {
 function buildScopeSummary(tabs, includes) {
   const counts = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0 };
   const included = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0 };
+  const linkedSet = linkedSystemIds();
 
   tabs.forEach(tab => {
     (ALL_DATA[tab] || []).forEach(col => {
       col.processes.forEach(proc => {
-        tallyItem(proc, counts, included, includes);
-        (proc.subs || []).forEach(sub => tallyItem(sub, counts, included, includes));
+        tallyItem(proc, counts, included, includes, null, linkedSet);
+        (proc.subs || []).forEach(sub => tallyItem(sub, counts, included, includes, proc, linkedSet));
       });
     });
   });
@@ -92,10 +100,10 @@ function buildScopeSummary(tabs, includes) {
     </table>`;
 }
 
-function tallyItem(item, counts, included, includes) {
-  const key = item.scope || 'untagged';
+function tallyItem(item, counts, included, includes, parentProcess, linkedSet) {
+  const key = effKey(item, parentProcess, linkedSet) || 'untagged';
   if (key in counts) counts[key]++;
-  if (scopeIncluded(item, includes) && key in included) included[key]++;
+  if (scopeIncluded(item, includes, parentProcess, linkedSet) && key in included) included[key]++;
 }
 
 // ── BUILD PREVIEW ──────────────────────────────────────────────────────────────
@@ -196,6 +204,7 @@ export function buildDoc() {
     </p>
     ${buildScopeSummary(tabs, includes)}`;
 
+  const linkedSet = linkedSystemIds();
   tabs.forEach(tab => {
     if (!ALL_DATA[tab]) return;
     const data = ALL_DATA[tab];
@@ -207,10 +216,10 @@ export function buildDoc() {
     data.forEach(col => {
       html += `<h3>${col.title}</h3>`;
       col.processes.forEach(proc => {
-        if (!scopeIncluded(proc, includes)) return;
+        if (!scopeIncluded(proc, includes, null, linkedSet)) return;
         html += renderItemHTML(proc, 'h4', inclOverview, inclActivities, inclPrereqs, inclAssoc);
         (proc.subs || []).forEach(sub => {
-          if (!scopeIncluded(sub, includes)) return;
+          if (!scopeIncluded(sub, includes, proc, linkedSet)) return;
           html += renderItemHTML(sub, 'h4', inclOverview, inclActivities, inclPrereqs, inclAssoc, true);
         });
       });
@@ -319,16 +328,17 @@ export function downloadWord() {
 
   let body = wordSummary;
 
+  const linkedSet = linkedSystemIds();
   tabs.forEach(tab => {
     if (!ALL_DATA[tab]) return;
     body += `<h1>${e(MODULE_CONFIG[tab]?.label || tab)}</h1>`;
     ALL_DATA[tab].forEach(col => {
       body += `<h2>${e(col.title)}</h2>`;
       col.processes.forEach(proc => {
-        if (!scopeIncluded(proc, includes)) return;
+        if (!scopeIncluded(proc, includes, null, linkedSet)) return;
         body += wordItem(proc, 'h3', e, bullets, inclOverview, inclActivities, inclPrereqs, inclAssoc);
         (proc.subs || []).forEach(sub => {
-          if (!scopeIncluded(sub, includes)) return;
+          if (!scopeIncluded(sub, includes, proc, linkedSet)) return;
           body += wordItem(sub, 'h4', e, bullets, inclOverview, inclActivities, inclPrereqs, inclAssoc);
         });
       });
@@ -381,11 +391,12 @@ ${body}
 function buildWordScopeTable(tabs, includes, e) {
   const counts   = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0 };
   const included = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0 };
+  const linkedSet = linkedSystemIds();
   tabs.forEach(tab => {
     (ALL_DATA[tab] || []).forEach(col => {
       col.processes.forEach(proc => {
-        tallyItem(proc, counts, included, includes);
-        (proc.subs || []).forEach(sub => tallyItem(sub, counts, included, includes));
+        tallyItem(proc, counts, included, includes, null, linkedSet);
+        (proc.subs || []).forEach(sub => tallyItem(sub, counts, included, includes, proc, linkedSet));
       });
     });
   });

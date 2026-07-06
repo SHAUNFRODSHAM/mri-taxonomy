@@ -1,6 +1,6 @@
 import './styles/main.css';
 import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, currentData, triggerRender, registerRender, isModuleVisible } from './state.js';
-import { render }         from './components/grid.js';
+import { render, effectiveScope } from './components/grid.js';
 import { showPanel, closePanel, setSystemLinkRenderer } from './components/panel.js';
 import { openEditModal, closeEditModal, saveEditModal } from './components/editModal.js';
 import { openAddModal, closeAddModal, confirmAdd, openAddTabModal, closeAddTabModal, confirmAddTab } from './components/addModal.js';
@@ -34,9 +34,9 @@ registerRender(() => render(gridCallbacks));
 function handleClick(id) {
   for (const col of currentData()) {
     for (const proc of col.processes) {
-      if (proc.id === id) { showPanel(proc, col.title, true); return; }
+      if (proc.id === id) { showPanel(proc, col.title, true, effectiveScope(proc)); return; }
       for (const sub of (proc.subs || [])) {
-        if (sub.id === id) { showPanel(sub, `${col.title} › ${proc.title}`, false); return; }
+        if (sub.id === id) { showPanel(sub, `${col.title} › ${proc.title}`, false, effectiveScope(sub, proc)); return; }
       }
     }
   }
@@ -229,6 +229,7 @@ function refreshOpenPanel() {
 /** After a link edit, refresh whichever panel is open (incl. the mapping cell). */
 function refreshAfterLinkEdit() {
   if (state.viewMode === 'mapping') { renderMapping(); refreshMappingPanel(); }
+  else if (state.viewMode === 'system') { render(gridCallbacks); refreshOpenPanel(); } // auto-OOS may change
   else refreshOpenPanel();
 }
 
