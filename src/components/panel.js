@@ -1,4 +1,5 @@
 import { state } from '../state.js';
+import { clientNoteHTML, wireClientNote } from './clientNote.js';
 
 // Phase-2 hook: main.js injects a function returning link-section HTML for a
 // system item id (cross-references to the business view). Null = no link UI.
@@ -39,6 +40,7 @@ export function showPanel(item, bc, isPro, scopeInfo) {
       <div class="psec-label">Core Activities</div>
       <ul class="act-list">${(item.activities || []).map(a => `<li>${a}</li>`).join('')}</ul>
     </div>
+    ${clientNoteHTML(item)}
     <div class="psec">
       <div class="psec-label">MRI Sub-Process Title</div>
       <div class="mri-title-block">
@@ -71,6 +73,8 @@ export function showPanel(item, bc, isPro, scopeInfo) {
     const linkHtml = linkRenderer(item.id, 'system');
     if (linkHtml) document.getElementById('panel-body').insertAdjacentHTML('beforeend', linkHtml);
   }
+
+  wireClientNote(item);
 
   document.getElementById('overlay').classList.add('open');
   document.getElementById('panel').classList.add('open');

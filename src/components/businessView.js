@@ -11,6 +11,7 @@
 
 import { state } from '../state.js';
 import { makeMultiSelect } from './multiSelect.js';
+import { clientNoteHTML, wireClientNote } from './clientNote.js';
 import {
   BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, findBusinessItem,
 } from '../data/business/index.js';
@@ -308,6 +309,8 @@ export function showBusinessPanel(id) {
     </div>`;
   }
 
+  html += clientNoteHTML(item);
+
   // Market Variation — one block per selected market that has content
   if (item.market) {
     (state.markets || []).forEach(k => {
@@ -369,6 +372,7 @@ export function showBusinessPanel(id) {
   }
 
   document.getElementById('panel-body').innerHTML = html;
+  wireClientNote(item);
   document.getElementById('overlay').classList.add('open');
   document.getElementById('panel').classList.add('open');
 }

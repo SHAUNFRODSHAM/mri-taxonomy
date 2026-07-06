@@ -1484,3 +1484,12 @@ body {
   padding: 5px 11px; cursor: pointer; transition: all var(--dur);
 }
 .expand-all-btn:hover { border-color: var(--green); color: var(--ink); }
+
+/* ── Client Note (detail panel, editable) ── */
+.client-note-input {
+  width: 100%; min-height: 64px; resize: vertical;
+  font-family: var(--font); font-size: 0.8rem; line-height: 1.5; color: var(--ink);
+  background: #fffdf5; border: 1px solid #e9cf94; border-radius: 6px; padding: 8px 10px;
+}
+.client-note-input:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 0 2px rgba(200,168,90,0.25); }
+.client-note-input::placeholder { color: var(--ink3); font-style: italic; }

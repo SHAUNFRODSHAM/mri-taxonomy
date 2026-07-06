@@ -508,7 +508,9 @@ function toggleEdit() {
 
 /** Show Save Changes only when in edit mode on a non-original saved version. */
 function updateSaveChangesBtn() {
-  const visible = state.editMode && state.activeVersionId !== 'original';
+  // Shown for a saved (non-original) version while editing, or whenever there
+  // are unsaved changes (e.g. a Client Note edited in view mode).
+  const visible = state.activeVersionId !== 'original' && (state.editMode || state.isDirty);
   document.getElementById('save-changes-btn').style.display = visible ? 'inline-flex' : 'none';
 }
 
@@ -960,6 +962,7 @@ const linkEditBtn = document.getElementById('link-edit-btn');
 if (linkEditBtn) linkEditBtn.addEventListener('click', toggleLinkEdit);
 
 // Cross-component events
+document.addEventListener('mri:contentDirty', () => { state.isDirty = true; updateVersionBadge(); updateSaveChangesBtn(); });
 document.addEventListener('mri:switchTab',     e => switchTab(e.detail));
 document.addEventListener('mri:toggleModule',  e => toggleModuleVisible(e.detail));
 document.addEventListener('mri:loadVersion',   e => loadVersion(e.detail));
