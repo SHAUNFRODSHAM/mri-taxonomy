@@ -49,8 +49,11 @@ export function render(callbacks) {
   if (header)     { header.className = 'main-header ' + (cfg.headerClass || 'cm-header'); header.style.background = ''; }
   if (headerText) headerText.textContent = cfg.headerText || cfg.label || state.currentTab;
 
-  const filter = state.scopeFilter || 'all';
+  const ALL_SCOPE_KEYS = ['core', 'custom', 'out-of-scope', 'untagged'];
+  const filters = Array.isArray(state.scopeFilters) ? state.scopeFilters : ALL_SCOPE_KEYS;
+  const showingAll = ALL_SCOPE_KEYS.every(k => filters.includes(k));
   const linkedSet = linkedSystemIds();   // system ids linked to a value stream
+  let renderedCols = 0;
 
   currentData().forEach(col => {
     const colEl = document.createElement('div');
@@ -126,7 +129,7 @@ export function render(callbacks) {
     col.processes.forEach(proc => {
       const procEl = makeItemEl(proc, 'process-box', onItemClick, onEditClick,
         () => onRemoveItem('proc', col.id, proc.id),
-        onScopeChange, filter, null, linkedSet);
+        onScopeChange, filters, null, linkedSet);
       colBody.appendChild(procEl);
       if (!procEl.classList.contains('item-hidden')) visibleCount++;
 
@@ -134,7 +137,7 @@ export function render(callbacks) {
         const cls   = sub.type === 'process' ? 'process-box' : 'sub-box';
         const subEl = makeItemEl(sub, cls, onItemClick, onEditClick,
           () => onRemoveItem('sub', col.id, proc.id, sub.id),
-          onScopeChange, filter, proc, linkedSet);
+          onScopeChange, filters, proc, linkedSet);
         colBody.appendChild(subEl);
         if (!subEl.classList.contains('item-hidden')) visibleCount++;
       });
@@ -147,12 +150,10 @@ export function render(callbacks) {
       colBody.appendChild(addSubBtn);
     });
 
-    // Show empty message when filter hides everything
-    if (visibleCount === 0 && filter !== 'all') {
-      const msg = document.createElement('div');
-      msg.className = 'empty-filter-msg';
-      msg.textContent = 'No items match this filter';
-      colBody.appendChild(msg);
+    // Hide a whole column when a scope filter is active and nothing matches
+    // (in edit mode keep columns so they remain editable / can be populated).
+    if (!showingAll && visibleCount === 0 && !state.editMode) {
+      return; // skip this column entirely
     }
 
     // Add process button
@@ -164,7 +165,16 @@ export function render(callbacks) {
 
     colEl.appendChild(colBody);
     grid.appendChild(colEl);
+    renderedCols++;
   });
+
+  // Grid-level empty state when the filter hides everything
+  if (renderedCols === 0) {
+    const msg = document.createElement('div');
+    msg.className = 'empty-filter-msg grid-empty-msg';
+    msg.textContent = 'No items match the selected scope(s).';
+    grid.appendChild(msg);
+  }
 
   // Equalise column header heights
   requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -181,22 +191,19 @@ export function render(callbacks) {
   }, { once: true });
 
   // Update filter bar counts and active button state
-  updateFilterBar(filter);
+  updateFilterBar(filters, showingAll);
 }
 
 // ── makeItemEl ────────────────────────────────────────────────────────────────
 
-function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScopeChange, filter, parentProcess, linkedSet) {
+function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScopeChange, filters, parentProcess, linkedSet) {
   const eff   = effectiveScope(item, parentProcess, linkedSet);
   const scope = eff.scope;   // effective scope (manual tag, or auto Out-of-Scope)
   const auto  = eff.auto;    // true when defaulted because nothing is linked
 
-  // Determine visibility (effective scope drives the scope filter)
-  const visible = (() => {
-    if (filter === 'all')       return true;
-    if (filter === 'untagged')  return !scope;            // untagged = linked but not tagged
-    return scope === filter;                               // 'out-of-scope' includes auto
-  })();
+  // Visibility — the effective scope key must be in the selected filter set
+  const key = scope || 'untagged';
+  const visible = filters.includes(key);
 
   const el = document.createElement('div');
   el.className = baseClass;
@@ -250,10 +257,13 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
 
 // ── Filter bar helpers ─────────────────────────────────────────────────────────
 
-function updateFilterBar(activeFilter) {
-  // Update active button state
+function updateFilterBar(filters, showingAll) {
+  // Active-state (multi-select): when everything is on, only "All" is lit;
+  // otherwise the individually selected chips are lit and "All" is not.
   document.querySelectorAll('.scope-filter-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.scope === activeFilter);
+    const s = btn.dataset.scope;
+    const active = s === 'all' ? showingAll : (!showingAll && filters.includes(s));
+    btn.classList.toggle('active', active);
   });
 
   // Compute counts from effective scope (incl. auto Out-of-Scope)

@@ -353,7 +353,7 @@ function openLinkPicker(side, anchorId) {
 function switchTab(tabId) {
   if (!ALL_DATA[tabId]) return;
   state.currentTab = tabId;
-  state.scopeFilter = 'all'; // reset filter on every tab switch
+  state.scopeFilters = ['core', 'custom', 'out-of-scope', 'untagged']; // reset filter on tab switch
 
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tabId);
@@ -895,10 +895,18 @@ document.getElementById('gen-preview-btn').addEventListener('click', buildDoc);
 document.getElementById('gen-word-btn').addEventListener('click', downloadWord);
 document.getElementById('gen-pdf-btn').addEventListener('click', downloadPDF);
 
-// Scope filter bar
+// Scope filter bar (multi-select). "All" resets to everything; other chips toggle.
+const ALL_SCOPE_KEYS = ['core', 'custom', 'out-of-scope', 'untagged'];
 document.querySelectorAll('.scope-filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    state.scopeFilter = btn.dataset.scope || 'all';
+    const s = btn.dataset.scope;
+    if (s === 'all') {
+      state.scopeFilters = [...ALL_SCOPE_KEYS];
+    } else {
+      const set = new Set(state.scopeFilters);
+      set.has(s) ? set.delete(s) : set.add(s);
+      state.scopeFilters = ALL_SCOPE_KEYS.filter(k => set.has(k)); // keep canonical order
+    }
     render(gridCallbacks);
   });
 });

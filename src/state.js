@@ -24,9 +24,9 @@ export const state = {
   activeVersionId:   'original',
   activeVersionName: 'Original',
   isDirty:           false,
-  // Scope filter — 'all' | 'core' | 'custom' | 'out-of-scope' | 'untagged'
-  // Resets to 'all' on every tab switch.
-  scopeFilter: 'all',
+  // Scope filter (System view) — multi-select set of the scope keys to show.
+  // All four selected = show everything. Resets on every tab switch.
+  scopeFilters: ['core', 'custom', 'out-of-scope', 'untagged'],
   // Per-module visibility. Map of tabId -> boolean. A tab is visible unless
   // explicitly set to false. Persisted as part of each saved version so a
   // client version can show only the modules in that client's scope.
