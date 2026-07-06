@@ -919,6 +919,15 @@ function renderScopeFilter() {
   }));
 }
 
+/** Expand or collapse every process (with subs) in the current system module. */
+function toggleExpandAll() {
+  const ids = [];
+  currentData().forEach(col => col.processes.forEach(p => { if ((p.subs || []).length) ids.push(p.id); }));
+  const allExpanded = ids.length > 0 && ids.every(id => state.expandedProcs[id]);
+  ids.forEach(id => { if (allExpanded) delete state.expandedProcs[id]; else state.expandedProcs[id] = true; });
+  render(gridCallbacks);
+}
+
 // Static tab buttons
 document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.tab));
@@ -928,6 +937,9 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
 document.querySelectorAll('.view-btn').forEach(btn => {
   btn.addEventListener('click', () => switchView(btn.dataset.view));
 });
+
+// Expand / collapse all sub-processes (System view)
+document.getElementById('expand-all-btn')?.addEventListener('click', toggleExpandAll);
 initBusinessView({ onTabSwitch: switchBusinessTab, onEdit: openBusinessEditModal, onRemove: businessRemove, onAdd: businessAdd });
 initBusinessEditModal({ afterSave: () => { renderBusiness(); updateUndoBtn(); updateVersionBadge(); } });
 initMappingView({ navigate: navigateToLinked });

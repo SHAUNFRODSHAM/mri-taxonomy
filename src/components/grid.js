@@ -134,28 +134,34 @@ export function render(callbacks) {
     let visibleCount = 0;
 
     col.processes.forEach(proc => {
-      const subs     = proc.subs || [];
-      const hasSubs  = subs.length > 0;
-      // Collapsed by default; a scope filter force-expands so matches show.
-      const expanded = !!state.expandedProcs[proc.id] || !showingAll;
+      const subs    = proc.subs || [];
+      const hasSubs = subs.length > 0;
+
+      // A process shows if it, or any of its sub-processes, matches the filter.
+      const procMatches = filters.includes(effectiveScope(proc, null, linkedSet).scope || 'untagged');
+      const subMatches  = subs.some(s => filters.includes(effectiveScope(s, proc, linkedSet).scope || 'untagged'));
+      if (!showingAll && !procMatches && !subMatches && !state.editMode) return; // hide non-matching process
+
+      // Collapse is respected during filtering (no force-expand).
+      const expanded = !!state.expandedProcs[proc.id];
       const subToggle = hasSubs
         ? { count: subs.length, expanded, onToggle: () => toggleExpand(proc.id) }
         : null;
 
-      const procEl = makeItemEl(proc, 'process-box', onItemClick, onEditClick,
+      colBody.appendChild(makeItemEl(proc, 'process-box', onItemClick, onEditClick,
         () => onRemoveItem('proc', col.id, proc.id),
-        onScopeChange, filters, null, linkedSet, subToggle);
-      colBody.appendChild(procEl);
-      if (!procEl.classList.contains('item-hidden')) visibleCount++;
+        onScopeChange, null, linkedSet, subToggle));
+      visibleCount++;
 
       if (expanded) {
         subs.forEach(sub => {
-          const cls   = sub.type === 'process' ? 'process-box' : 'sub-box';
-          const subEl = makeItemEl(sub, cls + ' is-nested', onItemClick, onEditClick,
+          const subKey = effectiveScope(sub, proc, linkedSet).scope || 'untagged';
+          if (!showingAll && !filters.includes(subKey) && !state.editMode) return; // skip non-matching sub
+          const cls = sub.type === 'process' ? 'process-box' : 'sub-box';
+          colBody.appendChild(makeItemEl(sub, cls + ' is-nested', onItemClick, onEditClick,
             () => onRemoveItem('sub', col.id, proc.id, sub.id),
-            onScopeChange, filters, proc, linkedSet, null);
-          colBody.appendChild(subEl);
-          if (!subEl.classList.contains('item-hidden')) visibleCount++;
+            onScopeChange, proc, linkedSet, null));
+          visibleCount++;
         });
       }
 
@@ -216,18 +222,14 @@ export function render(callbacks) {
 
 // ── makeItemEl ────────────────────────────────────────────────────────────────
 
-function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScopeChange, filters, parentProcess, linkedSet, subToggle) {
+function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScopeChange, parentProcess, linkedSet, subToggle) {
   const eff   = effectiveScope(item, parentProcess, linkedSet);
   const scope = eff.scope;   // effective scope (manual tag, or auto Out-of-Scope)
   const auto  = eff.auto;    // true when defaulted because nothing is linked
 
-  // Visibility — the effective scope key must be in the selected filter set
-  const key = scope || 'untagged';
-  const visible = filters.includes(key);
-
+  // Visibility is decided by the caller (matching items are the only ones rendered).
   const el = document.createElement('div');
   el.className = baseClass;
-  if (!visible) el.classList.add('item-hidden');
   if (scope === 'out-of-scope') el.classList.add('scope-oos');
   if (auto) el.classList.add('scope-oos-auto');
   el.dataset.id = item.id;
@@ -294,12 +296,26 @@ function updateFilterBar() {
   // Compute counts from effective scope (incl. auto Out-of-Scope)
   const counts = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0, auto: 0 };
   const linkedSet = linkedSystemIds();
+  const expandableIds = [];
   (currentData() || []).forEach(col => {
     col.processes.forEach(proc => {
+      if ((proc.subs || []).length) expandableIds.push(proc.id);
       tallyEff(effectiveScope(proc, null, linkedSet), counts);
       (proc.subs || []).forEach(sub => tallyEff(effectiveScope(sub, proc, linkedSet), counts));
     });
   });
+
+  // Expand/collapse-all button label + visibility
+  const expBtn = document.getElementById('expand-all-btn');
+  if (expBtn) {
+    if (!expandableIds.length) {
+      expBtn.style.display = 'none';
+    } else {
+      expBtn.style.display = '';
+      const allExpanded = expandableIds.every(id => state.expandedProcs[id]);
+      expBtn.textContent = allExpanded ? '⊟ Collapse all' : '⊞ Expand all';
+    }
+  }
 
   const countsEl = document.getElementById('scope-filter-counts');
   if (!countsEl) return;

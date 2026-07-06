@@ -1476,3 +1476,11 @@ body {
 .sub-toggle.open { color: var(--ink2); background: var(--surface3); border-color: var(--border2); }
 /* Nested sub-process cards — indented with a connector to their parent */
 .is-nested { margin-left: 14px; border-left: 2px solid var(--border2); }
+
+/* Expand / collapse all sub-processes button (scope filter bar) */
+.expand-all-btn {
+  font-family: var(--font); font-size: 0.72rem; font-weight: 600; color: var(--ink2);
+  background: var(--surface); border: 1px solid var(--border2); border-radius: 6px;
+  padding: 5px 11px; cursor: pointer; transition: all var(--dur);
+}
+.expand-all-btn:hover { border-color: var(--green); color: var(--ink); }
