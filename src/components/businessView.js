@@ -11,7 +11,7 @@
 
 import { state } from '../state.js';
 import { makeMultiSelect } from './multiSelect.js';
-import { clientNoteHTML, wireClientNote } from './clientNote.js';
+import { clientNoteHTML } from './clientNote.js';
 import {
   BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, findBusinessItem,
 } from '../data/business/index.js';
@@ -372,7 +372,6 @@ export function showBusinessPanel(id) {
   }
 
   document.getElementById('panel-body').innerHTML = html;
-  wireClientNote(item);
   document.getElementById('overlay').classList.add('open');
   document.getElementById('panel').classList.add('open');
 }

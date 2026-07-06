@@ -39,6 +39,9 @@ export function openBusinessEditModal(id) {
     <textarea id="bem-activities">${txt((item.activities || []).join('\n'))}</textarea>
     <p class="field-hint">One activity per line.</p>
 
+    <label>Client Note</label>
+    <textarea id="bem-client-note" placeholder="Client-specific note — saved with this version">${txt(item.clientNote)}</textarea>
+
     <div class="modal-sec-head">Market Variation</div>
     <p class="field-hint" style="margin-top:-6px">How this process differs by geography. Leave blank if not applicable.</p>
     ${MARKETS.map(m => `
@@ -74,6 +77,7 @@ export function saveBusinessEditModal() {
   item.desc  = document.getElementById('bem-desc').value.trim();
   item.activities = document.getElementById('bem-activities').value
     .split('\n').map(s => s.trim()).filter(Boolean);
+  item.clientNote = document.getElementById('bem-client-note').value.trim();
 
   const market = {};
   document.querySelectorAll('.bem-market').forEach(t => {
