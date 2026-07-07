@@ -1,2 +1,1 @@
-docs/azure-devops-import.csv -text
-docs/azure-devops-import.csv eol=crlf
+docs/azure-devops-import.csv text eol=lf

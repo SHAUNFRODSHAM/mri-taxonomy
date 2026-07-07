@@ -1,210 +1,210 @@
-﻿ID,Work Item Type,Title,Description,Acceptance Criteria,Story Points,Priority,Tags
-,Epic,Tri-View Taxonomy Platform,"The application shell and navigation: a single engagement viewed through three synchronised perspectives (Value Streams, MRI PMX System, Mapping) sharing one hierarchy (Tab -> Column -> Card) and one detail panel.",,,1,platform;MoSCoW-Must
-,Epic,Business Process View - CRE Powered Value Streams,"The 'what the business does' perspective, organised as CRE Powered value streams. Cards carry market, vertical and standards detail and are enriched during discovery.",,,1,business-view;MoSCoW-Must
-,Epic,MRI PMX System View,"The 'how the ERP supports it' perspective, organised by MRI PMX module. Each system process carries MRI screen navigation, setup prerequisites and associated screens.",,,1,system-view;MoSCoW-Must
-,Epic,Business-to-System Linkage & Mapping,"Connect each business process to the system process(es) that deliver it, navigate between counterparts, and visualise coverage and gaps in a matrix.",,,1,linkage;mapping;MoSCoW-Must
-,Epic,System Coverage Tagging,"Tag each value-stream process with how fully MRI PMX covers it (Full / Partial / Outside), filter by it, bulk-apply it, and surface guidance via tooltips and link warnings.",,,2,coverage;business-view;MoSCoW-Must
-,Epic,Scope Management,"Tag system processes as Core / Custom / Out of Scope, auto-derive out-of-scope for unlinked items, filter by scope with live counts, and bulk-tag columns.",,,2,scope;system-view;MoSCoW-Should
-,Epic,Client Versioning & Content Editing,"Author content in-browser (Edit Mode), capture client-specific notes, and save/load named client versions that snapshot content, links, tags and visibility across all views. Includes undo and reset.",,,1,versioning;editing;MoSCoW-Must
-,Epic,Document Generation & Export,"Produce client-ready Word and PDF documents from the current or all visible tabs, respecting scope tags and the market/vertical selection.",,,2,export;MoSCoW-Should
-,Epic,Multi-ERP Expansion,Future direction: map the same business processes against additional ERPs (Yardi planned) and share client versions between machines/users.,,,4,future;multi-erp
-,Feature,View Switcher & Shared Shell,"A three-way view switcher (Value Streams / MRI PMX System / Mapping) over shared grid, header and detail-panel containers, so context carries across perspectives.",,,1,platform;MoSCoW-Must
-,Feature,Hierarchical Grid & Navigation,"The Tab -> Column -> Card grid with a right-hand detail panel, collapsible sub-processes, and horizontally scrolling tab bars for many modules/streams.",,,1,platform;MoSCoW-Must
-,Feature,CRE Powered Value Streams Taxonomy,"Ten CRE value streams (L1 tabs) each broken into process groups (L2 columns) and processes (L3 cards), with an enrichment flag on skeleton cards.",,,1,business-view;MoSCoW-Must
-,Feature,Business Dimensions,"Per-card market variation (UK/US/EU), vertical/sector detail (Retail/Industrial/Office/Residential) and standards & frameworks (e.g. IFRS 16, ASC 842, EPRA).",,,2,business-view;MoSCoW-Should
-,Feature,Business Filters,Multi-select Market and Vertical filters that drive what the detail panel shows and which cards are visible.,,,2,business-view;filters;MoSCoW-Should
-,Feature,MRI PMX Module Taxonomy,"System processes organised by MRI PMX module -> functional area -> process -> optional sub-process, each with MRI navigation, prerequisites and associated screens.",,,1,system-view;MoSCoW-Must
-,Feature,Placeholder Module Flagging,"Modules awaiting SME review (Job Cost, Corporate AR, Budgeting & Forecasting) are visibly flagged as provisional.",,,3,system-view;placeholder;MoSCoW-Could
-,Feature,Business-to-System Links,"Each business process links to one or more system processes and vice-versa, with click-through navigation to the counterpart.",,,2,linkage;MoSCoW-Must
-,Feature,Link Editing in Edit Mode,Add and remove links inside the edit dialog on both views using a searchable process picker; changes are captured per client version.,,,2,linkage;editing;MoSCoW-Must
-,Feature,Coverage Mapping Matrix & Gap Analysis,"A matrix of value-stream groups (rows) against MRI PMX modules (columns) showing link counts, drill-down to pairs, coverage colouring and unmapped-gap flags.",,,2,mapping;MoSCoW-Should
-,Feature,Item-Level System Coverage Tag,"A single System Coverage tag (Full / Partial / Outside) on each value-stream process, with explanatory tooltips and a warning when a Full/Partial item is not yet linked.",,,2,coverage;MoSCoW-Must
-,Feature,Coverage Filter,A multi-select System Coverage filter beside Market and Vertical that shows/hides value-stream cards by their coverage tag.,,,2,coverage;filters;MoSCoW-Should
-,Feature,Bulk Coverage Tagging,A 'Tag all' dropdown on each value-stream column header (Edit Mode) to set Full/Partial/Outside or clear tags across the whole column.,,,3,coverage;editing;MoSCoW-Could
-,Feature,System Scope Tagging,"Tag each system process Core / Custom / Out of Scope, with auto Out-of-Scope for processes not linked to any value stream, and bulk column tagging.",,,2,scope;MoSCoW-Should
-,Feature,Scope Filter & Empty-Column Handling,"A multi-select scope filter with live counts and expand/collapse-all, hiding non-matching items and empty columns while respecting collapse state.",,,3,scope;filters;MoSCoW-Could
-,Feature,Edit Mode Content Authoring,"Add, edit and remove columns, processes and sub-processes in-browser, with view-specific edit forms and a per-item client note.",,,2,editing;MoSCoW-Must
-,Feature,Client Versions,"Save, load, rename and delete named version snapshots capturing content, links, coverage/scope tags, client notes and module visibility across all views; with undo and reset to original.",,,1,versioning;MoSCoW-Must
-,Feature,Module & Stream Visibility,Toggle which modules/streams are visible for a client; saved per version and reflected in exports.,,,3,versioning;MoSCoW-Could
-,Feature,Word & PDF Export,Export the current tab or all visible tabs to Word and PDF; system docs include a scope summary and respect scope tags; business docs include market/vertical/standards and respect the filter selection.,,,2,export;MoSCoW-Should
-,Feature,Yardi as a Second ERP,Future: add an ERP selector and a second system taxonomy plus link set so the same business processes can be mapped against Yardi.,,,4,future;multi-erp
-,Feature,Version Sharing,Future: export/import or shared storage so client versions can move between machines and users.,,,4,future;versioning
-,User Story,Switch between the three engagement views,"As an Implementation Consultant, I want to switch between the Value Streams, MRI PMX System and Mapping views, so that I can see the same engagement from the business, system and coverage perspectives.","Given I am on any view
+﻿State,ID,Area Path,Work Item Type,Title,Description,Acceptance Criteria,Story Points,Priority,Tags
+New,,Main Project\ERP Taxonomy Implementation App,Epic,Tri-View Taxonomy Platform,"The application shell and navigation: a single engagement viewed through three synchronised perspectives (Value Streams, MRI PMX System, Mapping) sharing one hierarchy (Tab -> Column -> Card) and one detail panel.",,,1,platform;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Epic,Business Process View - CRE Powered Value Streams,"The 'what the business does' perspective, organised as CRE Powered value streams. Cards carry market, vertical and standards detail and are enriched during discovery.",,,1,business-view;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Epic,MRI PMX System View,"The 'how the ERP supports it' perspective, organised by MRI PMX module. Each system process carries MRI screen navigation, setup prerequisites and associated screens.",,,1,system-view;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Epic,Business-to-System Linkage & Mapping,"Connect each business process to the system process(es) that deliver it, navigate between counterparts, and visualise coverage and gaps in a matrix.",,,1,linkage;mapping;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Epic,System Coverage Tagging,"Tag each value-stream process with how fully MRI PMX covers it (Full / Partial / Outside), filter by it, bulk-apply it, and surface guidance via tooltips and link warnings.",,,2,coverage;business-view;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Epic,Scope Management,"Tag system processes as Core / Custom / Out of Scope, auto-derive out-of-scope for unlinked items, filter by scope with live counts, and bulk-tag columns.",,,2,scope;system-view;MoSCoW-Should
+New,,Main Project\ERP Taxonomy Implementation App,Epic,Client Versioning & Content Editing,"Author content in-browser (Edit Mode), capture client-specific notes, and save/load named client versions that snapshot content, links, tags and visibility across all views. Includes undo and reset.",,,1,versioning;editing;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Epic,Document Generation & Export,"Produce client-ready Word and PDF documents from the current or all visible tabs, respecting scope tags and the market/vertical selection.",,,2,export;MoSCoW-Should
+New,,Main Project\ERP Taxonomy Implementation App,Epic,Multi-ERP Expansion,Future direction: map the same business processes against additional ERPs (Yardi planned) and share client versions between machines/users.,,,4,future;multi-erp
+New,,Main Project\ERP Taxonomy Implementation App,Feature,View Switcher & Shared Shell,"A three-way view switcher (Value Streams / MRI PMX System / Mapping) over shared grid, header and detail-panel containers, so context carries across perspectives.",,,1,platform;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Hierarchical Grid & Navigation,"The Tab -> Column -> Card grid with a right-hand detail panel, collapsible sub-processes, and horizontally scrolling tab bars for many modules/streams.",,,1,platform;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Feature,CRE Powered Value Streams Taxonomy,"Ten CRE value streams (L1 tabs) each broken into process groups (L2 columns) and processes (L3 cards), with an enrichment flag on skeleton cards.",,,1,business-view;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Business Dimensions,"Per-card market variation (UK/US/EU), vertical/sector detail (Retail/Industrial/Office/Residential) and standards & frameworks (e.g. IFRS 16, ASC 842, EPRA).",,,2,business-view;MoSCoW-Should
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Business Filters,Multi-select Market and Vertical filters that drive what the detail panel shows and which cards are visible.,,,2,business-view;filters;MoSCoW-Should
+New,,Main Project\ERP Taxonomy Implementation App,Feature,MRI PMX Module Taxonomy,"System processes organised by MRI PMX module -> functional area -> process -> optional sub-process, each with MRI navigation, prerequisites and associated screens.",,,1,system-view;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Placeholder Module Flagging,"Modules awaiting SME review (Job Cost, Corporate AR, Budgeting & Forecasting) are visibly flagged as provisional.",,,3,system-view;placeholder;MoSCoW-Could
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Business-to-System Links,"Each business process links to one or more system processes and vice-versa, with click-through navigation to the counterpart.",,,2,linkage;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Link Editing in Edit Mode,Add and remove links inside the edit dialog on both views using a searchable process picker; changes are captured per client version.,,,2,linkage;editing;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Coverage Mapping Matrix & Gap Analysis,"A matrix of value-stream groups (rows) against MRI PMX modules (columns) showing link counts, drill-down to pairs, coverage colouring and unmapped-gap flags.",,,2,mapping;MoSCoW-Should
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Item-Level System Coverage Tag,"A single System Coverage tag (Full / Partial / Outside) on each value-stream process, with explanatory tooltips and a warning when a Full/Partial item is not yet linked.",,,2,coverage;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Coverage Filter,A multi-select System Coverage filter beside Market and Vertical that shows/hides value-stream cards by their coverage tag.,,,2,coverage;filters;MoSCoW-Should
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Bulk Coverage Tagging,A 'Tag all' dropdown on each value-stream column header (Edit Mode) to set Full/Partial/Outside or clear tags across the whole column.,,,3,coverage;editing;MoSCoW-Could
+New,,Main Project\ERP Taxonomy Implementation App,Feature,System Scope Tagging,"Tag each system process Core / Custom / Out of Scope, with auto Out-of-Scope for processes not linked to any value stream, and bulk column tagging.",,,2,scope;MoSCoW-Should
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Scope Filter & Empty-Column Handling,"A multi-select scope filter with live counts and expand/collapse-all, hiding non-matching items and empty columns while respecting collapse state.",,,3,scope;filters;MoSCoW-Could
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Edit Mode Content Authoring,"Add, edit and remove columns, processes and sub-processes in-browser, with view-specific edit forms and a per-item client note.",,,2,editing;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Client Versions,"Save, load, rename and delete named version snapshots capturing content, links, coverage/scope tags, client notes and module visibility across all views; with undo and reset to original.",,,1,versioning;MoSCoW-Must
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Module & Stream Visibility,Toggle which modules/streams are visible for a client; saved per version and reflected in exports.,,,3,versioning;MoSCoW-Could
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Word & PDF Export,Export the current tab or all visible tabs to Word and PDF; system docs include a scope summary and respect scope tags; business docs include market/vertical/standards and respect the filter selection.,,,2,export;MoSCoW-Should
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Yardi as a Second ERP,Future: add an ERP selector and a second system taxonomy plus link set so the same business processes can be mapped against Yardi.,,,4,future;multi-erp
+New,,Main Project\ERP Taxonomy Implementation App,Feature,Version Sharing,Future: export/import or shared storage so client versions can move between machines and users.,,,4,future;versioning
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Switch between the three engagement views,"As an Implementation Consultant, I want to switch between the Value Streams, MRI PMX System and Mapping views, so that I can see the same engagement from the business, system and coverage perspectives.","Given I am on any view
 When I select a different view from the switcher
 Then that view renders using the shared grid and header
 And my place in the engagement (active tab where applicable) is preserved.",3,1,platform;MoSCoW-Must
-,User Story,Open a detail panel for any card,"As an Implementation Consultant, I want to click a card to open a detail panel, so that I can read its full detail without leaving the grid.","Given a card is shown in any view
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Open a detail panel for any card,"As an Implementation Consultant, I want to click a card to open a detail panel, so that I can read its full detail without leaving the grid.","Given a card is shown in any view
 When I click the card in view mode
 Then a right-hand detail panel opens showing the item's breadcrumb, title, badges and detail sections
 And clicking the overlay or another card updates or closes the panel.",2,1,platform;MoSCoW-Must
-,User Story,Browse the Tab-Column-Card hierarchy,"As an Implementation Consultant, I want to browse content as tabs, columns and cards, so that I can navigate a large taxonomy quickly.","Given a view is active
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Browse the Tab-Column-Card hierarchy,"As an Implementation Consultant, I want to browse content as tabs, columns and cards, so that I can navigate a large taxonomy quickly.","Given a view is active
 When it renders
 Then top-level items appear as tabs, groups as columns and items as cards
 And selecting a tab shows that tab's columns and cards.",2,1,platform;MoSCoW-Must
-,User Story,Expand and collapse sub-processes,"As an Implementation Consultant, I want to expand or collapse a process's sub-processes, so that I can control detail density on screen.","Given a process has sub-processes
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Expand and collapse sub-processes,"As an Implementation Consultant, I want to expand or collapse a process's sub-processes, so that I can control detail density on screen.","Given a process has sub-processes
 When I click its expand toggle
 Then its sub-processes are revealed and the toggle shows the count
 And when collapsed the sub-processes are hidden
 And an Expand all / Collapse all control toggles every process at once.",3,2,platform;MoSCoW-Should
-,User Story,Scroll a long tab bar,"As an Implementation Consultant, I want the tab bar to scroll horizontally when there are many tabs, so that all modules/streams remain reachable on a normal screen.","Given more tabs exist than fit the viewport width
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Scroll a long tab bar,"As an Implementation Consultant, I want the tab bar to scroll horizontally when there are many tabs, so that all modules/streams remain reachable on a normal screen.","Given more tabs exist than fit the viewport width
 When I view the tab bar
 Then it scrolls horizontally
 And every tab can be reached and selected.",2,3,platform;MoSCoW-Could
-,User Story,Browse CRE value streams,"As a Business Analyst, I want to browse the CRE Powered value streams as tabs with their process groups and processes, so that I can frame discovery around recognised value streams.","Given the Value Streams view is active
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Browse CRE value streams,"As a Business Analyst, I want to browse the CRE Powered value streams as tabs with their process groups and processes, so that I can frame discovery around recognised value streams.","Given the Value Streams view is active
 When I select a value-stream tab
 Then its process groups render as columns and processes as cards
 And supporting/enabling streams are visually distinguished.",3,1,business-view;MoSCoW-Must
-,User Story,See which cards still need enrichment,"As a Business Analyst, I want skeleton L3 cards flagged as needing enrichment, so that I know what to fill in during discovery.","Given a process card has not been enriched
+New,,Main Project\ERP Taxonomy Implementation App,User Story,See which cards still need enrichment,"As a Business Analyst, I want skeleton L3 cards flagged as needing enrichment, so that I know what to fill in during discovery.","Given a process card has not been enriched
 When I view it
 Then it shows a 'needs enrichment' flag
 And the flag is explained in the detail panel.",2,2,business-view;MoSCoW-Should
-,User Story,View market variation for a process,"As a Client SME / Reviewer, I want to see how a process varies by market for the markets I care about, so that geography-specific differences are explicit.","Given a process has market variation content
+New,,Main Project\ERP Taxonomy Implementation App,User Story,View market variation for a process,"As a Client SME / Reviewer, I want to see how a process varies by market for the markets I care about, so that geography-specific differences are explicit.","Given a process has market variation content
 And one or more markets are selected in the Market filter
 When I open the process detail panel
 Then I see one block per selected market that has content.",3,2,business-view;MoSCoW-Should
-,User Story,View vertical/sector detail for a process,"As a Client SME / Reviewer, I want to see sector-specific detail for the verticals I care about, so that the taxonomy reflects my property type.","Given a process has vertical detail
+New,,Main Project\ERP Taxonomy Implementation App,User Story,View vertical/sector detail for a process,"As a Client SME / Reviewer, I want to see sector-specific detail for the verticals I care about, so that the taxonomy reflects my property type.","Given a process has vertical detail
 And one or more verticals are selected in the Vertical filter
 When I open the process detail panel
 Then I see one colour-tagged row per selected sector that has content.",3,2,business-view;MoSCoW-Should
-,User Story,See standards and frameworks on a process,"As a Business Analyst, I want relevant standards/frameworks shown on a process, so that regulatory weight is visible at a glance.","Given a process has standards
+New,,Main Project\ERP Taxonomy Implementation App,User Story,See standards and frameworks on a process,"As a Business Analyst, I want relevant standards/frameworks shown on a process, so that regulatory weight is visible at a glance.","Given a process has standards
 When I view its card
 Then a standards count chip is shown with the standards on hover
 And the detail panel lists each standard.",2,3,business-view;MoSCoW-Could
-,User Story,Filter value streams by market,"As an Implementation Consultant, I want to filter by one or more markets, so that I focus on the client's geographies.","Given the Market filter offers UK, US and EU
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Filter value streams by market,"As an Implementation Consultant, I want to filter by one or more markets, so that I focus on the client's geographies.","Given the Market filter offers UK, US and EU
 When I change the selection
 Then the grid and detail panel reflect only the selected markets
 And the filter chip shows the current selection summary.",2,2,business-view;filters;MoSCoW-Should
-,User Story,Filter value streams by vertical,"As an Implementation Consultant, I want to filter by one or more verticals, so that I focus on the client's property types.","Given the Vertical filter offers Retail, Industrial, Office and Residential
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Filter value streams by vertical,"As an Implementation Consultant, I want to filter by one or more verticals, so that I focus on the client's property types.","Given the Vertical filter offers Retail, Industrial, Office and Residential
 When I change the selection
 Then cards not relevant to the selected verticals are hidden
 And vertical-agnostic cards remain visible.",2,2,business-view;filters;MoSCoW-Should
-,User Story,Browse the MRI PMX system taxonomy,"As an Implementation Consultant, I want to browse MRI PMX by module, functional area, process and sub-process, so that I can locate system support for a business need.","Given the MRI PMX System view is active
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Browse the MRI PMX system taxonomy,"As an Implementation Consultant, I want to browse MRI PMX by module, functional area, process and sub-process, so that I can locate system support for a business need.","Given the MRI PMX System view is active
 When I select a module tab
 Then its functional areas render as columns and processes as cards, with optional sub-processes
 And each level is navigable.",3,1,system-view;MoSCoW-Must
-,User Story,See MRI setup detail for a system process,"As an Implementation Consultant, I want each system process to show its MRI screen/navigation, setup prerequisites and associated screens, so that I can advise on configuration.","Given a system process is selected
+New,,Main Project\ERP Taxonomy Implementation App,User Story,See MRI setup detail for a system process,"As an Implementation Consultant, I want each system process to show its MRI screen/navigation, setup prerequisites and associated screens, so that I can advise on configuration.","Given a system process is selected
 When its detail panel opens
 Then it shows the MRI screen title/navigation, setup prerequisites and associated screens with descriptions.",3,1,system-view;MoSCoW-Must
-,User Story,See placeholder modules flagged,"As an Engagement Lead, I want placeholder modules clearly flagged, so that I do not present provisional content as final.","Given a module contains placeholder content (Job Cost, Corporate AR, Budgeting & Forecasting)
+New,,Main Project\ERP Taxonomy Implementation App,User Story,See placeholder modules flagged,"As an Engagement Lead, I want placeholder modules clearly flagged, so that I do not present provisional content as final.","Given a module contains placeholder content (Job Cost, Corporate AR, Budgeting & Forecasting)
 When I view that module
 Then it is visibly flagged as awaiting SME review.",2,3,system-view;placeholder;MoSCoW-Could
-,User Story,See linked counterparts in both directions,"As an Implementation Consultant, I want a business process to show the system processes that deliver it and a system process to show the business processes it supports, so that I understand the mapping from either side.","Given a process has links
+New,,Main Project\ERP Taxonomy Implementation App,User Story,See linked counterparts in both directions,"As an Implementation Consultant, I want a business process to show the system processes that deliver it and a system process to show the business processes it supports, so that I understand the mapping from either side.","Given a process has links
 When I open its detail panel
 Then business items list 'Delivered in MRI PMX by' and system items list 'Supports Business Processes'
 And each linked counterpart is listed with its breadcrumb.",3,1,linkage;MoSCoW-Must
-,User Story,Navigate to a linked counterpart,"As an Implementation Consultant, I want to click a linked process, so that I jump to its counterpart in the other view.","Given a linked counterpart is shown in the detail panel
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Navigate to a linked counterpart,"As an Implementation Consultant, I want to click a linked process, so that I jump to its counterpart in the other view.","Given a linked counterpart is shown in the detail panel
 When I click it
 Then the app switches to the counterpart's view
 And opens the counterpart's detail panel.",3,1,linkage;MoSCoW-Must
-,User Story,Add a link in Edit Mode,"As a Business Analyst, I want to add a business-system link from within the edit dialog using a searchable picker, so that I can build the mapping during discovery.","Given I am editing an item in Edit Mode
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Add a link in Edit Mode,"As a Business Analyst, I want to add a business-system link from within the edit dialog using a searchable picker, so that I can build the mapping during discovery.","Given I am editing an item in Edit Mode
 When I open the link editor and search for a counterpart
 And select it
 Then a link is created between the two items
 And it appears in both items' link lists
 And the change marks the version dirty for saving.",5,1,linkage;editing;MoSCoW-Must
-,User Story,Remove a link in Edit Mode,"As a Business Analyst, I want to remove a link from the edit dialog, so that I can correct the mapping.","Given an item has one or more links
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Remove a link in Edit Mode,"As a Business Analyst, I want to remove a link from the edit dialog, so that I can correct the mapping.","Given an item has one or more links
 When I remove a link in the edit dialog
 Then the link is deleted from both items
 And any affected coverage/auto-scope indicators update
 And the change marks the version dirty.",3,1,linkage;editing;MoSCoW-Must
-,User Story,View the coverage mapping matrix,"As an Engagement Lead, I want a matrix of value-stream groups against MRI PMX modules showing link counts, so that I can see overall coverage at a glance.","Given links exist
+New,,Main Project\ERP Taxonomy Implementation App,User Story,View the coverage mapping matrix,"As an Engagement Lead, I want a matrix of value-stream groups against MRI PMX modules showing link counts, so that I can see overall coverage at a glance.","Given links exist
 When I open the Mapping view
 Then a matrix shows value-stream groups as rows and MRI PMX modules as columns
 And each populated cell shows its link count and a coverage colour
 And a summary shows how many groups are mapped.",5,2,mapping;MoSCoW-Should
-,User Story,Drill into a matrix cell,"As an Engagement Lead, I want to click a matrix cell, so that I can see the specific business-system pairs behind the count.","Given a populated matrix cell
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Drill into a matrix cell,"As an Engagement Lead, I want to click a matrix cell, so that I can see the specific business-system pairs behind the count.","Given a populated matrix cell
 When I click it
 Then the detail panel lists each business-system pair with coverage and navigable links.",3,2,mapping;MoSCoW-Should
-,User Story,Identify coverage gaps,"As an Engagement Lead, I want value-stream groups with no system counterpart flagged, so that I can show where the ERP does not support the business.","Given a value-stream group has no links to any system module
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Identify coverage gaps,"As an Engagement Lead, I want value-stream groups with no system counterpart flagged, so that I can show where the ERP does not support the business.","Given a value-stream group has no links to any system module
 When I view the matrix
 Then that group's row is flagged as unmapped
 And the summary reflects the number of unmapped groups.",3,2,mapping;gap-analysis;MoSCoW-Should
-,User Story,Tag a value-stream process with system coverage,"As a Business Analyst, I want to tag a value-stream process Full, Partial or Outside, so that I record how much of it lives in MRI PMX.","Given I am in Edit Mode on the Value Streams view
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Tag a value-stream process with system coverage,"As a Business Analyst, I want to tag a value-stream process Full, Partial or Outside, so that I record how much of it lives in MRI PMX.","Given I am in Edit Mode on the Value Streams view
 When I click a process's coverage badge
 Then it cycles through Untagged -> Full -> Partial -> Outside
 And the tag is shown on the card and in the detail panel
 And the change marks the version dirty.",3,1,coverage;MoSCoW-Must
-,User Story,See context for a coverage tag on hover,"As a Client SME / Reviewer, I want a tooltip explaining each coverage tag, so that I understand what Full, Partial and Outside mean.","Given a process has a coverage tag
+New,,Main Project\ERP Taxonomy Implementation App,User Story,See context for a coverage tag on hover,"As a Client SME / Reviewer, I want a tooltip explaining each coverage tag, so that I understand what Full, Partial and Outside mean.","Given a process has a coverage tag
 When I hover over the tag on the card, in the panel, in the matrix, or in the edit dialog
 Then a tooltip shows the tag label and an explanation of its meaning.",2,2,coverage;MoSCoW-Should
-,User Story,Be warned when a covered process is unlinked,"As a Business Analyst, I want a warning when a Full or Partial process has no system link, so that I remember to map it (without being blocked).","Given a process is tagged Full or Partial
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Be warned when a covered process is unlinked,"As a Business Analyst, I want a warning when a Full or Partial process has no system link, so that I remember to map it (without being blocked).","Given a process is tagged Full or Partial
 And it has no system link
 When I view the card or its detail panel
 Then a 'link needed' warning is shown
 And I am still allowed to save the version.",3,1,coverage;MoSCoW-Must
-,User Story,Filter value streams by system coverage,"As an Implementation Consultant, I want a System Coverage filter beside Market and Vertical, so that I can focus on Full, Partial, Outside or Untagged processes.","Given the System Coverage filter offers Full, Partial, Outside and Untagged
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Filter value streams by system coverage,"As an Implementation Consultant, I want a System Coverage filter beside Market and Vertical, so that I can focus on Full, Partial, Outside or Untagged processes.","Given the System Coverage filter offers Full, Partial, Outside and Untagged
 When I change the selection
 Then only processes whose coverage matches are shown
 And a process is shown if it or one of its sub-processes matches.",3,2,coverage;filters;MoSCoW-Should
-,User Story,Bulk-tag a column's coverage,"As a Business Analyst, I want to tag every process in a value-stream column at once, so that I can set coverage efficiently.","Given I am in Edit Mode on the Value Streams view
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Bulk-tag a column's coverage,"As a Business Analyst, I want to tag every process in a value-stream column at once, so that I can set coverage efficiently.","Given I am in Edit Mode on the Value Streams view
 When I open a column's 'Tag all' dropdown and choose Full, Partial, Outside or Clear
 Then every process and sub-process in that column takes that coverage (or is cleared)
 And the change is undoable and marks the version dirty.",3,3,coverage;editing;MoSCoW-Could
-,User Story,Tag a system process's scope,"As an Implementation Consultant, I want to tag a system process Core, Custom or Out of Scope, so that scope decisions are captured.","Given I am in Edit Mode on the MRI PMX System view
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Tag a system process's scope,"As an Implementation Consultant, I want to tag a system process Core, Custom or Out of Scope, so that scope decisions are captured.","Given I am in Edit Mode on the MRI PMX System view
 When I cycle a process's scope tag
 Then the process shows the scope as a badge and in the panel
 And out-of-scope items are visually dimmed.",3,2,scope;MoSCoW-Should
-,User Story,Auto-derive out-of-scope for unlinked processes,"As an Implementation Consultant, I want system processes with no business link to default to Out of Scope, so that unused system areas are obvious without manual tagging.","Given a system process has no manual scope tag
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Auto-derive out-of-scope for unlinked processes,"As an Implementation Consultant, I want system processes with no business link to default to Out of Scope, so that unused system areas are obvious without manual tagging.","Given a system process has no manual scope tag
 And it is not linked to any value-stream process
 When I view it
 Then it is shown as Out of Scope with an 'auto' indicator
 And a manual tag overrides the auto state.",5,2,scope;MoSCoW-Should
-,User Story,Bulk-tag a system column's scope,"As an Implementation Consultant, I want to tag a whole system column Core/Custom/Out of Scope or clear it, so that I can scope efficiently.","Given I am in Edit Mode on the MRI PMX System view
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Bulk-tag a system column's scope,"As an Implementation Consultant, I want to tag a whole system column Core/Custom/Out of Scope or clear it, so that I can scope efficiently.","Given I am in Edit Mode on the MRI PMX System view
 When I choose a scope from a column's 'Tag all' dropdown
 Then every process and sub-process in that column takes that scope (or is cleared)
 And the change is undoable.",3,3,scope;editing;MoSCoW-Could
-,User Story,Filter the system view by scope,"As an Engagement Lead, I want to filter by scope with live counts, so that I can review only in-scope or out-of-scope work.","Given the scope filter offers Core, Custom, Out of Scope and Untagged
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Filter the system view by scope,"As an Engagement Lead, I want to filter by scope with live counts, so that I can review only in-scope or out-of-scope work.","Given the scope filter offers Core, Custom, Out of Scope and Untagged
 When I change the selection
 Then non-matching processes and empty columns are hidden
 And live counts reflect the current selection
 And collapse state is respected during filtering.",3,2,scope;filters;MoSCoW-Should
-,User Story,"Add, edit and remove business items","As a Business Analyst, I want to add, edit and remove domains, processes and sub-processes in the Value Streams view, so that I can tailor the taxonomy to the client.","Given I am in Edit Mode on the Value Streams view
+New,,Main Project\ERP Taxonomy Implementation App,User Story,"Add, edit and remove business items","As a Business Analyst, I want to add, edit and remove domains, processes and sub-processes in the Value Streams view, so that I can tailor the taxonomy to the client.","Given I am in Edit Mode on the Value Streams view
 When I add, edit or remove an item
 Then the change is applied to the grid
 And the business edit form captures description, activities, market, vertical, standards, coverage, client note and links
 And the change is undoable.",5,1,editing;business-view;MoSCoW-Must
-,User Story,"Add, edit and remove system items","As an Implementation Consultant, I want to add, edit and remove columns, processes and sub-processes in the MRI PMX System view, so that I can tailor system content.","Given I am in Edit Mode on the MRI PMX System view
+New,,Main Project\ERP Taxonomy Implementation App,User Story,"Add, edit and remove system items","As an Implementation Consultant, I want to add, edit and remove columns, processes and sub-processes in the MRI PMX System view, so that I can tailor system content.","Given I am in Edit Mode on the MRI PMX System view
 When I add, edit or remove an item
 Then the change is applied to the grid
 And the system edit form captures MRI screen, prerequisites, associated screens, client note and links
 And the change is undoable.",5,1,editing;system-view;MoSCoW-Must
-,User Story,Capture a client note on an item,"As a Client SME / Reviewer, I want to record a client-specific note on any item (editable only in Edit Mode), so that engagement context is retained.","Given I am editing an item in Edit Mode
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Capture a client note on an item,"As a Client SME / Reviewer, I want to record a client-specific note on any item (editable only in Edit Mode), so that engagement context is retained.","Given I am editing an item in Edit Mode
 When I enter a client note and save
 Then the note is stored on the item and shown read-only in the detail panel
 And it is captured in the saved version and in undo.",3,2,editing;versioning;MoSCoW-Should
-,User Story,Save a named client version,"As an Engagement Lead, I want to save a named snapshot of the engagement, so that each client's tailoring is preserved.","Given I have made changes
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Save a named client version,"As an Engagement Lead, I want to save a named snapshot of the engagement, so that each client's tailoring is preserved.","Given I have made changes
 When I save a named version
 Then a snapshot is stored capturing business and system content, links, coverage/scope tags, client notes and module visibility
 And the version appears in the versions list.",5,1,versioning;MoSCoW-Must
-,User Story,"Load, rename and delete versions","As an Engagement Lead, I want to load, rename and delete saved versions, so that I can manage multiple clients.","Given saved versions exist
+New,,Main Project\ERP Taxonomy Implementation App,User Story,"Load, rename and delete versions","As an Engagement Lead, I want to load, rename and delete saved versions, so that I can manage multiple clients.","Given saved versions exist
 When I load a version
 Then the app restores that version's content, links, tags and visibility across all views
 And I can rename or delete a version from the versions list.",3,1,versioning;MoSCoW-Must
-,User Story,Undo recent changes,"As an Implementation Consultant, I want to undo my recent changes, so that I can recover from mistakes during editing.","Given I have made one or more changes in Edit Mode
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Undo recent changes,"As an Implementation Consultant, I want to undo my recent changes, so that I can recover from mistakes during editing.","Given I have made one or more changes in Edit Mode
 When I choose Undo
 Then the most recent change is reverted (up to the retained history limit)
 And the view restores to the correct tab/perspective for that change.",3,2,editing;MoSCoW-Should
-,User Story,Reset to original content,"As an Engagement Lead, I want to reset to the original factory content, so that I can start a client from a clean baseline.","Given content has been changed
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Reset to original content,"As an Engagement Lead, I want to reset to the original factory content, so that I can start a client from a clean baseline.","Given content has been changed
 When I choose Reset
 Then the active content is restored to the original factory taxonomy
 And saved versions are unaffected.",2,3,versioning;MoSCoW-Could
-,User Story,Toggle module and stream visibility,"As an Engagement Lead, I want to hide modules/streams that are out of scope for a client, so that the app and exports show only what's relevant.","Given I am configuring a client
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Toggle module and stream visibility,"As an Engagement Lead, I want to hide modules/streams that are out of scope for a client, so that the app and exports show only what's relevant.","Given I am configuring a client
 When I toggle a module/stream off
 Then it is hidden from the view and from exports
 And the visibility choice is saved with the version.",3,3,versioning;MoSCoW-Could
-,User Story,Export to Word,"As an Implementation Consultant, I want to export the current tab or all visible tabs to Word, so that I can deliver a document to the client.","Given content is loaded
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Export to Word,"As an Implementation Consultant, I want to export the current tab or all visible tabs to Word, so that I can deliver a document to the client.","Given content is loaded
 When I generate a Word document for the current or all visible tabs
 Then a Word file is produced containing the selected content
 And system docs include a scope summary and respect scope tags
 And business docs include market/vertical/standards and respect the filter selection.",5,2,export;MoSCoW-Should
-,User Story,Export to PDF,"As an Implementation Consultant, I want to export to PDF, so that I can share a fixed-format document.","Given content is loaded
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Export to PDF,"As an Implementation Consultant, I want to export to PDF, so that I can share a fixed-format document.","Given content is loaded
 When I generate a PDF for the current or all visible tabs
 Then a PDF is produced reflecting the same scope and filter rules as the Word export.",3,2,export;MoSCoW-Should
-,User Story,Select the target ERP,"As a Product Admin, I want to choose which ERP the system view maps against, so that the same business processes can be mapped to different ERPs.","Given more than one ERP taxonomy is available
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Select the target ERP,"As a Product Admin, I want to choose which ERP the system view maps against, so that the same business processes can be mapped to different ERPs.","Given more than one ERP taxonomy is available
 When I select an ERP
 Then the System view and link set switch to that ERP
 And the Mapping view reflects the selected ERP.",8,4,future;multi-erp;MoSCoW-Wont
-,User Story,Share a client version between users,"As an Engagement Lead, I want to export and import client versions, so that engagements can move between machines and teammates.","Given a saved version exists
+New,,Main Project\ERP Taxonomy Implementation App,User Story,Share a client version between users,"As an Engagement Lead, I want to export and import client versions, so that engagements can move between machines and teammates.","Given a saved version exists
 When I export it
 Then a portable file is produced
 And importing it on another machine recreates the version faithfully.",5,4,future;versioning;MoSCoW-Wont
