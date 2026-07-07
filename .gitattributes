@@ -1,7 +1,2 @@
-# Normalise line endings to LF in the repo; checkout as-is on each platform
-* text=auto eol=lf
-
-# Explicitly binary
-*.png binary
-*.jpg binary
-*.ico binary
+docs/azure-devops-import.csv -text
+docs/azure-devops-import.csv eol=crlf
