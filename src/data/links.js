@@ -52,13 +52,13 @@ export const COVERAGE_ORDER = ['full', 'partial', 'outside'];
  */
 const GROUP_LINKS = {
   // Lease to Cash → Commercial / Residential Management
-  'vs-l2c-g1': ['cm-lease-origination', 'cm-onboard-prospecting', 'cm-onboard-application', 'rm-leasing-prospects', 'rm-leasing-application', 'rm-leasing-execution'],
-  'vs-l2c-g2': ['cm-lease-admin', 'cm-lease-abstraction', 'cm-lease-docs'],
-  'vs-l2c-g3': ['cm-billing-recurring', 'cm-billing-bulk', 'cm-billing-cpi', 'rm-billing-charges'],
-  'vs-l2c-g4': ['cm-recov-service-charge', 'cm-recov-method', 'cm-recov-apportionment', 'cm-recov-bulk'],
-  'vs-l2c-g5': ['cm-coll-receipts', 'cm-coll-allocation', 'cm-coll-arrears', 'cm-coll-bad-debt', 'rm-billing-receipts', 'rm-billing-delinquency'],
-  'vs-l2c-g6': ['cm-lease-billing-config', 'cm-inc-accounting', 'gl-journals-operational'],
-  'vs-l2c-g7': ['cm-lease-renewal', 'cm-lease-termination', 'cm-lease-vacating', 'rm-residents-renewal', 'rm-residents-moveout'],
+  'vs-l2c-g1': ['cm-lease-setup', 'cm-lease-special', 'rm-leasing-prospects', 'rm-leasing-application', 'rm-leasing-execution'],
+  'vs-l2c-g2': ['cm-lease-admin', 'cm-lease-setup'],
+  'vs-l2c-g3': ['cm-billing-recurring', 'cm-cpi-escalations', 'rm-billing-charges'],
+  'vs-l2c-g4': ['cm-recov-service', 'cm-recov-setup', 'cm-recov-recon'],
+  'vs-l2c-g5': ['cm-cash-receipts', 'cm-cash-recon', 'cm-billing-adjustments', 'rm-billing-receipts', 'rm-billing-delinquency'],
+  'vs-l2c-g6': ['cm-billing-advanced', 'cm-income-mapping', 'gl-journals-operational'],
+  'vs-l2c-g7': ['cm-lease-admin', 'rm-residents-renewal', 'rm-residents-moveout'],
 
   // Quote to Cash → Corporate Accounts Receivable
   'vs-q2c-g1': ['car-acct-setup', 'car-acct-tracking'],
@@ -79,7 +79,7 @@ const GROUP_LINKS = {
   // Source to Pay → Accounts Payable (+ RM vendor)
   'vs-s2p-g1': ['ap_sup_main', 'rm-vendor-onboarding'],
   'vs-s2p-g2': ['ap_inv_main', 'ap_commit_main', 'ap_pay_main', 'rm-vendor-invoices', 'rm-vendor-expense'],
-  'vs-s2p-g3': ['ap_inv_main', 'cm-recov-municipal', 'cm-recov-insurance'],
+  'vs-s2p-g3': ['ap_inv_main', 'cm-recov-setup'],
 
   // Project to Result → Job Cost
   'vs-p2r-g1': ['jc-setup-config', 'jc-jobs-manage'],
@@ -93,12 +93,12 @@ const GROUP_LINKS = {
   'vs-r2r-g4': ['gl-reporting-management', 'gl-reporting-schedule', 'rm-close-reporting', 'car-reporting-compliance'],
 
   // Treasury & Debt → limited AP / bank touchpoints (no treasury module)
-  'vs-tdm-g1': ['ap_recon_bank', 'cm-coll-receipts'],
+  'vs-tdm-g1': ['ap_recon_bank', 'cm-cash-receipts'],
 
   // Property & Facilities Operations → Residential ops + CM space
   'vs-pfo-g1': ['rm-residents-admin', 'rm-maintenance-requests'],
   'vs-pfo-g2': ['rm-maintenance-requests', 'rm-maintenance-makeready'],
-  'vs-pfo-g3': ['cm-lease-suite', 'cm-billing-vacancy'],
+  'vs-pfo-g3': ['cm-building-suites'],
   // vs-pfo-g4 (ESG) and vs-h2r (HR) have no MRI PMX counterpart — gaps.
 };
 
