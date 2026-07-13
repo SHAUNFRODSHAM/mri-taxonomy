@@ -107,7 +107,7 @@ export function renderMapping() {
 
 function showCell(domainId, sysMod) {
   const pairs = cellPairs(domainId, sysMod);
-  if (!pairs.length) { lastCell = null; document.getElementById('panel').classList.remove('open'); return; }
+  if (!pairs.length) { lastCell = null; document.getElementById('panel-overlay').classList.remove('open'); return; }
   lastCell = { domainId, sysMod };
   const domainTitle = pairs[0].b.domain.domainTitle;
   const sysLabel    = pairs[0].s.moduleLabel;
@@ -147,6 +147,5 @@ function showCell(domainId, sysMod) {
       <div class="map-pair-list">${rows}</div>
     </div>`;
 
-  document.getElementById('overlay').classList.add('open');
-  document.getElementById('panel').classList.add('open');
+  document.getElementById('panel-overlay').classList.add('open');
 }

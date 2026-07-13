@@ -494,6 +494,5 @@ export function showBusinessPanel(id) {
   }
 
   document.getElementById('panel-body').innerHTML = html;
-  document.getElementById('overlay').classList.add('open');
-  document.getElementById('panel').classList.add('open');
+  document.getElementById('panel-overlay').classList.add('open');
 }

@@ -31,41 +31,46 @@ export function showPanel(item, bc, isPro, scopeInfo) {
   const prereqs = item.mri_prereqs || [];
   const assoc   = item.mri_assoc   || [];
 
+  const clientNote = clientNoteHTML(item);
   document.getElementById('panel-body').innerHTML = `
-    <div class="psec">
-      <div class="psec-label">Overview</div>
-      <p class="psec-text">${item.desc || ''}</p>
-    </div>
-    <div class="psec">
-      <div class="psec-label">Core Activities</div>
-      <ul class="act-list">${(item.activities || []).map(a => `<li>${a}</li>`).join('')}</ul>
-    </div>
-    ${clientNoteHTML(item)}
-    <div class="psec">
-      <div class="psec-label">MRI Sub-Process Title</div>
-      <div class="mri-title-block">
-        <div class="mri-title-label">MRI Module Reference</div>
-        <div class="mri-title-name">${item.mri_title || '<em style="opacity:0.5;font-size:0.78rem;font-weight:400">Not configured</em>'}</div>
+    <div class="panel-col">
+      <div class="psec">
+        <div class="psec-label">Overview</div>
+        <p class="psec-text">${item.desc || ''}</p>
       </div>
+      <div class="psec">
+        <div class="psec-label">Core Activities</div>
+        <ul class="act-list">${(item.activities || []).map(a => `<li>${a}</li>`).join('')}</ul>
+      </div>
+      ${clientNote}
     </div>
-    <div class="psec">
-      <div class="psec-label">MRI Setup Prerequisites</div>
-      ${prereqs.length
-        ? `<ul class="prereq-list">${prereqs.map(p => `<li>${p}</li>`).join('')}</ul>`
-        : '<p class="psec-text" style="opacity:0.45;font-style:italic;font-size:0.74rem">No prerequisites configured.</p>'}
-    </div>
-    <div class="psec">
-      <div class="psec-label">MRI Associated Processes</div>
-      ${assoc.length
-        ? `<div class="assoc-grid">${assoc.map(a => `
-            <div class="assoc-item">
-              <span class="assoc-arrow">↗</span>
-              <div>
-                <div class="assoc-name">${a.name}</div>
-                <div class="assoc-desc">${a.desc}</div>
-              </div>
-            </div>`).join('')}</div>`
-        : '<p class="psec-text" style="opacity:0.45;font-style:italic;font-size:0.74rem">No associated processes configured.</p>'}
+    <div class="panel-col panel-col-right">
+      <div class="psec">
+        <div class="psec-label">MRI Module Reference</div>
+        <div class="mri-title-block">
+          <div class="mri-title-label">Navigation path</div>
+          <div class="mri-title-name">${item.mri_title || '<em style="opacity:0.5;font-size:0.78rem;font-weight:400">Not configured</em>'}</div>
+        </div>
+      </div>
+      <div class="psec">
+        <div class="psec-label">Setup Prerequisites</div>
+        ${prereqs.length
+          ? `<ul class="prereq-list">${prereqs.map(p => `<li>${p}</li>`).join('')}</ul>`
+          : '<p class="psec-text" style="opacity:0.45;font-style:italic;font-size:0.74rem">None configured.</p>'}
+      </div>
+      <div class="psec">
+        <div class="psec-label">Associated MRI Screens</div>
+        ${assoc.length
+          ? `<div class="assoc-grid">${assoc.map(a => `
+              <div class="assoc-item">
+                <span class="assoc-arrow">↗</span>
+                <div>
+                  <div class="assoc-name">${a.name}</div>
+                  <div class="assoc-desc">${a.desc}</div>
+                </div>
+              </div>`).join('')}</div>`
+          : '<p class="psec-text" style="opacity:0.45;font-style:italic;font-size:0.74rem">None configured.</p>'}
+      </div>
     </div>`;
 
   // Cross-references to the business view (Phase 2)
@@ -74,12 +79,10 @@ export function showPanel(item, bc, isPro, scopeInfo) {
     if (linkHtml) document.getElementById('panel-body').insertAdjacentHTML('beforeend', linkHtml);
   }
 
-  document.getElementById('overlay').classList.add('open');
-  document.getElementById('panel').classList.add('open');
+  document.getElementById('panel-overlay').classList.add('open');
 }
 
 export function closePanel() {
   state.openPanelId = null;
-  document.getElementById('overlay').classList.remove('open');
-  document.getElementById('panel').classList.remove('open');
+  document.getElementById('panel-overlay').classList.remove('open');
 }

@@ -468,10 +468,7 @@ function openVersionPanel() {
 
 function closeVersionPanel() {
   document.getElementById('ver-panel').classList.remove('open');
-  // Only remove the overlay if the detail panel is also closed
-  if (!document.getElementById('panel').classList.contains('open')) {
-    document.getElementById('overlay').classList.remove('open');
-  }
+  document.getElementById('overlay').classList.remove('open');
   document.getElementById('burger-btn').classList.remove('ver-open');
 }
 
@@ -701,9 +698,9 @@ document.getElementById('reset-tab-btn').addEventListener('click', resetTab);
 document.getElementById('reset-all-btn').addEventListener('click', resetAll);
 
 // Panel
-document.getElementById('overlay').addEventListener('click', () => {
-  closePanel();
-  closeVersionPanel();
+document.getElementById('overlay').addEventListener('click', closeVersionPanel);
+document.getElementById('panel-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('panel-overlay')) closePanel();
 });
 document.getElementById('panel-close').addEventListener('click', closePanel);
 

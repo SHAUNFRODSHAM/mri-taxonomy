@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ERP Implementation Taxonomy</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400&display=swap" />
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+      font-size: 18px; vertical-align: middle; line-height: 1;
+    }
+  </style>
 </head>
 <body>
 
@@ -12,7 +20,6 @@
     <div class="topbar-left">
       <button class="burger-btn" id="burger-btn" title="Manage Versions">☰</button>
       <div class="topbar-brand">
-        <div class="topbar-logo">🏢</div>
         <div>
           <div class="topbar-title">ERP Implementation Taxonomy</div>
           <div class="topbar-sub">Interactive Process Map · Click any item for detail</div>
@@ -43,9 +50,9 @@
 
   <!-- ── VIEW SWITCHER ── -->
   <div class="view-switcher" id="view-switcher">
-    <button class="view-btn active" data-view="business">💼 Value Streams</button>
-    <button class="view-btn"        data-view="system">🗂️ MRI PMX System View</button>
-    <button class="view-btn"        data-view="mapping">🔗 Mapping</button>
+    <button class="view-btn active" data-view="business"><span class="material-symbols-outlined">account_tree</span> Value Streams</button>
+    <button class="view-btn"        data-view="system"><span class="material-symbols-outlined">grid_view</span> MRI PMX System View</button>
+    <button class="view-btn"        data-view="mapping"><span class="material-symbols-outlined">hub</span> Mapping</button>
     <span class="view-switcher-hint" id="view-switcher-hint">CRE Powered value streams · Level 1 → Level 2 → Level 3 processes</span>
   </div>
 
@@ -55,13 +62,13 @@
 
   <!-- ── TAB BAR (System view) ── -->
   <div class="tab-bar" id="tab-bar">
-    <button class="tab-btn active" data-tab="cm"><span class="tab-icon">🏢</span>Commercial Management</button>
-    <button class="tab-btn"        data-tab="gl"><span class="tab-icon">📒</span>General Ledger</button>
-    <button class="tab-btn"        data-tab="ap"><span class="tab-icon">📤</span>Accounts Payable</button>
-    <button class="tab-btn"        data-tab="rm"><span class="tab-icon">🏠</span>Residential Management</button>
-    <button class="tab-btn tab-btn-placeholder" data-tab="jc" title="⚠️ Placeholder content — requires review"><span class="tab-icon">🏗️</span>Job Cost ⚠️</button>
-    <button class="tab-btn tab-btn-placeholder" data-tab="car" title="⚠️ Placeholder content — requires review"><span class="tab-icon">📥</span>Corp. Accounts Receivable ⚠️</button>
-    <button class="tab-btn tab-btn-placeholder" data-tab="bf" title="⚠️ Placeholder content — requires review"><span class="tab-icon">📊</span>Budgeting &amp; Forecasting ⚠️</button>
+    <button class="tab-btn active" data-tab="cm"><span class="tab-icon material-symbols-outlined">domain</span>Commercial Management</button>
+    <button class="tab-btn"        data-tab="gl"><span class="tab-icon material-symbols-outlined">account_balance</span>General Ledger</button>
+    <button class="tab-btn"        data-tab="ap"><span class="tab-icon material-symbols-outlined">payments</span>Accounts Payable</button>
+    <button class="tab-btn"        data-tab="rm"><span class="tab-icon material-symbols-outlined">apartment</span>Residential Management</button>
+    <button class="tab-btn tab-btn-placeholder" data-tab="jc" title="⚠️ Placeholder content — requires review"><span class="tab-icon material-symbols-outlined">construction</span>Job Cost ⚠️</button>
+    <button class="tab-btn tab-btn-placeholder" data-tab="car" title="⚠️ Placeholder content — requires review"><span class="tab-icon material-symbols-outlined">receipt_long</span>Corp. Accounts Receivable ⚠️</button>
+    <button class="tab-btn tab-btn-placeholder" data-tab="bf" title="⚠️ Placeholder content — requires review"><span class="tab-icon material-symbols-outlined">bar_chart</span>Budgeting &amp; Forecasting ⚠️</button>
     <button class="tab-add-btn"    id="tab-add-btn" title="Add new module tab">+ Add Tab</button>
   </div>
 
@@ -84,15 +91,19 @@
   <!-- ── OVERLAY (closes panel on click) ── -->
   <div class="overlay" id="overlay"></div>
 
-  <!-- ── DETAIL PANEL ── -->
-  <div class="panel" id="panel">
-    <div class="panel-header">
-      <div class="panel-breadcrumb" id="panel-bc"></div>
-      <div class="panel-title"      id="panel-title"></div>
-      <div class="panel-badges"     id="panel-badges"></div>
-      <button class="panel-close"   id="panel-close">✕</button>
+  <!-- ── DETAIL MODAL ── -->
+  <div class="panel-overlay" id="panel-overlay">
+    <div class="panel" id="panel">
+      <div class="panel-header">
+        <div class="panel-header-meta">
+          <div class="panel-breadcrumb" id="panel-bc"></div>
+          <div class="panel-title"      id="panel-title"></div>
+          <div class="panel-badges"     id="panel-badges"></div>
+        </div>
+        <button class="panel-close" id="panel-close">✕</button>
+      </div>
+      <div class="panel-body" id="panel-body"></div>
     </div>
-    <div class="panel-body" id="panel-body"></div>
   </div>
 
   <!-- ── EDIT MODAL ── -->
