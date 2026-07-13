@@ -21,11 +21,10 @@ export const ORIGINAL_DATA = Object.freeze({
 });
 
 export const MODULE_CONFIG = {
-  // ⚠️ PLACEHOLDER MODULE — refactored taxonomy, content requires review
   cm: {
     label: 'Commercial Management',
     headerClass: 'cm-header',
-    headerText: 'Commercial Management ⚠️ Placeholder Content',
+    headerText: 'Commercial Management',
     colHeaderClass: '',
     icon: '🏢',
   },

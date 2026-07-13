@@ -1,24 +1,17 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Commercial Management (CM) — Module Data
 //
-// ⚠️  PLACEHOLDER CONTENT — THIS FILE REQUIRES CONTENT REVIEW
-// Refactored (June 2026) from the deep, granular prior version into the concise
-// functional taxonomy used for B&F and CAR: 12 sub-domains (columns), each with
-// a small set of process cards. Every desc / activity / MRI field below is
-// PLACEHOLDER text derived from the CM Module Taxonomy document and is prefixed
-// with [PLACEHOLDER] so it is visible in both the source and the UI.
+// Structured on the concise functional taxonomy used for B&F and CAR:
+// 12 sub-domains (columns) → process cards → sub-processes. Content is drafted
+// from the CM Module Taxonomy document (§3 Functional Taxonomy, 3.1–3.12) and
+// written business-first per the rules in CLAUDE.md.
 //
-// To complete this module:
-//   1. Replace every [PLACEHOLDER] value with accurate, business-first content
-//      following the content writing rules in CLAUDE.md.
-//   2. Remove this warning block (and the ⚠️ flags in index.js / index.html)
-//      once all content has been reviewed and signed off.
+// NOTE: Content is AI-drafted from the taxonomy reference and should be
+// validated by an MRI CM SME before client delivery.
 //
 // Source reference: MRI PMX Commercial Management (CM) Module Taxonomy
-// (Open Box Software, June 2026) — §3 Functional Taxonomy (3.1–3.12).
+// (Open Box Software, June 2026).
 // ═══════════════════════════════════════════════════════════════════════════
-
-const PH = '[PLACEHOLDER] '; // prefix applied to every unreviewed field value
 
 export const cm = [
 
@@ -197,56 +190,140 @@ export const cm = [
         id: 'cm-income-categories',
         title: 'Income Categories',
         type: 'process',
-        desc: PH + 'Client-defined classification of tenant-related income streams (the INCH table) that underpin billing and reporting.',
+        desc: 'The catalogue of tenant income streams (the INCH table) that classifies every charge the business raises. These categories are the vocabulary of CM billing and reporting — getting the list right shapes how income is analysed and how cleanly it posts to the ledger.',
         activities: [
-          PH + 'Define income categories (INCH) for rent, late fees, percentage/turnover rent, recoveries, service charges, insurance, utilities, management fees',
-          PH + 'Classify concessions, refunds, prepayments, bad-debt write-offs and vacancy income',
+          'Define the income categories the business bills — rent, late fees, percentage/turnover rent, recoveries, service charges, insurance, utilities, management fees',
+          'Classify the credit-side items — concessions, refunds, prepayments, bad-debt write-offs and vacancy',
+          'Align category naming with the income breakdown finance needs for reporting',
         ],
-        mri_title: PH + 'CM > Setup & Maintenance > Income Categories',
+        mri_title: 'Income Categories (CM > Setup & Maintenance > Commercial Management > Income Categories — INCH)',
         mri_prereqs: [
-          PH + 'GL Chart of Accounts finalised so income categories can be mapped',
+          'GL Chart of Accounts finalised so each income category has an account to map to',
+          'Income-reporting requirements agreed with finance',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Setup > Setup and Maintenance > Commercial Management > Income Categories', desc: PH + 'Maintain the INCH classifications of tenant income streams' },
+          { name: 'CM > Setup & Maintenance > Commercial Management > Income Categories', desc: 'Maintain the INCH classifications of tenant income streams' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-income-categories-core',
+            title: 'Core Income Categories',
+            desc: 'The billable income streams that make up the bulk of tenant charges.',
+            activities: [
+              'Define rent, recoveries, service-charge and fee categories',
+              'Align naming with the required income reporting',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Income Categories',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Income Categories', desc: 'Core income category maintenance' },
+            ],
+          },
+          {
+            id: 'cm-income-categories-adjust',
+            title: 'Adjustment Categories',
+            desc: 'The credit-side categories used for concessions, refunds, write-offs and vacancy.',
+            activities: [
+              'Classify concessions, refunds and bad-debt write-offs',
+              'Agree the treatment of prepayments and vacancy',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Income Categories',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Income Categories', desc: 'Adjustment / credit category maintenance' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-income-mapping',
         title: 'GL Account Mapping',
         type: 'process',
-        desc: PH + 'Linking of each income category to the GL Chart of Accounts so CM transactions post correctly to the ledger.',
+        desc: 'The wiring between each income category and the GL Chart of Accounts, so every CM charge and receipt posts to the correct debit and credit accounts. Accurate mapping is what lets the CM sub-ledger reconcile to the GL without manual intervention.',
         activities: [
-          PH + 'Map income categories to GL debit/credit accounts via source codes',
-          PH + 'Map security-deposit income categories separately (typically to a separate ledger)',
+          'Map each income category to its GL debit and credit accounts via source codes',
+          'Map security-deposit categories separately, typically to their own ledger',
+          'Validate the mapping with a test posting before go-live',
         ],
-        mri_title: PH + 'CM > Setup & Maintenance > Income Categories > Account Mapping',
+        mri_title: 'Income Category Account Mapping (CM > Setup & Maintenance > Commercial Management > Income Categories > Account Mapping)',
         mri_prereqs: [
-          PH + 'Income categories defined and GL accounts available',
+          'Income categories defined and the GL accounts they map to created',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Setup > Setup and Maintenance > Commercial Management > Income Categories', desc: PH + 'Account mapping of income categories to the GL Chart of Accounts' },
+          { name: 'CM > Setup & Maintenance > Commercial Management > Income Categories', desc: 'Account mapping of income categories to the GL Chart of Accounts' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-income-mapping-accounts',
+            title: 'GL Account Mapping',
+            desc: 'Linking income categories to their GL debit and credit accounts via source codes.',
+            activities: [
+              'Map each category to debit/credit accounts',
+              'Test a posting to confirm the mapping is correct',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Income Categories > Account Mapping',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Income Categories', desc: 'GL account mapping' },
+            ],
+          },
+          {
+            id: 'cm-income-mapping-deposit',
+            title: 'Deposit Ledger Mapping',
+            desc: 'Mapping security-deposit categories to their own ledger so deposits stay separate from income.',
+            activities: [
+              'Map deposit categories to the separate deposit ledger',
+              'Confirm deposits are excluded from income reporting',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Income Categories',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Income Categories', desc: 'Security-deposit category mapping' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-income-special',
         title: 'Special Income Handling',
         type: 'process',
-        desc: PH + 'Configuration of the treatment of non-standard income items such as free rent, prepayments, and miscellaneous income.',
+        desc: 'How CM treats income that doesn\'t follow the standard bill-and-collect pattern — free rent and concessions, tenant prepayments, and ad-hoc miscellaneous income. Configuring these correctly keeps the ledger accurate when the commercial reality is more nuanced than straight rent.',
         activities: [
-          PH + 'Configure free rent / concessions / rent holidays (separate code or by not charging rent)',
-          PH + 'Configure treatment of tenant prepayments',
-          PH + 'Set up handling of ad-hoc / miscellaneous income streams',
+          'Set up free rent, concessions and rent holidays (a dedicated code or by suppressing the charge)',
+          'Configure how tenant prepayments are held and later applied',
+          'Set up handling for ad-hoc and miscellaneous income streams',
         ],
-        mri_title: PH + 'CM > Setup & Maintenance > Income Categories',
+        mri_title: 'Income Categories (CM > Setup & Maintenance > Commercial Management > Income Categories)',
         mri_prereqs: [
-          PH + 'Core income categories and mappings in place',
+          'Core income categories and their GL mappings already in place',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Setup > Setup and Maintenance > Commercial Management > Income Categories', desc: PH + 'Configuration of concessions, prepayments and miscellaneous income' },
+          { name: 'CM > Setup & Maintenance > Commercial Management > Income Categories', desc: 'Configuration of concessions, prepayments and miscellaneous income' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-income-special-freerent',
+            title: 'Free Rent & Concessions',
+            desc: 'Handling incentive periods where rent is reduced or not charged.',
+            activities: [
+              'Set up free-rent and concession codes or charge suppression',
+              'Ensure incentives are reflected correctly in reporting',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Income Categories',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Income Categories', desc: 'Free-rent and concession configuration' },
+            ],
+          },
+          {
+            id: 'cm-income-special-prepay',
+            title: 'Prepayments & Miscellaneous',
+            desc: 'Holding tenant prepayments and handling ad-hoc income outside the standard categories.',
+            activities: [
+              'Configure how prepayments are held and applied',
+              'Set up miscellaneous income handling',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Income Categories',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Income Categories', desc: 'Prepayment and miscellaneous income setup' },
+            ],
+          },
+        ],
       },
     ],
   },
@@ -260,60 +337,144 @@ export const cm = [
         id: 'cm-building-setup',
         title: 'Building Setup & Hierarchy',
         type: 'process',
-        desc: PH + 'Creation and structuring of the building estate (BLDG table) and the portfolio hierarchy that underpins reporting and security.',
+        desc: 'Creating the building estate (the BLDG table) and the portfolio hierarchy that everything else hangs off — reporting roll-ups, security and operational ownership all read from this structure. Get the hierarchy right at implementation and downstream reporting falls into place.',
         activities: [
-          PH + 'Create buildings (BLDG) with numbering/naming and 1:1 entity linking',
-          PH + 'Establish the hierarchy: Portfolio → Region → Sub-region → Controlling Office → Property Manager → Property → Units/Leases',
-          PH + 'Configure building groupings and property classifications for roll-up reporting',
+          'Create buildings (BLDG) with agreed numbering/naming and their 1:1 entity link',
+          'Establish the hierarchy: Portfolio → Region → Sub-region → Controlling Office → Property Manager → Property → Units/Leases',
+          'Configure building groupings and property classifications for roll-up reporting',
         ],
-        mri_title: PH + 'CM > Leasing > Building Setup',
+        mri_title: 'Building Setup (CM > Leasing > Building Setup — BLDG)',
         mri_prereqs: [
-          PH + 'Entity structure established in GL before creating buildings',
+          'Entity structure established in GL before buildings are created (buildings link 1:1 to an entity)',
+          'Portfolio hierarchy and classification scheme agreed with the business',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Leasing > Building Setup', desc: PH + 'Building (BLDG) maintenance, hierarchy and classifications' },
+          { name: 'CM > Leasing > Building Setup', desc: 'Building (BLDG) maintenance, hierarchy and classifications' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-building-setup-bldg',
+            title: 'Building Records (BLDG)',
+            desc: 'The individual building records and their link to the owning entity.',
+            activities: [
+              'Create buildings with numbering/naming conventions',
+              'Link each building 1:1 to its GL entity',
+            ],
+            mri_title: 'CM > Leasing > Building Setup',
+            mri_assoc: [
+              { name: 'CM > Leasing > Building Setup', desc: 'Building (BLDG) record maintenance' },
+            ],
+          },
+          {
+            id: 'cm-building-setup-hierarchy',
+            title: 'Hierarchy & Classifications',
+            desc: 'The portfolio hierarchy and classification scheme that drive roll-up reporting and security.',
+            activities: [
+              'Establish the portfolio → region → property hierarchy',
+              'Configure groupings and classifications for reporting',
+            ],
+            mri_title: 'CM > Leasing > Building Setup > Hierarchy',
+            mri_assoc: [
+              { name: 'CM > Leasing > Building Setup', desc: 'Hierarchy, groupings and classifications' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-building-accounting',
         title: 'Building Accounting & Recoveries Setup',
         type: 'process',
-        desc: PH + 'Building-level accounting configuration, expense-pool setup for recoveries, and tracking of valuations and special-purpose properties.',
+        desc: 'The accounting configuration a building needs before it can transact — accounting method, tax and cash types — plus the building-level expense pools that feed recoveries and the tracking of valuations and special-purpose properties. This is where a building is made ready to bill and recover.',
         activities: [
-          PH + 'Configure building accounting method, tax setup and cash types',
-          PH + 'Configure expense pools for recoveries at building level',
-          PH + 'Set up special-purpose properties (non-tenant receipts, loans, equipment, land) and ViewPoint reporting where licensed',
-          PH + 'Track property valuations and appraisals',
+          'Configure the building accounting method, tax setup and cash types',
+          'Set up building-level expense pools that recoveries draw on',
+          'Set up special-purpose properties (non-tenant receipts, loans, equipment, land) and ViewPoint reporting where licensed',
+          'Record property valuations and appraisals',
         ],
-        mri_title: PH + 'CM > Leasing > Building Setup > Accounting',
+        mri_title: 'Building Accounting (CM > Leasing > Building Setup > Accounting)',
         mri_prereqs: [
-          PH + 'Buildings created and income categories mapped',
+          'Buildings created and income categories mapped to the GL',
+          'Tax treatment and cash types agreed for the jurisdiction',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Leasing > Building Setup', desc: PH + 'Building accounting, recoveries setup and valuation tracking' },
+          { name: 'CM > Leasing > Building Setup', desc: 'Building accounting, recoveries setup and valuation tracking' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-building-accounting-method',
+            title: 'Accounting & Tax Setup',
+            desc: 'The accounting method, tax treatment and cash types that govern how a building transacts.',
+            activities: [
+              'Set the accounting method and cash types',
+              'Configure tax treatment for the jurisdiction',
+            ],
+            mri_title: 'CM > Leasing > Building Setup > Accounting',
+            mri_assoc: [
+              { name: 'CM > Leasing > Building Setup', desc: 'Building accounting and tax setup' },
+            ],
+          },
+          {
+            id: 'cm-building-accounting-pools',
+            title: 'Expense Pools & Valuations',
+            desc: 'Building-level expense pools for recoveries, plus special-purpose property and valuation tracking.',
+            activities: [
+              'Configure expense pools that feed recoveries',
+              'Set up special-purpose properties and track valuations',
+            ],
+            mri_title: 'CM > Leasing > Building Setup > Recoveries',
+            mri_assoc: [
+              { name: 'CM > Leasing > Building Setup', desc: 'Expense-pool and valuation setup' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-building-suites',
         title: 'Suite & Square Footage Management',
         type: 'process',
-        desc: PH + 'Maintenance of suites (SUIT table) and their square-footage metrics, which drive occupancy, vacancy, and pro-rata recovery calculations.',
+        desc: 'Maintaining the lettable spaces (the SUIT table) and their square-footage metrics. Suite areas drive occupancy and vacancy reporting and the pro-rata shares used in recoveries, so accurate square footage has a direct financial impact.',
         activities: [
-          PH + 'Maintain suites (SUIT) and square-footage history (BSQF)',
-          PH + 'Define suite types (storage, ATMs, kiosks) and square-footage types (rentable, usable, gross, common)',
-          PH + 'Track suite-level tax parcels; use Manage Suites preview (Application Studio, X.7.13)',
+          'Maintain suites (SUIT) and their square-footage history (BSQF)',
+          'Define suite types (storage, ATMs, kiosks) and square-footage types (rentable, usable, gross, common)',
+          'Track suite-level tax parcels',
         ],
-        mri_title: PH + 'CM > Manage Suites',
+        mri_title: 'Manage Suites (CM > Manage Suites — SUIT / BSQF)',
         mri_prereqs: [
-          PH + 'Buildings created before adding suites',
+          'Buildings created before suites can be added',
+          'Square-footage measurement standard agreed (rentable/usable basis)',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Manage Suites', desc: PH + 'Suite search, details and square-footage history' },
-          { name: PH + 'App Menu > Commercial Management > Leasing > Suite Maintenance', desc: PH + 'Suite (SUIT) maintenance and square-footage types' },
+          { name: 'CM > Manage Suites', desc: 'Suite search, details and square-footage history' },
+          { name: 'CM > Leasing > Suite Maintenance', desc: 'Suite (SUIT) maintenance and square-footage types' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-building-suites-suit',
+            title: 'Suite Records (SUIT)',
+            desc: 'The lettable spaces within each building, including specialist space types.',
+            activities: [
+              'Maintain suite records and suite types',
+              'Track suite-level tax parcels',
+            ],
+            mri_title: 'CM > Manage Suites',
+            mri_assoc: [
+              { name: 'CM > Manage Suites', desc: 'Suite (SUIT) maintenance' },
+            ],
+          },
+          {
+            id: 'cm-building-suites-sqft',
+            title: 'Square Footage (BSQF)',
+            desc: 'The area metrics that drive occupancy, vacancy and pro-rata recovery calculations.',
+            activities: [
+              'Maintain rentable, usable, gross and common area',
+              'Keep square-footage history current as space changes',
+            ],
+            mri_title: 'CM > Manage Suites > Square Footage',
+            mri_assoc: [
+              { name: 'CM > Leasing > Suite Maintenance', desc: 'Square-footage types and history (BSQF)' },
+            ],
+          },
+        ],
       },
     ],
   },
@@ -713,57 +874,141 @@ export const cm = [
         id: 'cm-cash-receipts',
         title: 'Cash Receipts & Application',
         type: 'process',
-        desc: PH + 'Entry of tenant payments and their application to open charges, including handling of advance payments.',
+        desc: 'Receiving tenant payments and applying them to the right open charges. Clean, accurate application is what keeps tenant balances trustworthy and arrears reporting meaningful.',
         activities: [
-          PH + 'Enter tenant payments via batch cash receipts',
-          PH + 'Apply payments using configurable application rules against open charges',
-          PH + 'Track tenant prepayments / advance payments',
+          'Enter tenant payments through batch cash receipts',
+          'Apply payments to open charges using the agreed application rules',
+          'Hold and track advance payments / prepayments until they are due',
         ],
-        mri_title: PH + 'CM > Batch Activities > Cash Receipts',
+        mri_title: 'Cash Receipts (CM > Batch Activities > Cash Receipts)',
         mri_prereqs: [
-          PH + 'Open charges present on tenant ledgers',
+          'Open charges present on tenant ledgers',
+          'Payment-application order agreed with finance',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Batch Activities > Cash Receipts', desc: PH + 'Batch entry and application of tenant payments' },
+          { name: 'CM > Batch Activities > Cash Receipts', desc: 'Batch entry and application of tenant payments' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-cash-receipts-entry',
+            title: 'Receipt Entry',
+            desc: 'Capturing tenant payments into a receipt batch.',
+            activities: [
+              'Enter receipts against tenant accounts',
+              'Record the payment reference and method',
+            ],
+            mri_title: 'CM > Batch Activities > Cash Receipts',
+            mri_assoc: [
+              { name: 'CM > Batch Activities > Cash Receipts', desc: 'Receipt batch entry' },
+            ],
+          },
+          {
+            id: 'cm-cash-receipts-apply',
+            title: 'Payment Application',
+            desc: 'Applying received payments to open charges per the configured rules, including prepayment handling.',
+            activities: [
+              'Apply payments to open charges by the agreed order',
+              'Hold unmatched amounts as prepayments',
+            ],
+            mri_title: 'CM > Batch Activities > Cash Receipts > Application',
+            mri_assoc: [
+              { name: 'CM > Batch Activities > Cash Receipts', desc: 'Payment application and prepayment handling' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-cash-methods',
         title: 'Payment Methods & Lockbox',
         type: 'process',
-        desc: PH + 'Configuration of electronic payment channels and automated lockbox processing for tenant receipts.',
+        desc: 'The electronic payment channels tenants use and the automated lockbox that ingests bank files. These reduce manual receipting and speed up cash application at volume.',
         activities: [
-          PH + 'Configure payment methods (EFT, SEPA, debit order, direct debit, cash, cheque)',
-          PH + 'Set up the Tenant Connect legacy payment process',
-          PH + 'Configure CMEL (Commercial Management Electronic Lockbox) for automated payment processing',
+          'Configure the payment methods in use (EFT, SEPA, debit order, direct debit, cash, cheque)',
+          'Set up the Tenant Connect portal payment process',
+          'Configure CMEL (Commercial Management Electronic Lockbox) for automated payment ingestion',
         ],
-        mri_title: PH + 'CM > Batch Activities > Electronic Lockbox',
+        mri_title: 'Electronic Lockbox (CM > Batch Activities > Electronic Lockbox — CMEL)',
         mri_prereqs: [
-          PH + 'Bank details and payment-channel agreements in place',
+          'Bank details and payment-channel agreements in place',
+          'Lockbox file format agreed with the bank',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Batch Activities', desc: PH + 'Payment-method configuration and electronic lockbox (CMEL)' },
+          { name: 'CM > Batch Activities', desc: 'Payment-method configuration and electronic lockbox (CMEL)' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-cash-methods-config',
+            title: 'Payment Methods',
+            desc: 'The tenant payment channels the business accepts and how they are configured.',
+            activities: [
+              'Configure EFT, SEPA, direct debit, cash and cheque methods',
+              'Enable the Tenant Connect portal payment route',
+            ],
+            mri_title: 'CM > Batch Activities > Payment Methods',
+            mri_assoc: [
+              { name: 'CM > Batch Activities', desc: 'Payment-method configuration' },
+            ],
+          },
+          {
+            id: 'cm-cash-methods-lockbox',
+            title: 'Electronic Lockbox (CMEL)',
+            desc: 'Automated ingestion and matching of bank lockbox files.',
+            activities: [
+              'Configure the CMEL lockbox file import',
+              'Review and clear exceptions from the automated match',
+            ],
+            mri_title: 'CM > Batch Activities > Electronic Lockbox',
+            mri_assoc: [
+              { name: 'CM > Batch Activities', desc: 'Electronic lockbox (CMEL) processing' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-cash-recon',
         title: 'Batch Reconciliation & Reversals',
         type: 'process',
-        desc: PH + 'Review, validation and posting of receipt batches, plus correction of posted payments through reversals.',
+        desc: 'Checking that a receipt batch balances before it posts, and correcting posted payments through reversals when needed. This is the control step that stops entry errors reaching the ledger.',
         activities: [
-          PH + 'Review, validate and post receipt batches',
-          PH + 'Process standard payment reversals for corrections',
+          'Review and validate receipt batches so totals agree before posting',
+          'Post balanced batches to the tenant ledger and GL',
+          'Process payment reversals to correct misapplied or erroneous receipts',
         ],
-        mri_title: PH + 'CM > Batch Activities > Batch Entry',
+        mri_title: 'Batch Entry (CM > Batch Activities > Batch Entry)',
         mri_prereqs: [
-          PH + 'Receipts entered in an open batch',
+          'Receipts entered in an open batch',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Batch Activities', desc: PH + 'Batch reconciliation, posting and payment reversals' },
+          { name: 'CM > Batch Activities', desc: 'Batch reconciliation, posting and payment reversals' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-cash-recon-post',
+            title: 'Batch Review & Posting',
+            desc: 'Validating and posting receipt batches once they balance.',
+            activities: [
+              'Reconcile the batch total before posting',
+              'Post the batch to the tenant ledger and GL',
+            ],
+            mri_title: 'CM > Batch Activities > Batch Entry',
+            mri_assoc: [
+              { name: 'CM > Batch Activities', desc: 'Batch review and posting' },
+            ],
+          },
+          {
+            id: 'cm-cash-recon-reversal',
+            title: 'Payment Reversals',
+            desc: 'Correcting posted payments that were misapplied or entered in error.',
+            activities: [
+              'Reverse the incorrect payment',
+              'Re-apply the receipt to the correct charge',
+            ],
+            mri_title: 'CM > Batch Activities > Reversals',
+            mri_assoc: [
+              { name: 'CM > Batch Activities', desc: 'Payment reversal processing' },
+            ],
+          },
+        ],
       },
     ],
   },
@@ -777,39 +1022,94 @@ export const cm = [
         id: 'cm-deposits-billing',
         title: 'Deposit Billing & Receipt',
         type: 'process',
-        desc: PH + 'Billing and receipt of tenant security deposits, typically mapped to a separate income category and ledger.',
+        desc: 'Billing and receiving the security deposits tenants lodge against their lease. Deposits are the tenant\'s money held on account, so they are kept on a separate ledger and never treated as income.',
         activities: [
-          PH + 'Bill and receive security deposits (BILDEP)',
-          PH + 'Receive deposits without billing (direct capture without a charge)',
-          PH + 'Map deposits to a separate income category / ledger',
+          'Bill and receive security deposits (BILDEP)',
+          'Receive deposits directly where no charge is raised',
+          'Ensure deposits post to the separate deposit ledger, not income',
         ],
-        mri_title: PH + 'CM > Batch Activities > Security Deposits',
+        mri_title: 'Security Deposits (CM > Batch Activities > Security Deposits — BILDEP)',
         mri_prereqs: [
-          PH + 'Security-deposit income categories configured',
+          'Security-deposit income categories configured and mapped to the deposit ledger',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Batch Activities > Security Deposits', desc: PH + 'Security deposit billing (BILDEP) and receipt' },
+          { name: 'CM > Batch Activities > Security Deposits', desc: 'Security deposit billing (BILDEP) and receipt' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-deposits-billing-bill',
+            title: 'Deposit Billing (BILDEP)',
+            desc: 'Raising a deposit charge and receiving the tenant\'s payment against it.',
+            activities: [
+              'Bill the deposit and receive payment',
+              'Confirm the deposit posts to the deposit ledger',
+            ],
+            mri_title: 'CM > Batch Activities > Security Deposits',
+            mri_assoc: [
+              { name: 'CM > Batch Activities > Security Deposits', desc: 'Deposit billing (BILDEP)' },
+            ],
+          },
+          {
+            id: 'cm-deposits-billing-direct',
+            title: 'Direct Deposit Receipt',
+            desc: 'Capturing a deposit directly where no billing charge is raised.',
+            activities: [
+              'Receive the deposit without a charge',
+              'Record it against the correct tenant and ledger',
+            ],
+            mri_title: 'CM > Batch Activities > Security Deposits',
+            mri_assoc: [
+              { name: 'CM > Batch Activities > Security Deposits', desc: 'Direct deposit capture' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-deposits-interest',
         title: 'Deposit Interest & Adjustments',
         type: 'process',
-        desc: PH + 'Calculation of interest on held deposits, deposit adjustments, and tracking of alternative deposit instruments.',
+        desc: 'Maintaining deposits once held — calculating any interest due, adjusting balances, and tracking alternative instruments such as bank guarantees. This keeps deposit liabilities accurate through to the point they are refunded or applied.',
         activities: [
-          PH + 'Calculate and refund security-deposit interest (refund types RF, AR, FF)',
-          PH + 'Process security-deposit adjustments (CMSDADJ)',
-          PH + 'Track bank guarantees as an EU-specific deposit alternative',
+          'Calculate and refund security-deposit interest (refund types RF, AR, FF)',
+          'Process deposit adjustments (CMSDADJ)',
+          'Track bank guarantees as an EU-specific deposit alternative',
         ],
-        mri_title: PH + 'CM > Batch Activities > Security Deposits > Adjustments',
+        mri_title: 'Security Deposit Adjustments (CM > Batch Activities > Security Deposits > Adjustments — CMSDADJ)',
         mri_prereqs: [
-          PH + 'Deposits received and recorded',
+          'Deposits received and recorded on the deposit ledger',
+          'Interest terms and rates agreed where interest is payable',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Batch Activities > Security Deposits', desc: PH + 'Deposit interest, adjustments and bank-guarantee tracking' },
+          { name: 'CM > Batch Activities > Security Deposits', desc: 'Deposit interest, adjustments and bank-guarantee tracking' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-deposits-interest-calc',
+            title: 'Interest & Adjustments',
+            desc: 'Calculating interest on held deposits and processing balance adjustments.',
+            activities: [
+              'Calculate and refund deposit interest (RF/AR/FF)',
+              'Process deposit adjustments (CMSDADJ)',
+            ],
+            mri_title: 'CM > Batch Activities > Security Deposits > Adjustments',
+            mri_assoc: [
+              { name: 'CM > Batch Activities > Security Deposits', desc: 'Interest calculation and adjustments' },
+            ],
+          },
+          {
+            id: 'cm-deposits-interest-guarantee',
+            title: 'Bank Guarantees',
+            desc: 'Tracking bank guarantees held in place of a cash deposit (common in the EU).',
+            activities: [
+              'Record bank-guarantee details and expiry',
+              'Track guarantees alongside cash deposits',
+            ],
+            mri_title: 'CM > Batch Activities > Security Deposits',
+            mri_assoc: [
+              { name: 'CM > Batch Activities > Security Deposits', desc: 'Bank-guarantee tracking' },
+            ],
+          },
+        ],
       },
     ],
   },
@@ -990,58 +1290,140 @@ export const cm = [
         id: 'cm-retail-percentage',
         title: 'Percentage & Turnover Rent',
         type: 'process',
-        desc: PH + 'Calculation of sales-linked rent using percentage and turnover methods with breakpoint tiers.',
+        desc: 'Rent that flexes with a retail tenant\'s trading performance — percentage and turnover rent calculated against reported sales, over agreed breakpoints. This is how landlords share in the upside of a successful retail location.',
         activities: [
-          PH + 'Configure percentage rent and turnover rent with natural/artificial/cumulative breakpoints',
-          PH + 'Set lease options — breakpoints, percentages, offsets/credits',
-          PH + 'Run PCALC to calculate and post percentage-rent charges to the tenant ledger',
+          'Configure percentage and turnover rent with natural, artificial or cumulative breakpoints',
+          'Set the lease options — breakpoints, percentages and any offsets/credits',
+          'Run PCALC to calculate and post percentage-rent charges to the tenant ledger',
         ],
-        mri_title: PH + 'CM > Retail > PCALC (% Rent)',
+        mri_title: 'PCALC — Percentage Rent (CM > Retail > PCALC)',
         mri_prereqs: [
-          PH + 'Retail licensed; sales data captured for the period',
+          'Retail module licensed and enabled',
+          'Sales data captured for the period being calculated',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Retail > PCALC', desc: PH + 'Percentage-rent calculation and posting' },
+          { name: 'CM > Retail > PCALC', desc: 'Percentage-rent calculation and posting' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-retail-percentage-breakpoints',
+            title: 'Breakpoints & Lease Options',
+            desc: 'The percentage-rent terms on the lease — breakpoints, percentages and offsets.',
+            activities: [
+              'Configure natural/artificial/cumulative breakpoints',
+              'Set percentages, offsets and credits per the lease',
+            ],
+            mri_title: 'CM > Retail > Lease Options',
+            mri_assoc: [
+              { name: 'CM > Retail', desc: 'Percentage-rent lease options' },
+            ],
+          },
+          {
+            id: 'cm-retail-percentage-pcalc',
+            title: 'PCALC Run',
+            desc: 'Calculating and posting percentage rent from reported sales.',
+            activities: [
+              'Run PCALC for the period',
+              'Review and post the calculated percentage-rent charges',
+            ],
+            mri_title: 'CM > Retail > PCALC',
+            mri_assoc: [
+              { name: 'CM > Retail > PCALC', desc: 'Percentage-rent calculation (update mode posts charges)' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-retail-sales',
         title: 'Sales Reporting & Estimation',
         type: 'process',
-        desc: PH + 'Capture of tenant sales figures and the analytical reporting that supports percentage-rent projections.',
+        desc: 'Capturing the tenant sales figures that percentage rent depends on, and the reporting that turns them into insight and projections. Reliable sales data is the foundation of both accurate turnover rent and landlord asset-management decisions.',
         activities: [
-          PH + 'Capture monthly sales, annual turnover certificates and trading-hours compliance',
-          PH + 'Estimate sales for percentage-rent projections',
-          PH + 'Collect Tenant Connect sales entry; produce Gross Sales / Net Sales / Comparative Sales reports',
+          'Capture monthly sales, annual turnover certificates and trading-hours compliance',
+          'Estimate sales where actuals are outstanding, to project percentage rent',
+          'Collect Tenant Connect sales entry and run Gross Sales / Net Sales / Comparative Sales reports',
         ],
-        mri_title: PH + 'CM > Retail > Sales Entry',
+        mri_title: 'Sales Entry (CM > Retail > Sales Entry)',
         mri_prereqs: [
-          PH + 'Retail lease options and reporting categories configured',
+          'Retail lease options and reporting categories configured',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Retail > Sales Entry', desc: PH + 'Sales figure capture and retail sales reporting' },
+          { name: 'CM > Retail > Sales Entry', desc: 'Sales figure capture and retail sales reporting' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-retail-sales-capture',
+            title: 'Sales Capture',
+            desc: 'Recording tenant sales figures, whether keyed or submitted via Tenant Connect.',
+            activities: [
+              'Capture monthly sales and turnover certificates',
+              'Import Tenant Connect sales submissions',
+            ],
+            mri_title: 'CM > Retail > Sales Entry',
+            mri_assoc: [
+              { name: 'CM > Retail > Sales Entry', desc: 'Sales figure capture' },
+            ],
+          },
+          {
+            id: 'cm-retail-sales-reporting',
+            title: 'Sales Reporting & Estimation',
+            desc: 'Analytical reporting on sales and estimation where actuals are outstanding.',
+            activities: [
+              'Run Gross/Net/Comparative sales reports',
+              'Estimate sales to project percentage rent',
+            ],
+            mri_title: 'CM > Retail > Sales Reports',
+            mri_assoc: [
+              { name: 'CM > Retail', desc: 'Retail sales reporting and estimation' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-retail-setup',
         title: 'Retail Setup & Categories',
         type: 'process',
-        desc: PH + 'Reference setup that underpins retail sales capture and percentage-rent calculation.',
+        desc: 'The reference setup that underpins retail sales capture and percentage-rent calculation — reporting categories, building defaults, and the grouping of sales by master occupant. Configured once, it keeps retail data consistent across the estate.',
         activities: [
-          PH + 'Configure reporting categories and building defaults',
-          PH + 'Set up retail by master occupant (combining sales histories across shared leases)',
-          PH + 'Maintain retail lookup lists (NAICS, SIC, retail chains, national tenants, store/tenant categories)',
+          'Configure retail reporting categories and building defaults',
+          'Set up retail by master occupant to combine sales histories across shared leases',
+          'Maintain retail lookup lists (NAICS, SIC, retail chains, national tenants, store/tenant categories)',
         ],
-        mri_title: PH + 'CM > Retail > Advanced Retail',
+        mri_title: 'Advanced Retail (CM > Retail > Advanced Retail)',
         mri_prereqs: [
-          PH + 'Lookup lists and income categories available',
+          'Lookup lists and income categories available',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Retail', desc: PH + 'Retail reference setup, categories and master-occupant grouping' },
+          { name: 'CM > Retail', desc: 'Retail reference setup, categories and master-occupant grouping' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-retail-setup-categories',
+            title: 'Reporting Categories & Defaults',
+            desc: 'The categories and building defaults that structure retail sales capture.',
+            activities: [
+              'Configure reporting categories and building defaults',
+              'Set retail-by-master-occupant grouping',
+            ],
+            mri_title: 'CM > Retail > Advanced Retail',
+            mri_assoc: [
+              { name: 'CM > Retail', desc: 'Retail reporting categories and defaults' },
+            ],
+          },
+          {
+            id: 'cm-retail-setup-lookups',
+            title: 'Retail Lookup Lists',
+            desc: 'The retail-specific reference lists used to classify tenants and stores.',
+            activities: [
+              'Maintain NAICS/SIC, retail chains and national tenants',
+              'Maintain store and tenant categories',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Lookup Lists',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Lookup Lists', desc: 'Retail lookup-list maintenance' },
+            ],
+          },
+        ],
       },
     ],
   },
@@ -1055,56 +1437,126 @@ export const cm = [
         id: 'cm-cpi-escalations',
         title: 'CPI / RPI Escalations',
         type: 'process',
-        desc: PH + 'Index-linked rent escalations applied through the monthly CPI process.',
+        desc: 'Uplifting rents in line with a published index (CPI, or RPI in the UK) or an agreed schedule. Automating escalations ensures increases are applied on time and consistently, protecting real rental income against inflation.',
         activities: [
-          PH + 'Apply CPI (and UK RPI) linked rent escalations',
-          PH + 'Manage escalation schedules — fixed steps, index-linked, hybrid',
-          PH + 'Run the monthly "Working with CPI Increases" process',
+          'Apply CPI/RPI-linked rent escalations as they fall due',
+          'Manage escalation schedules — fixed steps, index-linked or hybrid',
+          'Run the monthly CPI increases process and review the resulting uplifts',
         ],
-        mri_title: PH + 'CM > Monthly Activities > CPI Increases',
+        mri_title: 'CPI Increases (CM > Monthly Activities > CPI Increases)',
         mri_prereqs: [
-          PH + 'Financial indexes configured with effective months and base years',
+          'Financial indexes configured with effective months and base years',
+          'Escalation clauses abstracted onto the leases',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Monthly Activities > CPI Increases', desc: PH + 'Monthly CPI/RPI escalation processing' },
+          { name: 'CM > Monthly Activities > CPI Increases', desc: 'Monthly CPI/RPI escalation processing' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-cpi-escalations-schedule',
+            title: 'Escalation Schedules',
+            desc: 'The per-lease escalation basis — fixed steps, index-linked or hybrid.',
+            activities: [
+              'Configure the escalation basis on each lease',
+              'Confirm review dates and effective months',
+            ],
+            mri_title: 'CM > Manage Leases > Escalations',
+            mri_assoc: [
+              { name: 'CM > Manage Leases', desc: 'Lease escalation schedule setup' },
+            ],
+          },
+          {
+            id: 'cm-cpi-escalations-run',
+            title: 'CPI/RPI Run',
+            desc: 'The monthly process that applies index-linked uplifts to rents.',
+            activities: [
+              'Run the CPI/RPI increase process for the period',
+              'Review and post the resulting rent uplifts',
+            ],
+            mri_title: 'CM > Monthly Activities > CPI Increases',
+            mri_assoc: [
+              { name: 'CM > Monthly Activities > CPI Increases', desc: 'CPI/RPI escalation run' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-cpi-setup',
         title: 'Index Setup & Caps',
         type: 'process',
-        desc: PH + 'Configuration of the financial indexes and cap/floor limits that govern escalation amounts.',
+        desc: 'The index values and the cap/floor limits that bound how far a rent can move at review. This setup enforces the commercial limits negotiated in the lease, so escalations never exceed what was agreed.',
         activities: [
-          PH + 'Configure financial indexes (CPI/RPI) with effective months and base years',
-          PH + 'Set CPI limitation percent (cap and floor)',
-          PH + 'Track and carry forward unused cap amounts',
+          'Configure the financial indexes (CPI/RPI) with effective months and base years',
+          'Set cap and floor percentages that limit escalation amounts',
+          'Track and carry forward unused cap amounts between reviews',
         ],
-        mri_title: PH + 'CM > Setup & Maintenance > Financial Indexes',
+        mri_title: 'Financial Indexes (CM > Setup & Maintenance > Commercial Management > Financial Indexes)',
         mri_prereqs: [
-          PH + 'Index sources and escalation clauses agreed',
+          'Index sources identified and escalation clauses agreed',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Setup > Setup and Maintenance > Commercial Management > Financial Indexes', desc: PH + 'CPI/RPI index configuration, caps and floors' },
+          { name: 'CM > Setup & Maintenance > Commercial Management > Financial Indexes', desc: 'CPI/RPI index configuration, caps and floors' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-cpi-setup-indexes',
+            title: 'Index Configuration',
+            desc: 'Setting up the CPI/RPI indexes with their effective months and base years.',
+            activities: [
+              'Configure index definitions and base years',
+              'Maintain effective-month settings',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Financial Indexes',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Financial Indexes', desc: 'Index configuration' },
+            ],
+          },
+          {
+            id: 'cm-cpi-setup-caps',
+            title: 'Caps, Floors & Carry-Forward',
+            desc: 'The limits that bound escalation amounts, including carrying forward unused cap.',
+            activities: [
+              'Set cap and floor limitation percentages',
+              'Track and carry forward unused cap amounts',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Financial Indexes',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Financial Indexes', desc: 'Cap/floor and carry-forward settings' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-cpi-renewals',
         title: 'Renewal Option Management',
         type: 'process',
-        desc: PH + 'Tracking and management of lease renewal options that interact with escalation and rent-review terms.',
+        desc: 'Tracking the renewal and rent-review options embedded in leases so their key dates are never missed. These options often trigger escalations or renegotiations, making timely tracking a direct revenue-protection activity.',
         activities: [
-          PH + 'Track and manage lease renewal options',
+          'Record renewal and review options with their trigger and notice dates',
+          'Monitor upcoming option dates and prompt action in good time',
         ],
-        mri_title: PH + 'CM > Leasing > Lease Administration > Options',
+        mri_title: 'Lease Options (CM > Leasing > Lease Administration > Options)',
         mri_prereqs: [
-          PH + 'Lease options captured on the lease',
+          'Lease options and critical dates captured on the lease',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Leasing > Lease Administration', desc: PH + 'Renewal option tracking and management' },
+          { name: 'CM > Leasing > Lease Administration', desc: 'Renewal option tracking and management' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-cpi-renewals-track',
+            title: 'Option Tracking',
+            desc: 'Recording and monitoring renewal/review options and their key dates.',
+            activities: [
+              'Record option trigger and notice dates',
+              'Monitor upcoming options and prompt action',
+            ],
+            mri_title: 'CM > Leasing > Lease Administration > Options',
+            mri_assoc: [
+              { name: 'CM > Leasing > Lease Administration', desc: 'Renewal option tracking' },
+            ],
+          },
+        ],
       },
     ],
   },
@@ -1118,39 +1570,81 @@ export const cm = [
         id: 'cm-batch-entry',
         title: 'Batch Entry',
         type: 'process',
-        desc: PH + 'Entry of cash receipts, charges, credits and adjustments through the CM batch entry workflow.',
+        desc: 'The common entry point through which receipts, charges, credits and adjustments reach the ledger in controlled, balanced batches. Batching gives a review-and-post control point rather than transactions hitting the ledger one at a time.',
         activities: [
-          PH + 'Enter cash receipts, charges, credits and adjustments in batches',
-          PH + 'Use auto-numbered batch IDs for unique batch identification',
-          PH + 'Use streamlined (X.7 Next Gen) batch entry via Application Studio',
+          'Enter receipts, charges, credits and adjustments into batches',
+          'Rely on auto-numbered batch IDs for unique identification and audit',
+          'Use the streamlined (X.7 Next Gen) batch entry where available',
         ],
-        mri_title: PH + 'CM > Batch Activities > Batch Entry',
+        mri_title: 'Batch Entry (CM > Batch Activities > Batch Entry)',
         mri_prereqs: [
-          PH + 'Batch options and source codes configured',
+          'Batch options and source codes configured',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Batch Activities > Batch Entry', desc: PH + 'Batch entry of receipts, charges, credits and adjustments' },
+          { name: 'CM > Batch Activities > Batch Entry', desc: 'Batch entry of receipts, charges, credits and adjustments' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-batch-entry-capture',
+            title: 'Batch Capture',
+            desc: 'Entering transactions into a batch for later review and posting.',
+            activities: [
+              'Enter receipts, charges, credits and adjustments',
+              'Confirm the auto-numbered batch ID and totals',
+            ],
+            mri_title: 'CM > Batch Activities > Batch Entry',
+            mri_assoc: [
+              { name: 'CM > Batch Activities > Batch Entry', desc: 'Transaction batch capture' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-batch-integration',
         title: 'Enterprise Ledger & Imports',
         type: 'process',
-        desc: PH + 'Batch integration with the Enterprise Ledger (segmented JEs) and bulk import of externally-sourced transactions.',
+        desc: 'Bringing external transactions into CM in bulk and posting segmented journal entries to the Enterprise Ledger. This supports high-volume operations and richer GL analysis than standard postings allow.',
         activities: [
-          PH + 'Apply GL segmentation on batches (X.7.10+ with Enterprise Ledger)',
-          PH + 'Import batches of charges/receipts from external sources',
-          PH + 'Process security-deposit batch refunds (RF, AR, FF; X.7.12+)',
+          'Apply GL segmentation on batches where the Enterprise Ledger is in use',
+          'Import batches of charges/receipts from external sources',
+          'Process security-deposit batch refunds (RF, AR, FF)',
         ],
-        mri_title: PH + 'CM > Batch Activities > Import Batches',
+        mri_title: 'Import Batches (CM > Batch Activities > Import Batches)',
         mri_prereqs: [
-          PH + 'Enterprise Ledger segmentation configured where used',
+          'Enterprise Ledger segmentation configured where used',
+          'External file format agreed for imported batches',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Batch Activities', desc: PH + 'Enterprise Ledger segmentation and external batch imports' },
+          { name: 'CM > Batch Activities', desc: 'Enterprise Ledger segmentation and external batch imports' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-batch-integration-import',
+            title: 'External Batch Imports',
+            desc: 'Bulk-importing externally-sourced charges and receipts.',
+            activities: [
+              'Import charge/receipt batches from external files',
+              'Validate imported batches before posting',
+            ],
+            mri_title: 'CM > Batch Activities > Import Batches',
+            mri_assoc: [
+              { name: 'CM > Batch Activities', desc: 'External batch import' },
+            ],
+          },
+          {
+            id: 'cm-batch-integration-egl',
+            title: 'Enterprise Ledger Segmentation',
+            desc: 'Posting segmented journal entries to the Enterprise Ledger for richer GL analysis.',
+            activities: [
+              'Apply GL segmentation columns on batches',
+              'Confirm segmented JEs post correctly to the EGL',
+            ],
+            mri_title: 'CM > Batch Activities > Batch Entry',
+            mri_assoc: [
+              { name: 'CM > Batch Activities', desc: 'Enterprise Ledger segmentation' },
+            ],
+          },
+        ],
       },
     ],
   },
@@ -1164,59 +1658,140 @@ export const cm = [
         id: 'cm-monthly-processing',
         title: 'Monthly Processing',
         type: 'process',
-        desc: PH + 'The recurring month-end cycle of charge creation, fee calculation, printing and journal generation.',
+        desc: 'The recurring month-end cycle that turns the month\'s activity into charges, tenant communications and GL journals. Running this sequence reliably each period is what keeps billing timely and the ledger current.',
         activities: [
-          PH + 'Run RENTUP to create recurring charges; calculate fees and interest (management fees, late fees, deposit interest)',
-          PH + 'Process CPI increases and the monthly bad-debt reserve',
-          PH + 'Print statements, invoices and late letters; create CM-to-GL journal entries',
+          'Run RENTUP to create recurring charges and calculate fees and interest (management, late, deposit)',
+          'Process CPI increases and the monthly bad-debt reserve',
+          'Print statements, invoices and late letters, then create the CM-to-GL journal entries',
         ],
-        mri_title: PH + 'CM > Monthly Activities',
+        mri_title: 'Monthly Activities (CM > Monthly Activities)',
         mri_prereqs: [
-          PH + 'Prior period closed; leases and charges current',
+          'Prior period closed and leases/charges current',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Monthly Activities', desc: PH + 'RENTUP, fee/interest calculation, printing and journal creation' },
+          { name: 'CM > Monthly Activities', desc: 'RENTUP, fee/interest calculation, printing and journal creation' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-monthly-processing-charges',
+            title: 'Charge & Fee Runs',
+            desc: 'The month\'s charge creation and fee/interest calculations.',
+            activities: [
+              'Run RENTUP and CPI increases',
+              'Calculate management fees, late fees and deposit interest',
+            ],
+            mri_title: 'CM > Monthly Activities',
+            mri_assoc: [
+              { name: 'CM > Monthly Activities', desc: 'Charge and fee processing' },
+            ],
+          },
+          {
+            id: 'cm-monthly-processing-output',
+            title: 'Printing & Journals',
+            desc: 'Producing tenant documents and posting the month\'s journals to the GL.',
+            activities: [
+              'Print statements, invoices and late letters',
+              'Create the CM-to-GL journal entries',
+            ],
+            mri_title: 'CM > Monthly Activities > Create Journal Entries',
+            mri_assoc: [
+              { name: 'CM > Monthly Activities', desc: 'Printing and journal creation' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-monthly-close',
         title: 'Period Close & Reconciliation',
         type: 'process',
-        desc: PH + 'Month-end reconciliation and the CM period close, which must precede the GL close.',
+        desc: 'Reconciling the CM sub-ledger and closing the period — which must happen before the GL closes. This is the control gate that confirms the month\'s tenant activity is complete and agrees to the ledger.',
         activities: [
-          PH + 'Use the CM Month End Reconciliation AI tool (X.7.14+) for AI-assisted reconciliation',
-          PH + 'Confirm all CM postings are complete and reconciled before close',
-          PH + 'Close the CM period ahead of the GL close',
+          'Reconcile the CM sub-ledger to the GL, using the Month End Reconciliation AI tool where available',
+          'Confirm all CM postings for the period are complete and balanced',
+          'Close the CM period ahead of the GL close',
         ],
-        mri_title: PH + 'CM > Monthly Activities > End of Month',
+        mri_title: 'End of Month (CM > Monthly Activities > End of Month)',
         mri_prereqs: [
-          PH + 'All batches posted and journals created for the period',
+          'All batches posted and journals created for the period',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Monthly Activities > End of Month', desc: PH + 'CM month-end reconciliation and period close' },
+          { name: 'CM > Monthly Activities > End of Month', desc: 'CM month-end reconciliation and period close' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-monthly-close-recon',
+            title: 'Sub-Ledger Reconciliation',
+            desc: 'Agreeing the CM sub-ledger to the GL before close.',
+            activities: [
+              'Reconcile CM balances to GL control accounts',
+              'Investigate and clear any differences',
+            ],
+            mri_title: 'CM > Monthly Activities > End of Month',
+            mri_assoc: [
+              { name: 'CM > Monthly Activities > End of Month', desc: 'Month-end reconciliation' },
+            ],
+          },
+          {
+            id: 'cm-monthly-close-period',
+            title: 'Period Close',
+            desc: 'Closing the CM period in the correct sequence, ahead of the GL close.',
+            activities: [
+              'Confirm postings are complete and balanced',
+              'Close CM before the GL period close',
+            ],
+            mri_title: 'CM > Monthly Activities > End of Month',
+            mri_assoc: [
+              { name: 'CM > Monthly Activities > End of Month', desc: 'CM period close' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-monthly-reporting',
         title: 'Dashboards & Reporting',
         type: 'process',
-        desc: PH + 'Operational and executive reporting across occupancy, AR and portfolio performance.',
+        desc: 'The operational and executive reporting that turns CM data into decisions — occupancy, arrears, expirations and portfolio performance. This is where the module\'s value surfaces for asset managers and leadership.',
         activities: [
-          PH + 'Review the Executive dashboard (occupancy, delinquency, top tenants) and Operations dashboard (leasing activity, follow-ups, make-ready)',
-          PH + 'Run key reports — Rent Roll (MRI_CMROLL), Aged Delinquencies, Expirations, Ledger Summary',
-          PH + 'Produce tenant statements, vacancy, debtors, security-deposit and tenant-movement reports; build custom reports via Application Studio',
+          'Review the Executive dashboard (occupancy, delinquency, top tenants) and Operations dashboard (leasing activity, follow-ups, make-ready)',
+          'Run the key reports — Rent Roll (MRI_CMROLL), Aged Delinquencies, Expirations, Ledger Summary',
+          'Produce tenant statements, vacancy, debtors, deposit and tenant-movement reports, and build custom reports via Application Studio',
         ],
-        mri_title: PH + 'CM > Reports',
+        mri_title: 'Reports (CM > Reports)',
         mri_prereqs: [
-          PH + 'Period data posted and reconciled',
+          'Period data posted and reconciled',
         ],
         mri_assoc: [
-          { name: PH + 'App Menu > Commercial Management > Reports', desc: PH + 'Rent Roll, Aged Delinquencies, Expirations and Ledger Summary' },
-          { name: PH + 'App Menu > Commercial Management > Home', desc: PH + 'Executive and Operations dashboards' },
+          { name: 'CM > Reports', desc: 'Rent Roll, Aged Delinquencies, Expirations and Ledger Summary' },
+          { name: 'CM > Home', desc: 'Executive and Operations dashboards' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-monthly-reporting-dashboards',
+            title: 'Dashboards',
+            desc: 'The at-a-glance Executive and Operations dashboards.',
+            activities: [
+              'Review occupancy, delinquency and top-tenant views',
+              'Track leasing activity, follow-ups and make-ready',
+            ],
+            mri_title: 'CM > Home',
+            mri_assoc: [
+              { name: 'CM > Home', desc: 'Executive and Operations dashboards' },
+            ],
+          },
+          {
+            id: 'cm-monthly-reporting-reports',
+            title: 'Key Reports',
+            desc: 'The core CM reports used operationally and for delivery.',
+            activities: [
+              'Run Rent Roll, Aged Delinquencies, Expirations and Ledger Summary',
+              'Produce tenant statements and build custom reports',
+            ],
+            mri_title: 'CM > Reports',
+            mri_assoc: [
+              { name: 'CM > Reports', desc: 'Core CM reporting suite' },
+            ],
+          },
+        ],
       },
     ],
   },
