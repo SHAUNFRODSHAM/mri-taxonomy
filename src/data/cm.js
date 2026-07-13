@@ -47,7 +47,47 @@ export const cm = [
           { name: 'CM > Setup & Maintenance > Commercial Management > Management Options', desc: 'Site-wide switches (CMOPTION) for numbering, date enforcement, proration and posting behaviour' },
           { name: 'CM > Setup & Maintenance > Commercial Management > Batch Entry Options', desc: 'Default behaviour and GL segmentation columns applied to CM batches' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-setup-options-mgmt',
+            title: 'Management Options (CMOPTION)',
+            desc: 'The core site-wide switches that control how CM numbers records and enforces transaction dates across the whole database.',
+            activities: [
+              'Set master-occupant, batch and invoice numbering (by database or building)',
+              'Configure date controls — last rent-up date enforcement and prior-period close policy',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Management Options',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Management Options', desc: 'The CMOPTION switch panel' },
+            ],
+          },
+          {
+            id: 'cm-setup-options-batch',
+            title: 'Batch Entry Options',
+            desc: 'Defaults that govern how CM batches behave and post, including GL segmentation where the Enterprise Ledger is in use.',
+            activities: [
+              'Configure default batch entry behaviour',
+              'Define GL segmentation columns applied to batches',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Batch Entry Options',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Batch Entry Options', desc: 'Batch behaviour and GL segmentation defaults' },
+            ],
+          },
+          {
+            id: 'cm-setup-options-retail',
+            title: 'Retail Options',
+            desc: 'Settings that control how retail sales are grouped and accumulated for percentage-rent calculation.',
+            activities: [
+              'Set retail by master occupant to combine sales across shared leases',
+              'Configure monthly proration and cumulative application',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Retail Options',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Retail Options', desc: 'Retail grouping and accumulation settings' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-setup-classifications',
@@ -68,7 +108,34 @@ export const cm = [
           { name: 'CM > Setup & Maintenance > Commercial Management > Transaction Classifications', desc: 'Defines the transaction categories and how each behaves when charged or received' },
           { name: 'CM > Setup & Maintenance > Commercial Management > Source Codes', desc: 'Sub-classifications of income within each transaction classification' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-setup-class-trans',
+            title: 'Transaction Classifications',
+            desc: 'The top-level categories that group every charge and receipt and determine its posting behaviour.',
+            activities: [
+              'Define the classifications used to group income and adjustments',
+              'Confirm whether each classification is billable, recoverable or an adjustment',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Transaction Classifications',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Transaction Classifications', desc: 'Maintain transaction categories and behaviour' },
+            ],
+          },
+          {
+            id: 'cm-setup-class-source',
+            title: 'Source Codes',
+            desc: 'The finer sub-classifications within each transaction classification that allow income to be analysed in detail.',
+            activities: [
+              'Set up source codes beneath each classification',
+              'Map source codes so income reports at the required level of detail',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Source Codes',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Source Codes', desc: 'Maintain source-code sub-classifications' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-setup-lookups',
@@ -89,7 +156,34 @@ export const cm = [
           { name: 'CM > Setup & Maintenance > Commercial Management > Lookup Lists', desc: 'Reference lists for tenant, retail and industry classifications' },
           { name: 'CM > Setup & Maintenance > Commercial Management > Financial Indexes', desc: 'CPI/RPI and seasonal index values used by escalation processing' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-setup-lookups-lists',
+            title: 'Lookup Lists',
+            desc: 'The classification lists that keep leasing and retail data entry consistent.',
+            activities: [
+              'Maintain tenant types, store categories, national tenants and retail chains',
+              'Maintain industry codes (NAICS/SIC) and sales report types',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Lookup Lists',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Lookup Lists', desc: 'Reference classification lists' },
+            ],
+          },
+          {
+            id: 'cm-setup-lookups-indexes',
+            title: 'Financial Indexes',
+            desc: 'The published indexes (CPI, RPI, seasonal) loaded into CM to drive automated rent escalations.',
+            activities: [
+              'Load index values with effective months and base years',
+              'Review published figures each period before escalation runs',
+            ],
+            mri_title: 'CM > Setup & Maintenance > Commercial Management > Financial Indexes',
+            mri_assoc: [
+              { name: 'CM > Setup & Maintenance > Commercial Management > Financial Indexes', desc: 'CPI/RPI/seasonal index maintenance' },
+            ],
+          },
+        ],
       },
     ],
   },
@@ -249,7 +343,47 @@ export const cm = [
           { name: 'CM > Manage Leases', desc: 'Create and maintain the lease (LEAS) and master occupant (MOCCP), including terms and billing information' },
           { name: 'CM > Leasing > Lease Setup', desc: 'Detailed lease creation across the general, billing and recovery tabs' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-lease-setup-lease',
+            title: 'Lease Record (LEAS)',
+            desc: 'The lease agreement itself — commencement, expiry and break dates, demised suites and the rent and recovery terms that drive billing.',
+            activities: [
+              'Record lease dates, demised space and rent/recovery terms',
+              'Set the billing arrangements (frequency, advance/arrears, recurring charges)',
+            ],
+            mri_title: 'CM > Manage Leases > Lease Details',
+            mri_assoc: [
+              { name: 'CM > Manage Leases', desc: 'Lease (LEAS) general, billing and recovery information' },
+            ],
+          },
+          {
+            id: 'cm-lease-setup-moccp',
+            title: 'Master Occupant (MOCCP)',
+            desc: 'The tenant entity that holds the lease — reused across renewals and linked to related leases for consolidated reporting.',
+            activities: [
+              'Create or reuse the master occupant for the tenant',
+              'Record legal and trading names, classification and key contacts',
+            ],
+            mri_title: 'CM > Manage Leases > Master Occupant',
+            mri_assoc: [
+              { name: 'CM > Manage Leases', desc: 'Master occupant (MOCCP) maintenance' },
+            ],
+          },
+          {
+            id: 'cm-lease-setup-abstract',
+            title: 'Lease Abstraction & Creation Route',
+            desc: 'Choosing how the lease is captured — manual entry, LeaseFlow abstraction or MRI Contract Intelligence — to suit the volume and complexity involved.',
+            activities: [
+              'Select the creation route for the portfolio (manual / LeaseFlow / MCI)',
+              'Validate abstracted terms against the signed lease',
+            ],
+            mri_title: 'CM > Leasing > Lease Setup',
+            mri_assoc: [
+              { name: 'CM > Leasing > Lease Setup', desc: 'Lease creation and abstraction entry point' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-lease-admin',
@@ -271,7 +405,47 @@ export const cm = [
           { name: 'CM > Leasing > Lease Administration', desc: 'Wizard-driven renewals, transfers, space changes and vacates' },
           { name: 'CM > Manage Leases', desc: 'Review and adjust lease terms following an administration event' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-lease-admin-renewal',
+            title: 'Renewals & Rent Reviews',
+            desc: 'Extending or renewing leases and applying rent reviews as leases reach their key dates.',
+            activities: [
+              'Process renewals and extensions at expiry or break',
+              'Apply agreed rent reviews and updated terms',
+            ],
+            mri_title: 'CM > Leasing > Lease Administration > Renewals',
+            mri_assoc: [
+              { name: 'CM > Leasing > Lease Administration', desc: 'Renewal and rent-review wizard' },
+            ],
+          },
+          {
+            id: 'cm-lease-admin-space',
+            title: 'Transfers & Space Changes',
+            desc: 'Moving a tenant between spaces or adding/reducing demised area within an existing lease.',
+            activities: [
+              'Process transfers between suites or buildings',
+              'Add or reduce demised space and adjust the associated charges',
+            ],
+            mri_title: 'CM > Leasing > Lease Administration > Space Changes',
+            mri_assoc: [
+              { name: 'CM > Leasing > Lease Administration', desc: 'Transfer and space-change wizard' },
+            ],
+          },
+          {
+            id: 'cm-lease-admin-vacate',
+            title: 'Vacates & Occupancy Status',
+            desc: 'Recording full or partial vacates and keeping occupancy status current so the rent roll and vacancy reporting stay accurate.',
+            activities: [
+              'Process full or partial vacates with the correct stop-bill date',
+              'Maintain occupancy status (active, month-to-month, vacated, expired)',
+            ],
+            mri_title: 'CM > Leasing > Lease Administration > Vacates',
+            mri_assoc: [
+              { name: 'CM > Leasing > Lease Administration', desc: 'Vacate processing and occupancy status' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-lease-special',
@@ -292,7 +466,47 @@ export const cm = [
           { name: 'CM > Manage Leases', desc: 'Multi-space, prospective and sub-lease structures' },
           { name: 'CM > Leasing > Lease Setup', desc: 'Configure additional-space and sub-lease relationships' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-lease-special-multi',
+            title: 'Multi-Space Leases',
+            desc: 'Leases where a single agreement spans multiple suites or buildings.',
+            activities: [
+              'Attach additional suites/buildings to one lease',
+              'Ensure billing and recoveries apportion correctly across the spaces',
+            ],
+            mri_title: 'CM > Manage Leases > Additional Spaces',
+            mri_assoc: [
+              { name: 'CM > Manage Leases', desc: 'Additional-space lease configuration' },
+            ],
+          },
+          {
+            id: 'cm-lease-special-prospect',
+            title: 'Prospective / Speculative Leases',
+            desc: 'Pipeline leases held for planning that must be kept out of live billing until executed.',
+            activities: [
+              'Record prospective leases for pipeline visibility',
+              'Feed speculative leases into budgeting workbooks',
+            ],
+            mri_title: 'CM > Manage Leases > Prospective Leases',
+            mri_assoc: [
+              { name: 'CM > Manage Leases', desc: 'Prospective / speculative lease tracking' },
+            ],
+          },
+          {
+            id: 'cm-lease-special-sublet',
+            title: 'Sub-Leasing',
+            desc: 'Tracking sub-tenants occupying space under a head lease.',
+            activities: [
+              'Record sub-letting arrangements against the head lease',
+              'Track the sub-tenants and their occupied space',
+            ],
+            mri_title: 'CM > Manage Leases > Sub-Leases',
+            mri_assoc: [
+              { name: 'CM > Manage Leases', desc: 'Sub-lease and sub-tenant tracking' },
+            ],
+          },
+        ],
       },
     ],
   },
@@ -322,7 +536,47 @@ export const cm = [
           { name: 'CM > Monthly Activities > Create Recurring Charges (RENTUP)', desc: 'Calculates and posts recurring charges from active lease terms' },
           { name: 'CM > Manage Leases', desc: 'Recurring-charge schedules that RENTUP reads when generating charges' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-billing-recurring-schedule',
+            title: 'Recurring-Charge Schedules',
+            desc: 'The per-lease schedules of rent and recurring charges that the rent-up run reads from.',
+            activities: [
+              'Review recurring-charge schedules for accuracy before the run',
+              'Confirm charge start/stop dates and amounts against the lease',
+            ],
+            mri_title: 'CM > Manage Leases > Recurring Charges',
+            mri_assoc: [
+              { name: 'CM > Manage Leases', desc: 'Recurring-charge schedule maintenance' },
+            ],
+          },
+          {
+            id: 'cm-billing-recurring-rentup',
+            title: 'RENTUP Run',
+            desc: 'The periodic process that calculates and posts recurring charges to the tenant ledger.',
+            activities: [
+              'Run the rent-up for the billing period',
+              'Review the output before committing charges to the ledger',
+            ],
+            mri_title: 'CM > Monthly Activities > Create Recurring Charges (RENTUP)',
+            mri_assoc: [
+              { name: 'CM > Monthly Activities > Create Recurring Charges (RENTUP)', desc: 'The MRI_RENTUP rent-up process' },
+            ],
+          },
+          {
+            id: 'cm-billing-recurring-freq',
+            title: 'Frequency, Advance/Arrears & Proration',
+            desc: 'The billing-cadence rules that determine when and how each charge is raised.',
+            activities: [
+              'Set billing frequency and advance vs arrears per lease',
+              'Apply calendar-day proration and any regional billing rules',
+            ],
+            mri_title: 'CM > Manage Leases > Billing Information',
+            mri_assoc: [
+              { name: 'CM > Manage Leases', desc: 'Billing frequency and proration settings' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-billing-adjustments',
@@ -344,7 +598,60 @@ export const cm = [
           { name: 'CM > Batch Activities > Charges & Credits', desc: 'Batch entry of one-off charges, credits and adjustments to the tenant ledger' },
           { name: 'CM > Monthly Activities > Bad Debt Reserve', desc: 'Periodic bad-debt reserve calculation' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-billing-adj-oneoff',
+            title: 'One-off Charges',
+            desc: 'Ad-hoc charges for costs not covered by the recurring schedule.',
+            activities: [
+              'Raise one-off charges via batch entry',
+              'Assign the correct income category and source code',
+            ],
+            mri_title: 'CM > Batch Activities > Charges & Credits',
+            mri_assoc: [
+              { name: 'CM > Batch Activities > Charges & Credits', desc: 'One-off charge entry' },
+            ],
+          },
+          {
+            id: 'cm-billing-adj-latefee',
+            title: 'Late Fees',
+            desc: 'Charges applied to overdue accounts using the agreed calculation method.',
+            activities: [
+              'Calculate late fees (flat, rate-based or hybrid)',
+              'Apply late fees to overdue tenant accounts',
+            ],
+            mri_title: 'CM > Monthly Activities > Calculate Late Fees',
+            mri_assoc: [
+              { name: 'CM > Monthly Activities', desc: 'Late-fee calculation' },
+            ],
+          },
+          {
+            id: 'cm-billing-adj-credit',
+            title: 'Concessions, Credits & Write-offs',
+            desc: 'Downward adjustments to the tenant ledger — commercial concessions, credits and bad-debt write-offs.',
+            activities: [
+              'Apply concessions, credits and free-rent adjustments where agreed',
+              'Write off uncollectable balances within authorisation limits',
+            ],
+            mri_title: 'CM > Batch Activities > Charges & Credits',
+            mri_assoc: [
+              { name: 'CM > Batch Activities > Charges & Credits', desc: 'Credit and write-off entry' },
+            ],
+          },
+          {
+            id: 'cm-billing-adj-refund',
+            title: 'Refunds & Bad-Debt Reserve',
+            desc: 'Tenant refunds and the periodic bad-debt reserve that protects income against expected losses.',
+            activities: [
+              'Process refunds, transferring to AP for payment where required',
+              'Calculate and maintain the monthly bad-debt reserve',
+            ],
+            mri_title: 'CM > Monthly Activities > Bad Debt Reserve',
+            mri_assoc: [
+              { name: 'CM > Monthly Activities > Bad Debt Reserve', desc: 'Bad-debt reserve and refund processing' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-billing-advanced',
@@ -365,7 +672,34 @@ export const cm = [
           { name: 'CM > Monthly Activities > Straight-Line Rent', desc: 'Calculates straight-lined rent recognition for reporting compliance' },
           { name: 'CM > Manage Leases', desc: 'Lease terms and currency that drive straight-lining and multi-currency billing' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-billing-adv-sl',
+            title: 'Straight-Line Rent',
+            desc: 'Smoothing recognised rental income across the lease term under the applicable accounting standard (FASB 13 / ASC 842 / IFRS 16).',
+            activities: [
+              'Configure straight-line schedules per the applicable standard',
+              'Review and adjust schedules as leases change',
+            ],
+            mri_title: 'CM > Monthly Activities > Straight-Line Rent',
+            mri_assoc: [
+              { name: 'CM > Monthly Activities > Straight-Line Rent', desc: 'Straight-line rent calculation' },
+            ],
+          },
+          {
+            id: 'cm-billing-adv-fx',
+            title: 'Multi-Currency Billing',
+            desc: 'Billing tenants in a currency other than the entity base, with split-currency support down to charge level.',
+            activities: [
+              'Configure billing currency at building/lease/charge level',
+              'Maintain the exchange-rate source used for conversion',
+            ],
+            mri_title: 'CM > Manage Leases > Currency',
+            mri_assoc: [
+              { name: 'CM > Manage Leases', desc: 'Lease-level currency configuration' },
+            ],
+          },
+        ],
       },
     ],
   },
@@ -505,7 +839,47 @@ export const cm = [
           { name: 'CM > Recoveries > Formula Builder', desc: 'Defines expense pools, participation rules and pro-rata share for cost recovery' },
           { name: 'CM > Leasing > Building Setup', desc: 'Building-level expense pools and square footage referenced by recovery formulas' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-recov-setup-pools',
+            title: 'Expense Pools',
+            desc: 'Grouping recoverable property costs into the pools tenants contribute to (operating, tax, insurance, CAM).',
+            activities: [
+              'Define expense pools at building level',
+              'Assign eligible expense types to each pool',
+            ],
+            mri_title: 'CM > Recoveries > Formula Builder > Expense Pools',
+            mri_assoc: [
+              { name: 'CM > Recoveries > Formula Builder', desc: 'Expense-pool definition' },
+            ],
+          },
+          {
+            id: 'cm-recov-setup-participation',
+            title: 'Participation & Caps',
+            desc: 'How each tenant participates in a pool — gross-up, occupancy thresholds and any caps or exclusions from the lease.',
+            activities: [
+              'Configure gross-up and occupancy thresholds',
+              'Apply lease-specific caps, floors and exclusions',
+            ],
+            mri_title: 'CM > Recoveries > Formula Builder > Participation',
+            mri_assoc: [
+              { name: 'CM > Recoveries > Formula Builder', desc: 'Expense participation rules' },
+            ],
+          },
+          {
+            id: 'cm-recov-setup-share',
+            title: 'Pro-Rata Share Basis',
+            desc: 'The measure used to apportion pooled costs across tenants (rentable, usable or custom square footage).',
+            activities: [
+              'Set the pro-rata share basis for each pool',
+              'Validate share percentages against occupied area',
+            ],
+            mri_title: 'CM > Recoveries > Formula Builder > Pro-Rata Share',
+            mri_assoc: [
+              { name: 'CM > Recoveries > Formula Builder', desc: 'Pro-rata share configuration' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-recov-recon',
@@ -527,7 +901,34 @@ export const cm = [
           { name: 'CM > Recoveries > Standard Recovery Billing Worksheet', desc: 'Preview and update recovery billing (MRI_BILLREC) for estimates and reconciliation' },
           { name: 'CM > Monthly Activities', desc: 'Posting of recovery charges and balancing adjustments to the tenant ledger' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-recov-recon-estimate',
+            title: 'On-Account Estimates',
+            desc: 'Billing tenants estimated recovery charges on account through the year, ahead of actual costs being known.',
+            activities: [
+              'Calculate and bill estimated recovery charges for the period',
+              'Preview the recovery worksheet before committing charges',
+            ],
+            mri_title: 'CM > Recoveries > Standard Recovery Billing Worksheet',
+            mri_assoc: [
+              { name: 'CM > Recoveries > Standard Recovery Billing Worksheet', desc: 'On-account estimate billing (MRI_BILLREC)' },
+            ],
+          },
+          {
+            id: 'cm-recov-recon-yearend',
+            title: 'Year-End Reconciliation',
+            desc: 'Truing up estimated charges against actual pooled costs and issuing each tenant a balancing charge or credit.',
+            activities: [
+              'Compare actual pooled costs to amounts billed on account',
+              'Issue balancing charges/credits and handle retroactive adjustments',
+            ],
+            mri_title: 'CM > Recoveries > Standard Recovery Billing Worksheet',
+            mri_assoc: [
+              { name: 'CM > Recoveries > Standard Recovery Billing Worksheet', desc: 'Reconciliation (update) run' },
+            ],
+          },
+        ],
       },
       {
         id: 'cm-recov-service',
@@ -548,7 +949,34 @@ export const cm = [
           { name: 'CM > Recoveries > Service Charges', desc: 'Country-specific (EMEA) service-charge processing and direct-charge recoveries' },
           { name: 'CM > Recoveries > Formula Builder', desc: 'Custom recovery formulas for non-standard arrangements' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'cm-recov-service-direct',
+            title: 'Direct-Charge Recoveries',
+            desc: 'Passing directly-attributable costs — such as sub-metered utilities — straight through to the tenants who incurred them.',
+            activities: [
+              'Capture meter/consumption data per tenant',
+              'Raise direct pass-through charges for the period',
+            ],
+            mri_title: 'CM > Recoveries > Service Charges > Direct Charges',
+            mri_assoc: [
+              { name: 'CM > Recoveries > Service Charges', desc: 'Direct-charge (metered) recoveries' },
+            ],
+          },
+          {
+            id: 'cm-recov-service-emea',
+            title: 'EMEA Service-Charge Packs',
+            desc: 'Country-specific service-charge regimes (UK, France, Germany, Italy) applied where local practice differs from the standard model.',
+            activities: [
+              'Enable the relevant country service-charge pack',
+              'Configure custom formulas for non-standard arrangements',
+            ],
+            mri_title: 'CM > Recoveries > Service Charges',
+            mri_assoc: [
+              { name: 'CM > Recoveries > Service Charges', desc: 'EMEA country service-charge processing' },
+            ],
+          },
+        ],
       },
     ],
   },
