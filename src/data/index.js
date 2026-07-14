@@ -57,11 +57,10 @@ export const MODULE_CONFIG = {
     colHeaderClass: '',
     icon: '🏗️',
   },
-  // ⚠️ PLACEHOLDER MODULE — content requires review before client use
   car: {
     label: 'Corporate Accounts Receivable',
     headerClass: 'car-header',
-    headerText: 'Corporate Accounts Receivable ⚠️ Placeholder Content',
+    headerText: 'Corporate Accounts Receivable',
     colHeaderClass: 'car-header-col',
     icon: '📥',
   },
