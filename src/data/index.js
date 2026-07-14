@@ -64,11 +64,10 @@ export const MODULE_CONFIG = {
     colHeaderClass: 'car-header-col',
     icon: '📥',
   },
-  // ⚠️ PLACEHOLDER MODULE — content requires review before client use
   bf: {
     label: 'Budgeting & Forecasting',
     headerClass: 'bf-header',
-    headerText: 'Budgeting & Forecasting ⚠️ Placeholder Content',
+    headerText: 'Budgeting & Forecasting',
     colHeaderClass: 'bf-header-col',
     icon: '📊',
   },
