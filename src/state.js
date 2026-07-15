@@ -16,7 +16,7 @@ export const state = {
   entities:  ['reit', 'pm', 'dev'],                           // subset of ENTITY_TYPES
   // Coverage filter (Value Streams) — multi-select of item coverage tags
   coverageFilters: ['full', 'partial', 'outside', 'untagged'],
-  currentTab: 'cm',
+  currentTab: 'gl',
   editMode: false,
   addTarget: null,
   openPanelId: null,
