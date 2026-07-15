@@ -5,8 +5,10 @@ import { rm } from './rm.js';
 import { jc } from './jc.js';
 import { car } from './car.js';
 import { bf } from './bf.js';
+import { ia } from './ia.js';
+import { faa } from './faa.js';
 
-export const ALL_DATA = { cm, gl, ap, rm, jc, car, bf };
+export const ALL_DATA = { cm, gl, ap, rm, jc, car, bf, ia, faa };
 
 // Deep-frozen snapshot taken at module-load time, BEFORE any user edits.
 // This is the source of truth for "Reset to Original".
@@ -18,6 +20,8 @@ export const ORIGINAL_DATA = Object.freeze({
   jc: JSON.parse(JSON.stringify(jc)),
   car: JSON.parse(JSON.stringify(car)),
   bf: JSON.parse(JSON.stringify(bf)),
+  ia: JSON.parse(JSON.stringify(ia)),
+  faa: JSON.parse(JSON.stringify(faa)),
 });
 
 export const MODULE_CONFIG = {
@@ -69,5 +73,19 @@ export const MODULE_CONFIG = {
     headerText: 'Budgeting & Forecasting',
     colHeaderClass: 'bf-header-col',
     icon: '📊',
+  },
+  ia: {
+    label: 'Investment Accounting',
+    headerClass: 'ia-header',
+    headerText: 'Investment Accounting',
+    colHeaderClass: '',
+    icon: '📈',
+  },
+  faa: {
+    label: 'Fixed Asset Accounting',
+    headerClass: 'faa-header',
+    headerText: 'Fixed Asset Accounting',
+    colHeaderClass: '',
+    icon: '🏗️',
   },
 };
