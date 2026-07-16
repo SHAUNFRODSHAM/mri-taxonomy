@@ -206,6 +206,8 @@ body {
 .jc-header  { background: #4E79A7; }   /* OB data blue */
 .car-header { background: #76B7B2; }   /* OB analysis teal */
 .bf-header  { background: #B07AA1; }   /* OB purple (sparingly) */
+.ia-header  { background: #5B6BA8; }   /* OB indigo */
+.faa-header { background: #8C6D46; }   /* OB bronze */
 
 /* ── GRID ──────────────────────────────────────────────────────────────────── */
 .grid {

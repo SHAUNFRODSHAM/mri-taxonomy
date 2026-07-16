@@ -1,4 +1,201 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// Residential Management (RM) — Module Data
+//
+// Structured on the RM Module Taxonomy (§3 Functional Taxonomy): the taxonomy's
+// 10 sub-domains, PLUS two operational columns retained from the prior model —
+// "Maintenance & Property Operations" and "Vendor & Payables Management". The
+// taxonomy scopes RM to the residential financial lifecycle; these two areas are
+// real RM operations and are referenced by the value-stream link registry, so
+// they are kept. Content is written business-first per the rules in CLAUDE.md.
+//
+// RM is the tenant-facing sub-ledger for RESIDENTIAL (multifamily) properties:
+// prospects → application/screening → lease → RentUp billing → cash receipts →
+// renewals → move-out/SODA. It posts journals to GL and closes before GL. RM
+// shares its data model with Affordable Housing, Public Housing and Condo Mgmt.
+//
+// NOTE: Content is AI-drafted from the taxonomy reference and should be
+// validated by an MRI RM SME before client delivery.
+//
+// Source reference: MRI PMX Residential Management (RM) Module Taxonomy
+// (Open Box Software, June 2026).
+// ═══════════════════════════════════════════════════════════════════════════
+
 export const rm = [
+
+  /* ── 1. PROPERTY, BUILDING & UNIT SETUP ──────────────────────────────────── */
+  {
+    id: 'rm-property',
+    title: 'Property, Building & Unit Setup',
+    processes: [
+      {
+        id: 'rm-property-setup',
+        title: 'Property & Building Setup',
+        type: 'process',
+        desc: 'Establishing the residential property and its buildings — the top of the RM hierarchy that everything else attaches to. The Property Setup Assistant walks required steps (location, entity, billing) and the entity determines where journals are sent.',
+        activities: [
+          'Complete base property information via the Property Setup Assistant (location, entity, billing, charge-code exclusions)',
+          'Set up RM buildings (at least one per property) that contain the leasable units',
+          'Migrate any properties originally built in the MRI for Windows client to Web',
+        ],
+        mri_title: 'Property Setup (Setup and Maintenance > Residential Management > Property Setup)',
+        mri_prereqs: [
+          'GL entity established (the entity is where RM journals are sent)',
+          'Charge codes planned so billing steps can be completed',
+        ],
+        mri_assoc: [
+          { name: 'Setup and Maintenance > Residential Management > Property Setup', desc: 'Property Setup Assistant — required steps' },
+        ],
+        subs: [
+          {
+            id: 'rm-property-setup-base',
+            title: 'Base Property Info',
+            desc: 'The property record — location, entity and billing basics.',
+            activities: [
+              'Complete location, entity and billing steps',
+              'Set charge-code exclusions',
+            ],
+            mri_title: 'Setup and Maintenance > Residential Management > Property Setup',
+            mri_assoc: [
+              { name: 'Setup and Maintenance > Residential Management > Property Setup', desc: 'Base property information' },
+            ],
+          },
+          {
+            id: 'rm-property-setup-buildings',
+            title: 'RM Buildings',
+            desc: 'The building structures within a property that hold units.',
+            activities: [
+              'Create at least one building per property',
+              'Review the Building List report',
+            ],
+            mri_title: 'Setup and Maintenance > Residential Management > Property Setup',
+            mri_assoc: [
+              { name: 'Setup and Maintenance > Residential Management > Property Setup', desc: 'RM building setup' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'rm-property-units',
+        title: 'Units, Types & Amenities',
+        type: 'process',
+        desc: 'Defining the dwellings themselves — unit types with default settings, the individual units and their status, and the amenities that drive charges. Units are the leasable inventory RM markets, leases and bills.',
+        activities: [
+          'Set up unit types (bedrooms, bathrooms, base rent) whose defaults apply when assigned',
+          'Create units and track status (available, occupied, make-ready)',
+          'Configure property and unit amenities; use Quick Rent Roll for rapid unit/rent setup',
+        ],
+        mri_title: 'Units & Amenities (Setup and Maintenance > Residential Management)',
+        mri_prereqs: [
+          'Buildings created before units can be added',
+        ],
+        mri_assoc: [
+          { name: 'Setup and Maintenance > Residential Management > Property Setup', desc: 'Unit types, units and amenity setup' },
+        ],
+        subs: [
+          {
+            id: 'rm-property-units-types',
+            title: 'Unit Types & Units',
+            desc: 'Unit-type templates and the individual dwellings.',
+            activities: [
+              'Define unit types with default settings',
+              'Create units and track status',
+            ],
+            mri_title: 'Setup and Maintenance > Residential Management',
+            mri_assoc: [
+              { name: 'Setup and Maintenance > Residential Management', desc: 'Unit type and unit setup' },
+            ],
+          },
+          {
+            id: 'rm-property-units-amenities',
+            title: 'Amenities & Quick Rent Roll',
+            desc: 'Property/unit amenities and rapid rent-roll setup.',
+            activities: [
+              'Configure property and unit amenities',
+              'Use Quick Rent Roll during configuration',
+            ],
+            mri_title: 'Setup and Maintenance > Residential Management',
+            mri_assoc: [
+              { name: 'Setup and Maintenance > Residential Management', desc: 'Amenities and Quick Rent Roll' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+
+  /* ── 2. CHARGE CODES, SECURITY CODES & BILLING OPTIONS ───────────────────── */
+  {
+    id: 'rm-charges',
+    title: 'Charge Codes, Security Codes & Billing Options',
+    processes: [
+      {
+        id: 'rm-charges-codes',
+        title: 'Charge & Security Codes',
+        type: 'process',
+        desc: 'The "buckets" that categorise every resident-ledger transaction (rent, pet rent, parking, utilities) and security deposits, and map each to the GL. These codes are the vocabulary of RM billing — they tell the system how to journalise income.',
+        activities: [
+          'Set up charge codes with description, late-fee eligibility, frequency, cash type and GL mapping',
+          'Set up security codes for deposits (billing security creates a deposit receipt on the resident ledger)',
+          'Configure charge-code groups and concession/prepayment code mappings; set rent tax groups',
+        ],
+        mri_title: 'Charge Code Setup (Setup and Maintenance > Residential Management > Charge Code Setup)',
+        mri_prereqs: [
+          'GL chart of accounts finalised so codes can be mapped',
+        ],
+        mri_assoc: [
+          { name: 'Setup and Maintenance > Residential Management > Charge Code Setup', desc: 'Charge/security code setup and GL mapping' },
+        ],
+        subs: [
+          {
+            id: 'rm-charges-codes-charge',
+            title: 'Charge Codes',
+            desc: 'Income buckets for rent and recurring charges, mapped to GL.',
+            activities: [
+              'Define charge codes with frequency and late-fee eligibility',
+              'Map each code to its GL account and cash type',
+            ],
+            mri_title: 'Setup and Maintenance > Residential Management > Charge Code Setup',
+            mri_assoc: [
+              { name: 'Setup and Maintenance > Residential Management > Charge Code Setup', desc: 'Charge code setup' },
+            ],
+          },
+          {
+            id: 'rm-charges-codes-security',
+            title: 'Security Codes',
+            desc: 'Deposit codes that create security receipts on the resident ledger.',
+            activities: [
+              'Set up security codes for deposits',
+              'Map security codes to the deposit GL account',
+            ],
+            mri_title: 'Setup and Maintenance > Residential Management > Security Deposit Codes',
+            mri_assoc: [
+              { name: 'Setup and Maintenance > Residential Management', desc: 'Security code setup' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'rm-charges-billing',
+        title: 'Billing Options & Event-Based Billing',
+        type: 'process',
+        desc: 'The property-level billing rules — frequency, mid-month billing, ePayments — and event-based billing that updates recurring charges when lease events occur. These control how and when residents are billed.',
+        activities: [
+          'Configure billing options (frequency, mid-month billing, direct debit/ePayments; block ePayments per lease where needed)',
+          'Set up Event Based Billing (EBB) to update recurring charges on lease events',
+        ],
+        mri_title: 'Billing Options (Setup and Maintenance > Residential Management > Property Setup — Step 4)',
+        mri_prereqs: [
+          'Charge codes configured',
+        ],
+        mri_assoc: [
+          { name: 'Setup and Maintenance > Residential Management > Property Setup', desc: 'Billing options and event-based billing' },
+        ],
+        subs: [],
+      },
+    ],
+  },
+
+  /* ── 3. LEASING & PROSPECT MANAGEMENT ────────────────────────────────────── */
   {
     id: 'rm-leasing',
     title: 'Leasing & Prospect Management',
@@ -7,85 +204,90 @@ export const rm = [
         id: 'rm-leasing-prospects',
         title: 'Prospect Engagement & Guest Card Management',
         type: 'process',
-        desc: 'Manage the full prospect journey from first enquiry to application — capturing contact details, qualifying needs, scheduling follow-up, and building the leasing pipeline that drives occupancy across the residential portfolio.',
+        desc: 'Capturing and nurturing prospective residents from first enquiry — the top of the leasing funnel. Guest cards record what a prospect wants and the contact history that moves them toward an application.',
         activities: [
-          'Capture prospect enquiry details on a guest card: contact information, unit preference, budget, and desired move-in date',
-          'Log all prospect communications — calls, emails, tours — in the phone log for a complete contact history',
-          'Search available units matching the prospect\'s requirements and present pricing options',
-          'Schedule and record follow-up activities: call-backs, tours, and application appointments',
-          'Add occupant and guarantor details to the guest card as the prospect progresses',
-          'Track conversion rates from enquiry to application and application to lease as a leasing performance indicator',
+          'Capture guest cards (contact, unit preference, budget, move-in date) and maintain a phone log',
+          'Track the leasing pipeline and marketing sources for traffic reporting',
         ],
-        mri_title: 'Prospects / Guest Cards (RM > Leasing > Prospects/Guest Cards)',
+        mri_title: 'Leasing — Prospects (Residential Management > Leasing)',
         mri_prereqs: [
-          'Property and unit type setup complete with current pricing',
-          'Unit availability and status current in the system',
-          'Leasing agent user profiles configured with appropriate property access',
+          'Units and pricing available to offer prospects',
         ],
         mri_assoc: [
-          { name: 'RM > Leasing > Prospects/Guest Cards', desc: 'Prospect record — contact details, preferences, phone log, notes, and leasing status' },
-          { name: 'RM > Leasing > Guest Cards > Phone Log', desc: 'Chronological contact log for all prospect communications — supports follow-up accountability' },
-          { name: 'RM > Role Pages > Leasing Agent', desc: 'Leasing pipeline dashboard — prospect follow-up list, available units, and pending application actions' },
+          { name: 'Residential Management > Leasing', desc: 'Guest card / prospect capture and pipeline' },
         ],
+        subs: [],
       },
       {
         id: 'rm-leasing-application',
         title: 'Application Processing & Tenant Screening',
         type: 'process',
-        desc: 'Process rental applications from unit selection through credit and background screening to an approval or denial decision — applying consistent qualifying criteria and documenting the decision rationale to support fair housing compliance.',
+        desc: 'Turning a prospect into a qualified applicant — running screening/background checks and making an approve/deny decision, all within fair-housing rules. This is the risk-control gate before a lease is offered.',
         activities: [
-          'Confirm unit availability and place a hold to reserve it during the application period',
-          'Collect a completed rental application and application fee payment',
-          'Submit credit and background check through the integrated screening service',
-          'Review screening results against the property\'s qualifying criteria',
-          'Document the approval or denial decision with supporting rationale',
-          'Notify the applicant of the decision within the required timeframe',
-          'Release the hold if the application is denied and the unit returns to available',
-          'Add the applicant to the waitlist if no suitable unit is currently available',
+          'Run credit and background checks via the integrated screening service against qualifying criteria',
+          'Process the application (unit search, application fee) and record an approve/deny decision with rationale',
+          'Place holds or add to the waitlist to reserve a unit during application',
         ],
-        mri_title: 'Application Process (RM > Leasing > Application)',
+        mri_title: 'Leasing — Application (Residential Management > Leasing)',
         mri_prereqs: [
-          'Unit hold and waitlist functionality configured on the property',
-          'Credit screening service integrated and configured',
-          'Qualifying criteria documented and approved for each property',
-          'Application fee charge code defined',
+          'Screening service integrated; qualifying criteria agreed',
         ],
         mri_assoc: [
-          { name: 'RM > Leasing > Application > Searching Apartments', desc: 'Unit availability search by type, move-in date, and price range — used to match applicant to available unit' },
-          { name: 'RM > Leasing > Application > Holds/Waitlist', desc: 'Places a temporary hold on a unit during application processing, or adds to waitlist if no unit is available' },
-          { name: 'RM > Leasing > Application > Credit Reports', desc: 'Submits integrated screening request and displays results for approval decision' },
-          { name: 'RM > Leasing > Application > Resident Preferences', desc: 'Records applicant-specific unit preferences and lease term requirements' },
+          { name: 'Residential Management > Leasing', desc: 'Application, screening, holds and waitlist' },
         ],
+        subs: [],
       },
       {
         id: 'rm-leasing-execution',
         title: 'Lease Execution & Move-In',
         type: 'process',
-        desc: 'Complete the leasing transaction from approved application to a fully executed, active lease — confirming all commercial terms, collecting move-in payments, and handing over the unit to the new resident in a ready condition.',
+        desc: 'Converting an approved application into an active lease, signing it and moving the resident in. This is where the resident relationship and the recurring revenue formally begin.',
         activities: [
-          'Convert the approved application to a lease record with agreed terms: start date, end date, rent, and concessions',
-          'Add deposits, amenity charges, rentable items (parking, storage), and any other recurring fees to the lease',
-          'Collect all move-in funds: first month\'s rent, security deposit, and applicable fees',
-          'Generate the lease document and obtain the resident\'s signature',
-          'Confirm the unit is in make-ready condition before the move-in date',
-          'Complete the move-in inspection with the resident and document unit condition',
-          'Hand over keys and provide the resident with welcome information and portal access details',
+          'Create the lease (start/end, rent, concessions, deposits, amenity charges, rentable items) and collect move-in funds',
+          'Sign the lease electronically via SecureSign (mobile/email/print)',
+          'Confirm unit make-ready, complete the move-in inspection and issue keys/portal access',
         ],
-        mri_title: 'Leasing Process (RM > Leasing > Leasing Process)',
+        mri_title: 'Leasing — Leasing Process (Residential Management > Leasing)',
         mri_prereqs: [
-          'Application approved with decision documented',
-          'Pricing, concession, and deposit amounts confirmed',
-          'Unit in available and make-ready complete status',
-          'Charge codes for all move-in fees configured',
+          'Application approved; unit make-ready; pricing from the Global Pricing Worksheet',
         ],
         mri_assoc: [
-          { name: 'RM > Leasing > Leasing Process', desc: 'Converts approved application to active lease — enter terms, charges, concessions, and collect move-in payments' },
-          { name: 'RM > AR Processing > Cash Receipts', desc: 'Records move-in payment collection: first month, deposit, and fees' },
-          { name: 'RM > Setup > Global Pricing Worksheet', desc: 'Source of current rent, concession, deposit, and amenity pricing used in the lease offer' },
+          { name: 'Residential Management > Leasing', desc: 'Lease execution and move-in' },
+          { name: 'Residential Management > Leasing > SecureSign', desc: 'E-signature for the lease' },
+        ],
+        subs: [
+          {
+            id: 'rm-leasing-execution-lease',
+            title: 'Lease Execution & SecureSign',
+            desc: 'Creating and e-signing the lease with its terms and move-in funds.',
+            activities: [
+              'Set lease terms, deposits and amenity charges',
+              'Collect move-in funds and sign via SecureSign',
+            ],
+            mri_title: 'Residential Management > Leasing',
+            mri_assoc: [
+              { name: 'Residential Management > Leasing', desc: 'Lease execution and signing' },
+            ],
+          },
+          {
+            id: 'rm-leasing-execution-movein',
+            title: 'Move-In & Make-Ready',
+            desc: 'Confirming the unit is ready and moving the resident in.',
+            activities: [
+              'Confirm make-ready and complete the move-in inspection',
+              'Issue keys and portal access',
+            ],
+            mri_title: 'Residential Management > Leasing',
+            mri_assoc: [
+              { name: 'Residential Management > Leasing', desc: 'Move-in and make-ready' },
+            ],
+          },
         ],
       },
     ],
   },
+
+  /* ── 4. RESIDENT LIFECYCLE MANAGEMENT ────────────────────────────────────── */
   {
     id: 'rm-residents',
     title: 'Resident Lifecycle Management',
@@ -94,328 +296,483 @@ export const rm = [
         id: 'rm-residents-admin',
         title: 'Resident Account Administration',
         type: 'process',
-        desc: 'Maintain accurate and up-to-date resident lease and account records throughout the tenancy — managing contact details, occupants, vehicle records, payment preferences, and lease-level settings — to support billing accuracy and a positive resident experience.',
+        desc: 'Maintaining the resident record and everyone associated with the lease across the tenancy — profiles, occupants, guarantors, vehicles and legal actions. This is the master record for the resident relationship.',
         activities: [
-          'Review the resident\'s lease information tab to confirm current charges, balance, and lease terms',
-          'Update contact details, emergency contacts, and alternate invoice address as notified by the resident',
-          'Maintain vehicle records associated with the lease for parking management and compliance',
-          'Add or update notes and actions on the resident file to document material events',
-          'Manage occupant and guarantor records — additions, removals, and updates',
-          'Review and adjust late fee options at the lease level where exceptional circumstances apply',
-          'Enable or block e-payment access in line with the resident\'s account status',
+          'Maintain the resident profile (contacts, emergency contacts, alternate invoice address, communication preferences)',
+          'Record occupants, guarantors and vehicle assignments',
+          'Log notes/actions and track legal actions with resolution codes',
         ],
-        mri_title: 'Resident Record Management (RM > Residents)',
+        mri_title: 'Manage Residents (Residential Management > Residents > Manage Residents)',
         mri_prereqs: [
-          'Active lease records exist',
-          'Charge codes and billing options configured on the property',
+          'Active lease and resident created at move-in',
         ],
         mri_assoc: [
-          { name: 'RM > Residents > Lease Info Tab', desc: 'Current lease details: charge schedule, balance, lease dates, and billing configuration' },
-          { name: 'RM > Residents > Profile Tab', desc: 'Resident contact details, communication preferences, and alternate invoice address' },
-          { name: 'RM > Residents > Occupants Tab', desc: 'Co-residents, additional occupants, and guarantor records linked to the lease' },
-          { name: 'RM > Residents > Vehicle Tab', desc: 'Vehicle records used for parking assignment and property compliance tracking' },
+          { name: 'Residential Management > Residents > Manage Residents', desc: 'Resident search, profile and lease tab' },
         ],
         subs: [
           {
-            id: 'rm-residents-amend',
-            title: 'Lease Amendments & Mid-Term Changes',
-            desc: 'Process agreed mid-tenancy changes to the lease — rent adjustments, concession amendments, deposit changes, rentable item additions, and other fee modifications — ensuring the billing schedule remains accurate and the lease document reflects the current agreement.',
+            id: 'rm-residents-admin-profile',
+            title: 'Profile & Occupants',
+            desc: 'The resident profile plus occupants and guarantors.',
             activities: [
-              'Document and obtain approval for the proposed lease amendment before making system changes',
-              'Amend rent amount or concession schedules where agreed changes are mid-term',
-              'Add or remove rentable items (parking, storage, garage) and adjust associated charges',
-              'Adjust security deposit amounts where top-up or reduction is agreed',
-              'Add or modify recurring fees: pet rent, renter\'s insurance, utility flat fee',
-              'Confirm that amended billing lines generate correctly on the next charge run',
+              'Maintain resident and emergency contacts',
+              'Record occupants and guarantors',
             ],
-            mri_title: 'Amend Lease (RM > Residents > Amend Lease)',
-            mri_prereqs: ['Active lease record', 'Amendment authorised in writing by the appropriate level'],
+            mri_title: 'Residential Management > Residents > Manage Residents',
             mri_assoc: [
-              { name: 'RM > Residents > Amend Lease > Concessions', desc: 'Adds, modifies, or removes concession credits on the active lease' },
-              { name: 'RM > Residents > Amend Lease > Deposits', desc: 'Adjusts the held deposit type or amount on the lease record' },
-              { name: 'RM > Residents > Amend Lease > Rentable Items', desc: 'Adds or removes rentable items (parking, storage) with their associated recurring charges' },
-              { name: 'RM > Residents > Amend Lease > Other Fees', desc: 'Adds or modifies recurring miscellaneous fees: pet rent, insurance, utility flat rate' },
-              { name: 'RM > Residents > Amend Lease > Lease Terms', desc: 'Modifies lease start/end dates where an agreed term change is not a formal renewal' },
+              { name: 'Residential Management > Residents', desc: 'Resident profile and occupants' },
             ],
           },
           {
-            id: 'rm-residents-directdebit',
-            title: 'Direct Debit & Payment Setup',
-            desc: 'Establish and maintain recurring direct debit (ACH) payment instructions for residents who have opted for automatic payment — reducing collections effort and improving on-time payment rates.',
+            id: 'rm-residents-admin-legal',
+            title: 'Vehicles & Legal Actions',
+            desc: 'Vehicle records and tracked legal actions.',
             activities: [
-              'Obtain the resident\'s signed direct debit authorisation with bank account details',
-              'Set up the recurring direct debit schedule on the lease record',
-              'Confirm the first direct debit run picks up the correct amount and charges',
-              'Manage updates to bank details when residents change their account',
-              'Cancel the direct debit instruction on move-out or at the resident\'s request',
+              'Record vehicles and parking assignment',
+              'Track legal actions with resolution codes',
             ],
-            mri_title: 'RM > Residents > Amend Lease > Direct Debit',
-            mri_prereqs: ['ACH/direct debit payment processing configured on the property', 'Resident authorisation obtained'],
+            mri_title: 'Residential Management > Residents',
             mri_assoc: [
-              { name: 'RM > Residents > Amend Lease > Direct Debit', desc: 'Configures the recurring ACH payment schedule — bank account, amount, and frequency' },
-              { name: 'RM > AR Processing > Cash Receipts > Recurring Direct Debit', desc: 'Processes the scheduled direct debit payment batch for residents on auto-pay' },
-            ],
-          },
-        ],
-      },
-      {
-        id: 'rm-residents-renewal',
-        title: 'Lease Renewal Management',
-        type: 'process',
-        desc: 'Proactively manage the lease renewal cycle — identifying expiring leases, presenting competitive renewal offers, and processing accepted renewals — to retain residents, minimise vacancy, and protect rental income.',
-        activities: [
-          'Run the renewal worksheet to identify leases expiring within the review horizon',
-          'Review current market rents and agree renewal pricing for each unit type',
-          'Generate and distribute renewal offer letters with proposed terms and deadline for acceptance',
-          'Process accepted renewal terms — update lease end date, rent, and any amended concessions',
-          'Process manual renewals for residents who have agreed terms but are not using the online renewal portal',
-          'Track non-responding residents and initiate notice-to-vacate workflow where renewal is not pursued',
-        ],
-        mri_title: 'Renewal Process (RM > Residents > Renewal Process)',
-        mri_prereqs: [
-          'Active leases with expiry dates approaching the review window',
-          'Renewal pricing agreed and entered in the global pricing worksheet',
-          'Online renewal portal configured if residents are being directed to self-service renewal',
-        ],
-        mri_assoc: [
-          { name: 'RM > Residents > Renewal Process > Renewal Worksheet', desc: 'Lists expiring leases with proposed renewal terms — primary tool for planning and executing the renewal cycle' },
-          { name: 'RM > Residents > Renewal Process > Accepting Renewals', desc: 'Records resident acceptance and updates lease terms for the renewal period' },
-          { name: 'RM > Residents > Renewal Process > Manual Renewals', desc: 'Processes renewals for residents not using the online renewal portal' },
-          { name: 'RM > Role Pages > Property Manager', desc: 'Online renewal queue — surfaces residents who have submitted renewal acceptance via the resident portal' },
-        ],
-      },
-      {
-        id: 'rm-residents-moveout',
-        title: 'Notice, Transfer & Move-Out Processing',
-        type: 'process',
-        desc: 'Manage the controlled departure of a resident — from notice receipt through final account settlement and deposit disposition — ensuring the unit is returned to the available pool quickly and all financial obligations are resolved.',
-        activities: [
-          'Record notice to vacate received from the resident, confirming the move-out date and notice compliance',
-          'Schedule the move-out inspection and communicate expectations to the resident',
-          'Process a unit transfer if the resident is relocating within the property',
-          'Complete the Statement of Deposit Account (SODA) process for the final financial settlement',
-          'Apply or refund the security deposit based on the SODA outcome within the legally required timeframe',
-          'Update unit status to vacant on confirmed departure and initiate the make-ready workflow',
-        ],
-        mri_title: 'Move-Out / Transfer (RM > Residents > Move-Out / Transfer)',
-        mri_prereqs: [
-          'Active lease record with confirmed move-out date',
-          'SODA options configured on the property',
-          'Move-out charge codes and deposit refund process defined',
-        ],
-        mri_assoc: [
-          { name: 'RM > Residents > Move-Out', desc: 'Records move-out date, generates final charges, and initiates SODA and deposit disposition workflow' },
-          { name: 'RM > Residents > Transfer', desc: 'Transfers a resident from one unit to another within the same property — closes one lease, opens another' },
-          { name: 'RM > SODA', desc: 'Statement of Deposit Account — final accounting of all charges, credits, and deposit disposition at move-out' },
-        ],
-        subs: [
-          {
-            id: 'rm-residents-legal',
-            title: 'Legal Actions & Eviction Tracking',
-            desc: 'Track legal proceedings initiated against residents who have failed to meet their lease obligations — managing filing dates, court appearances, judgement outcomes, and payment plans within a single system of record.',
-            activities: [
-              'Initiate a legal action record when a formal eviction or debt recovery proceeding is filed',
-              'Record filing date, court dates, and legal costs as proceedings progress',
-              'Update the legal action status following each court hearing',
-              'Record judgement amounts and agreed payment plans',
-              'Close the legal action record on resolution — whether by payment, settlement, or move-out',
-            ],
-            mri_title: 'RM > Residents > Legal Actions',
-            mri_prereqs: ['Active or former resident record with delinquent balance', 'Legal action authorised by management'],
-            mri_assoc: [
-              { name: 'RM > Residents > Legal Actions', desc: 'Tracks eviction and debt recovery proceedings — filing dates, hearing dates, outcomes, and payment plans' },
+              { name: 'Residential Management > Residents', desc: 'Vehicles and legal actions' },
             ],
           },
         ],
       },
     ],
   },
+
+  /* ── 5. LEASE AMENDMENTS & RENEWALS ──────────────────────────────────────── */
   {
-    id: 'rm-billing',
-    title: 'Residential Billing & Collections',
+    id: 'rm-renewals',
+    title: 'Lease Amendments & Renewals',
     processes: [
       {
-        id: 'rm-billing-charges',
-        title: 'Monthly Charge Generation & Distribution',
+        id: 'rm-residents-renewal',
+        title: 'Amendments, Step-Ups & Renewals',
         type: 'process',
-        desc: 'Generate and distribute the monthly recurring charge batch for all active residential leases — ensuring every resident is billed accurately and on time for rent, fees, and all other contractual obligations.',
+        desc: 'Changing a lease mid-term and renewing it at expiry — rent adjustments, step-ups, concessions and the renewal worksheet run ~90 days ahead. Renewals protect occupancy and income continuity, and include rent-stabilisation regimes where they apply.',
         activities: [
-          'Advance the property date to initiate the upcoming month\'s charge generation',
-          'Run recurring charge generation and review the output for missing or incorrect billing lines',
-          'Apply concessions and non-cash credits per the auto-apply configuration',
-          'Post the charge batch to the AR ledger',
-          'Produce and distribute resident statements or charge notices for the billing period',
-          'Confirm the AR-to-GL journal entries post correctly to the income accounts',
+          'Amend leases mid-term (rent adjustments, concession/deposit changes, rentable items, other fees)',
+          'Create scheduled rent step-ups and manage committed step-ups',
+          'Run the renewal worksheet ~90 days ahead, review/adjust/submit, and make renewal offers with flexible concessions (incl. DHCR/NYC rent stabilisation)',
         ],
-        mri_title: 'Monthly Activities — Recurring Charges (RM > Monthly Processing)',
+        mri_title: 'Renewals (Residential Management > Residents > Renewals)',
         mri_prereqs: [
-          'Active leases with billing lines configured and effective dates current',
-          'Auto-apply mapping configured for non-cash credits and concessions',
-          'Property date set correctly before running charge generation',
+          'Active leases approaching renewal; renewal concession codes configured',
         ],
         mri_assoc: [
-          { name: 'RM > Monthly Processing > Next Month\'s Charges', desc: 'Generates the upcoming period charge batch from all active lease billing schedules' },
-          { name: 'RM > Monthly Processing > Auto-Apply Non-Cash Credits', desc: 'Applies concession credits per auto-apply mapping rules after charges are generated' },
-          { name: 'RM > Monthly Processing > Auto-Apply Prepayments', desc: 'Applies held prepayment balances to newly generated charges' },
-          { name: 'RM > Calendar', desc: 'Property date management — advancing the date triggers charge generation and month-end processing' },
+          { name: 'Residential Management > Residents > Renewals', desc: 'Renewal worksheet, offers and concessions' },
+          { name: 'Residential Management > Residents > Amend Lease', desc: 'Mid-term lease amendments and step-ups' },
+        ],
+        subs: [
+          {
+            id: 'rm-residents-renewal-amend',
+            title: 'Amendments & Step-Ups',
+            desc: 'Mid-term lease changes and scheduled rent step-ups.',
+            activities: [
+              'Amend rent, concessions, deposits and fees',
+              'Create and manage committed step-ups',
+            ],
+            mri_title: 'Residential Management > Residents > Amend Lease',
+            mri_assoc: [
+              { name: 'Residential Management > Residents', desc: 'Lease amendments and step-ups' },
+            ],
+          },
+          {
+            id: 'rm-residents-renewal-renew',
+            title: 'Renewal Worksheet & Concessions',
+            desc: 'The renewal worksheet, offers and renewal concessions.',
+            activities: [
+              'Run and review the renewal worksheet ~90 days ahead',
+              'Make renewal offers with flexible concessions',
+            ],
+            mri_title: 'Residential Management > Residents > Renewals',
+            mri_assoc: [
+              { name: 'Residential Management > Residents > Renewals', desc: 'Renewal worksheet and offers' },
+            ],
+          },
         ],
       },
+    ],
+  },
+
+  /* ── 6. TRANSACTIONS & RECEIVABLES (AR PROCESSING) ───────────────────────── */
+  {
+    id: 'rm-ar',
+    title: 'Transactions & Receivables',
+    processes: [
       {
         id: 'rm-billing-receipts',
-        title: 'Cash Receipt Processing',
+        title: 'Cash Receipts & Payments',
         type: 'process',
-        desc: 'Receive, post, and apply all resident payments — rent, deposits, fees, and miscellaneous charges — maintaining an accurate AR ledger and minimising unapplied cash balances.',
+        desc: 'Recording resident payments and handling the exceptions — NSF, reversals and prepayments. Clean, prompt receipting keeps resident balances accurate and delinquency reporting meaningful.',
         activities: [
-          'Create or select an open AR batch for the period',
-          'Enter rent receipts and apply to open charge items — oldest charge first unless the resident specifies otherwise',
-          'Enter security deposit receipts, split receipts, and combined charge-and-payment transactions',
-          'Enter miscellaneous receipts for one-off fees: move-in fees, application fees, late charges',
-          'Review the open batch for errors before posting',
-          'Post the completed batch to the AR ledger and confirm resident account balances',
+          'Record cash receipts / individual checks (check scanner supported)',
+          'Handle NSF (non-sufficient funds) via NSF batch entry',
+          'Process payment reversals and prepayments',
         ],
-        mri_title: 'Cash Receipts (RM > AR Processing)',
+        mri_title: 'Receivables — Payments (Residential Management > Receivables)',
         mri_prereqs: [
-          'Open AR batch created',
-          'Resident with open charges in the system',
-          'Charge codes for all receipt types configured',
+          'Charges present on the resident ledger; cash types mapped',
         ],
         mri_assoc: [
-          { name: 'RM > AR Processing > Batches > Create/Select', desc: 'Creates or reopens an AR batch for transaction entry — all receipts must be entered within an open batch' },
-          { name: 'RM > AR Processing > Cash Receipts > Rent Receipt', desc: 'Standard rent payment entry with automatic or manual application to open charges' },
-          { name: 'RM > AR Processing > Cash Receipts > Security Deposit Receipt', desc: 'Receipt entry specific to deposit charge codes — posts to the deposit holding account' },
-          { name: 'RM > AR Processing > Cash Receipts > Split Receipt', desc: 'Single payment entry split across multiple charge types or periods' },
-          { name: 'RM > AR Processing > One-Time Charges & Credits', desc: 'Ad-hoc charge and credit entry for miscellaneous billing adjustments outside the recurring schedule' },
+          { name: 'Residential Management > Receivables', desc: 'Cash receipts, NSF and reversals' },
+        ],
+        subs: [
+          {
+            id: 'rm-billing-receipts-cash',
+            title: 'Cash Receipts',
+            desc: 'Recording resident payments, including scanned checks.',
+            activities: [
+              'Record individual receipts/checks',
+              'Apply receipts to the resident ledger',
+            ],
+            mri_title: 'Residential Management > Receivables',
+            mri_assoc: [
+              { name: 'Residential Management > Receivables', desc: 'Cash receipt entry' },
+            ],
+          },
+          {
+            id: 'rm-billing-receipts-nsf',
+            title: 'NSF, Reversals & Prepayments',
+            desc: 'Handling bounced payments, reversals and advance payments.',
+            activities: [
+              'Process NSF batch entries',
+              'Reverse payments and track prepayments',
+            ],
+            mri_title: 'Residential Management > Receivables',
+            mri_assoc: [
+              { name: 'Residential Management > Receivables', desc: 'NSF, reversals and prepayments' },
+            ],
+          },
         ],
       },
       {
         id: 'rm-billing-delinquency',
-        title: 'Delinquency Management & Collections',
+        title: 'Charges, Adjustments & Aged Delinquency',
         type: 'process',
-        desc: 'Monitor overdue resident accounts, apply late fees, escalate collections activity, and manage the recovery of unpaid balances — protecting property income and reducing bad debt exposure.',
+        desc: 'The rest of resident-ledger activity — ad-hoc charges/credits, security adjustments, write-offs, and tracking who has and hasn\'t paid. Aged delinquency is the lens collections works from.',
         activities: [
-          'Run the delinquency report weekly and review accounts exceeding the agreed threshold',
-          'Assess late fees against eligible overdue accounts per the property\'s late fee formula and grace period',
-          'Issue demand notices to delinquent residents within the timeframe required by local tenancy law',
-          'Escalate persistent non-payers to management for legal action or negotiated payment plan',
-          'Document all collections contact and outcomes on the resident\'s notes record',
-          'Write off irrecoverable balances following exhaustion of all collection steps and management sign-off',
+          'Post ad-hoc charges and credits to the resident ledger',
+          'Apply security adjustments (apply all/part of a deposit to open receivables; refund all/part) and process bad-debt write-offs',
+          'Track aged delinquency to drive collections',
         ],
-        mri_title: 'Late Fees / Write-offs (RM > Monthly Processing / AR Processing)',
+        mri_title: 'Receivables — Charges/Credits & Security (Residential Management > Receivables)',
         mri_prereqs: [
-          'Late fee formulas configured and assigned to the property',
-          'Write-off charge codes and approval process defined',
-          'Delinquency reporting configured with the correct ageing buckets',
+          'Resident ledgers active with balances',
         ],
         mri_assoc: [
-          { name: 'RM > Monthly Processing > Late Fees', desc: 'Calculates and posts late payment penalties for delinquent accounts per the property\'s configured formula' },
-          { name: 'RM > AR Processing > Write-offs', desc: 'Removes irrecoverable balances with reason code after all collection activity is exhausted' },
-          { name: 'RM > AR Processing > NSFs', desc: 'Records returned payments, reverses the original receipt, and raises the NSF fee charge' },
-          { name: 'RM > AR Processing > Reversals', desc: 'Reverses a posted charge or receipt entry where an error has been made' },
-          { name: 'RM > Inquiries > Resident Ledger', desc: 'Full AR transaction history for a resident — used in collections review and dispute resolution' },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'rm-deposits',
-    title: 'Security Deposit Management',
-    processes: [
-      {
-        id: 'rm-deposits-admin',
-        title: 'Deposit Collection & Administration',
-        type: 'process',
-        desc: 'Manage the receipt, holding, and ongoing tracking of resident security deposits in compliance with lease terms and applicable tenancy law — ensuring deposits are correctly recorded, segregated, and available for disposition at move-out.',
-        activities: [
-          'Collect the security deposit at move-in and apply it to the deposit charge code on the lease',
-          'Confirm the deposit is posted to the correct trust or controlled holding account',
-          'Track deposit balances by resident throughout the tenancy',
-          'Process top-up billing where the lease requires the deposit to be maintained at a set multiple of rent',
-          'Review total deposit liabilities against held funds as part of balance sheet reconciliation',
-        ],
-        mri_title: 'Security Deposit Receipt (RM > AR Processing / Setup)',
-        mri_prereqs: [
-          'Security deposit charge codes defined and mapped to the deposit holding GL account',
-          'Trust or controlled bank account configured if deposits are held separately',
-          'SODA options configured on the property',
-        ],
-        mri_assoc: [
-          { name: 'RM > AR Processing > Cash Receipts > Security Deposit Receipt', desc: 'Posts deposit payment to the deposit charge code and holding account' },
-          { name: 'RM > Setup > Charge Codes', desc: 'Security deposit charge codes must map to the correct GL holding account to ensure accurate balance sheet reporting' },
-        ],
-      },
-      {
-        id: 'rm-deposits-interest',
-        title: 'Security Deposit Interest Calculation',
-        type: 'process',
-        desc: 'Calculate and credit security deposit interest to residents in jurisdictions where this is a legal requirement — ensuring the correct rate is applied, interest is posted accurately, and the property remains compliant with local tenancy regulations.',
-        activities: [
-          'Confirm the interest rate applicable to each property for the calculation period',
-          'Run the security deposit interest calculation for selected properties',
-          'Review calculated interest amounts by resident before posting',
-          'Post interest credit entries to the resident deposit accounts',
-          'Report on cumulative interest obligations across the portfolio for compliance review',
-        ],
-        mri_title: 'Security Deposit Interest (RM > Monthly Processing)',
-        mri_prereqs: [
-          'Security deposit interest rates configured by jurisdiction',
-          'Deposit charge codes and interest income categories defined',
-          'Security deposit balances posted and accurate for all active leases',
-        ],
-        mri_assoc: [
-          { name: 'RM > Monthly Processing > Security Deposit Interest', desc: 'Calculates and posts interest accrued on held deposits — driven by configured rate and deposit balance' },
-          { name: 'RM > Setup > Security Deposit Interest', desc: 'Interest rate and calculation method configuration — set by jurisdiction for compliance purposes' },
-        ],
-      },
-      {
-        id: 'rm-deposits-soda',
-        title: 'SODA Processing at Move-Out',
-        type: 'process',
-        desc: 'Complete the Statement of Deposit Account (SODA) at move-out — accounting for all outstanding charges, damages, cleaning costs, and credits against the held deposit — and return the net balance (or invoice the shortfall) within the timeframe required by law.',
-        activities: [
-          'Access the SODA for the departing resident following the move-out inspection',
-          'Enter move-out charges: rent balance, cleaning, damages, and any other deductions on the AR tab',
-          'Apply credits and allocate any prepaid rent or non-cash credits',
-          'Review the resident\'s account via the inquiry view to confirm the running balance is correct',
-          'Attach supporting documentation: inspection report, photos, and contractor invoices',
-          'Print the SODA document for resident distribution and obtain required acknowledgement',
-          'Commit the SODA to finalise the deposit disposition — refund or invoice the balance',
-          'Reverse unearned concessions per property policy before committing if applicable',
-        ],
-        mri_title: 'SODA Processing (RM > SODA)',
-        mri_prereqs: [
-          'Resident move-out date recorded on the lease',
-          'Move-out inspection completed and charges identified',
-          'SODA options configured on the property',
-          'Deposit balance confirmed in the system before SODA is processed',
-        ],
-        mri_assoc: [
-          { name: 'RM > SODA > AR Tab', desc: 'Final charge, credit, and allocation entry for the move-out deposit accounting' },
-          { name: 'RM > SODA > Attachments', desc: 'Document attachment for inspection reports, contractor invoices, and supporting evidence' },
-          { name: 'RM > SODA > Print/Commit', desc: 'Generates the SODA statement and commits the deposit disposition entries to the AR ledger' },
-          { name: 'RM > AR Processing > Security Adjustments > Refund Deposit', desc: 'Processes the refund payment to the resident following SODA commitment' },
+          { name: 'Residential Management > Receivables', desc: 'Charges/credits, security adjustments and write-offs' },
         ],
         subs: [
           {
-            id: 'rm-deposits-soda-revise',
-            title: 'Revising a Committed SODA',
-            desc: 'Correct a previously committed SODA where errors are identified or additional charges are agreed after the initial move-out processing — ensuring the final account accurately reflects all legitimate deductions.',
+            id: 'rm-billing-delinquency-charges',
+            title: 'Charges, Credits & Write-Offs',
+            desc: 'Ad-hoc ledger activity and bad-debt write-offs.',
             activities: [
-              'Identify the need to revise and obtain management authorisation before unlocking the SODA',
-              'Access and unlock the committed SODA',
-              'Make required corrections to charges, credits, or allocations',
-              'Re-commit the revised SODA and generate an updated statement for the former resident',
-              'Document the reason for the revision and the approver details in the resident notes',
+              'Post ad-hoc charges and credits',
+              'Process bad-debt write-offs',
             ],
-            mri_title: 'RM > SODA > Revise Committed SODA',
-            mri_prereqs: ['SODA previously committed', 'Revision authorised at management level'],
+            mri_title: 'Residential Management > Receivables',
             mri_assoc: [
-              { name: 'RM > SODA > Revise Committed SODA', desc: 'Unlocks and re-processes a committed SODA for corrections — generates updated statement on re-commit' },
+              { name: 'Residential Management > Receivables', desc: 'Charges, credits and write-offs' },
+            ],
+          },
+          {
+            id: 'rm-billing-delinquency-security',
+            title: 'Security Adjustments & Aged Delinquency',
+            desc: 'Applying/refunding deposits and monitoring delinquency.',
+            activities: [
+              'Apply or refund security deposits against receivables',
+              'Track aged delinquency for collections',
+            ],
+            mri_title: 'Residential Management > Receivables > Security Adjustments',
+            mri_assoc: [
+              { name: 'Residential Management > Receivables', desc: 'Security adjustments and aged delinquency' },
             ],
           },
         ],
       },
     ],
   },
+
+  /* ── 7. RENTUP & MONTHLY PROCESSING ──────────────────────────────────────── */
+  {
+    id: 'rm-rentup',
+    title: 'RentUp & Monthly Processing',
+    processes: [
+      {
+        id: 'rm-billing-charges',
+        title: 'RentUp — Recurring Charges',
+        type: 'process',
+        desc: 'The monthly RentUp that generates next month\'s recurring charges for every resident from their lease terms — RM\'s core revenue-producing run. Charges are determined in advance and posted to resident ledgers on update.',
+        activities: [
+          'Preview all residents/charges via the RM Rental Update List before committing',
+          'Run RentUp in update mode to post recurring charges (utilities, pet rent, parking) to resident ledgers',
+          'Enable Enhanced RentUp (required for accelerated rent in SODA) and reconcile charge-code/account mapping',
+        ],
+        mri_title: 'Create Next Month\'s Charges / RentUp (Residential Management > Create Next Month\'s Charges — WEB_RMRENTUP)',
+        mri_prereqs: [
+          'Leases with recurring charges configured; charge codes mapped to GL',
+          'Prior period closed',
+        ],
+        mri_assoc: [
+          { name: 'Residential Management > Create Next Month\'s Charges', desc: 'RentUp preview and update run' },
+        ],
+        subs: [
+          {
+            id: 'rm-billing-charges-run',
+            title: 'RentUp Run',
+            desc: 'Previewing and posting the monthly recurring charges.',
+            activities: [
+              'Preview the RM Rental Update List',
+              'Run in update mode to post to resident ledgers',
+            ],
+            mri_title: 'Residential Management > Create Next Month\'s Charges',
+            mri_assoc: [
+              { name: 'Residential Management > Create Next Month\'s Charges', desc: 'RentUp execution' },
+            ],
+          },
+          {
+            id: 'rm-billing-charges-recon',
+            title: 'Enhanced RentUp & Reconciliation',
+            desc: 'Enhanced RentUp and charge/account-mapping reconciliation.',
+            activities: [
+              'Enable Enhanced RentUp where required',
+              'Reconcile charge-code and account mapping',
+            ],
+            mri_title: 'Setup and Maintenance > Management Options > RM',
+            mri_assoc: [
+              { name: 'Setup and Maintenance > Management Options > RM', desc: 'Enhanced RentUp option' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'rm-close-period',
+        title: 'Journal Creation & Period Close',
+        type: 'process',
+        desc: 'Journalising RM activity to the GL and closing the RM period, which must happen before the GL close. This is the control gate that confirms the month\'s residential activity is complete and posted.',
+        activities: [
+          'Create RM journal entries (WEB_RMCREAJE) to journalise charges, cash receipts and transactions to GL',
+          'Set up and run the late fee worksheet (formulas assigned to properties)',
+          'Close the RM period ahead of the GL close',
+        ],
+        mri_title: 'Monthly Activities (Residential Management > Monthly Activities)',
+        mri_prereqs: [
+          'RentUp run and receipts posted for the period',
+        ],
+        mri_assoc: [
+          { name: 'Residential Management > Monthly Activities', desc: 'Create journals, late fees and period close' },
+        ],
+        subs: [
+          {
+            id: 'rm-close-period-journals',
+            title: 'Create RM Journals',
+            desc: 'Journalising RM charges, receipts and transactions to GL.',
+            activities: [
+              'Run Create RM Journal Entries',
+              'Confirm journals reflect all activity',
+            ],
+            mri_title: 'Residential Management > Monthly Activities',
+            mri_assoc: [
+              { name: 'Residential Management > Monthly Activities', desc: 'RM journal creation' },
+            ],
+          },
+          {
+            id: 'rm-close-period-close',
+            title: 'Late Fees & Close',
+            desc: 'Late-fee processing and the RM period close.',
+            activities: [
+              'Run the late fee worksheet',
+              'Close the RM period before GL',
+            ],
+            mri_title: 'Residential Management > Monthly Activities',
+            mri_assoc: [
+              { name: 'Residential Management > Monthly Activities', desc: 'Late fees and period close' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+
+  /* ── 8. SODA (STATEMENT OF DEPOSIT ACCOUNTING) ───────────────────────────── */
+  {
+    id: 'rm-soda',
+    title: 'SODA (Statement of Deposit Accounting)',
+    processes: [
+      {
+        id: 'rm-deposits-interest',
+        title: 'Security Deposits & Interest',
+        type: 'process',
+        desc: 'Holding resident security deposits and calculating any interest due under state/regional law. Deposits are the resident\'s money held on account and are administered separately from income.',
+        activities: [
+          'Bill and receive security deposits via security codes',
+          'Calculate security-deposit interest per state/regional law',
+        ],
+        mri_title: 'Security Deposits (Residential Management > Receivables / Setup)',
+        mri_prereqs: [
+          'Security codes configured and mapped to the deposit ledger',
+        ],
+        mri_assoc: [
+          { name: 'Residential Management > Receivables', desc: 'Deposit receipt and interest' },
+        ],
+        subs: [],
+      },
+      {
+        id: 'rm-residents-moveout',
+        title: 'Move-Out & SODA Processing',
+        type: 'process',
+        desc: 'The move-out process that determines how much deposit a resident gets back — Statement of Deposit Accounting. It is legally time-boxed (often 30 days), follows a set step order, and sends refunds to AP on commit.',
+        activities: [
+          'Work the SODA steps in order: start → forwarding address → deposit interest → concession chargebacks → additional charges/credits → reconcile open items → print → commit',
+          'Choose the SODA type (Preliminary/Open/Applicant/Final/Revised/Modified); a committed SODA needs a Revised SODA to change',
+          'Handle broken leases via Accelerated Rent OR Bill Broken Lease Through Expiration (mutually exclusive); refunds flow to AP on commit',
+        ],
+        mri_title: 'Statement of Deposit (Residential Management > Residents > Statement of Deposit)',
+        mri_prereqs: [
+          'Set Account Numbers for AP Processing (Security + Rent Refund clearing accounts) — critical for AP refunds',
+          'Enhanced RentUp enabled where accelerated rent is used',
+        ],
+        mri_assoc: [
+          { name: 'Residential Management > Residents > Statement of Deposit', desc: 'SODA processing — steps, types, commit/revise' },
+          { name: 'Accounts Payable > Invoice Entry Management', desc: 'AP refund — vendor and invoice created for the resident on SODA commit' },
+        ],
+        subs: [
+          {
+            id: 'rm-residents-moveout-steps',
+            title: 'SODA Steps & Types',
+            desc: 'The ordered SODA workflow and the SODA type lifecycle.',
+            activities: [
+              'Work the SODA steps in the recommended order',
+              'Manage SODA type (Open → Final; Revised to amend)',
+            ],
+            mri_title: 'Residential Management > Residents > Statement of Deposit',
+            mri_assoc: [
+              { name: 'Residential Management > Residents > Statement of Deposit', desc: 'SODA steps and types' },
+            ],
+          },
+          {
+            id: 'rm-residents-moveout-ap',
+            title: 'Refunds & AP Integration',
+            desc: 'Interest, broken-lease billing and the refund flow to AP.',
+            activities: [
+              'Calculate interest and handle broken-lease billing',
+              'Send the refund to AP on commit (manual AP adjustment if revised)',
+            ],
+            mri_title: 'Residential Management > Residents > Statement of Deposit',
+            mri_assoc: [
+              { name: 'Accounts Payable > Invoice Entry Management', desc: 'AP refund vendor/invoice on SODA commit' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+
+  /* ── 9. INTEGRATIONS & RESIDENT SELF-SERVICE ─────────────────────────────── */
+  {
+    id: 'rm-integrations',
+    title: 'Integrations & Resident Self-Service',
+    processes: [
+      {
+        id: 'rm-integrations-payments',
+        title: 'Resident Connect & Payments',
+        type: 'process',
+        desc: 'The resident-facing payment channels that let residents pay online and self-serve. Self-service reduces manual receipting and improves on-time payment.',
+        activities: [
+          'Enable Resident Connect for single and recurring online payments (incl. checking-account payments)',
+          'Integrate RentPayment for online rent payment (mind the X.5→X.7 migration)',
+          'Use the check scanner at cash-receipt entry and manage received payments',
+        ],
+        mri_title: 'Resident Connect / RentPayment (Residential Management integrations)',
+        mri_prereqs: [
+          'Payment integration provisioned; charge codes and cash types mapped',
+        ],
+        mri_assoc: [
+          { name: 'Residential Management > Receivables', desc: 'Received-payment management from self-service channels' },
+        ],
+        subs: [],
+      },
+      {
+        id: 'rm-integrations-docs',
+        title: 'SecureSign, Forms & Screening',
+        type: 'process',
+        desc: 'The document and screening integrations that support leasing — e-signature, integrated lease forms and background checks. These streamline the leasing paperwork and compliance.',
+        activities: [
+          'Use SecureSign for e-signature of lease documents',
+          'Use Bluemoon integrated lease forms (edits save in the form, not the MRI database)',
+          'Integrate screening services (credit/background via the MITS API) and mobile/AI features (MRI On the Go / Ask Agora)',
+        ],
+        mri_title: 'SecureSign / Bluemoon / Screening (Residential Management integrations)',
+        mri_prereqs: [
+          'Integration accounts provisioned with the relevant providers',
+        ],
+        mri_assoc: [
+          { name: 'Residential Management > Leasing', desc: 'SecureSign, Bluemoon forms and screening integrations' },
+        ],
+        subs: [],
+      },
+    ],
+  },
+
+  /* ── 10. REPORTING, DASHBOARDS & ROLE PAGES ──────────────────────────────── */
+  {
+    id: 'rm-reporting',
+    title: 'Reporting, Dashboards & Role Pages',
+    processes: [
+      {
+        id: 'rm-close-reporting',
+        title: 'Reporting, Dashboards & Role Pages',
+        type: 'process',
+        desc: 'The reporting and role-based views that give each team the picture they need — from aged delinquency and rent roll to SODA reports and configurable dashboards. This is where RM data becomes operational insight.',
+        activities: [
+          'Run key reports — Aged Delinquency, Rent Roll, Property List/Status, SODA (Detail/Summary), and state compliance (DHCR, Minnesota CRP)',
+          'Use role pages (Regional/Property/Leasing/Service/Portfolio/Call Center) and dashboards for role-appropriate views',
+          'Configure panels (fields, charts, graphs) on Summary, Lease and Resident Profile pages',
+        ],
+        mri_title: 'Reports & Role Pages (Residential Management > Reports / Role Pages)',
+        mri_prereqs: [
+          'Period activity posted and reconciled',
+        ],
+        mri_assoc: [
+          { name: 'Residential Management > Reports', desc: 'Aged delinquency, rent roll, SODA and compliance reports' },
+          { name: 'Residential Management > Role Pages', desc: 'Role-based dashboards and views' },
+        ],
+        subs: [
+          {
+            id: 'rm-close-reporting-reports',
+            title: 'Key Reports',
+            desc: 'The core RM reporting suite and compliance reports.',
+            activities: [
+              'Run aged delinquency, rent roll and SODA reports',
+              'Produce state compliance reports (DHCR, CRP)',
+            ],
+            mri_title: 'Residential Management > Reports',
+            mri_assoc: [
+              { name: 'Residential Management > Reports', desc: 'RM reporting suite' },
+            ],
+          },
+          {
+            id: 'rm-close-reporting-roles',
+            title: 'Role Pages & Dashboards',
+            desc: 'Role-based pages, dashboards and configurable panels.',
+            activities: [
+              'Use role pages and dashboards per team',
+              'Configure panels on key pages',
+            ],
+            mri_title: 'Residential Management > Role Pages',
+            mri_assoc: [
+              { name: 'Residential Management > Role Pages', desc: 'Role pages and dashboards' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+
+  /* ── 11. MAINTENANCE & PROPERTY OPERATIONS (operational; link-referenced) ── */
   {
     id: 'rm-maintenance',
     title: 'Maintenance & Property Operations',
@@ -424,54 +781,44 @@ export const rm = [
         id: 'rm-maintenance-requests',
         title: 'Service Request Management',
         type: 'process',
-        desc: 'Manage the end-to-end maintenance service request process — from resident-reported defect through assignment, completion, and resident sign-off — to maintain asset condition, meet habitability standards, and sustain resident satisfaction.',
+        desc: 'Capturing and resolving resident maintenance requests — the day-to-day operations that keep units habitable and residents satisfied. (Operational area beyond the RM financial taxonomy; retained as it maps to the Property Operations value stream.)',
         activities: [
-          'Receive and log a maintenance service request from the resident: defect description, location, and priority',
-          'Assign the service request to the appropriate technician or vendor based on trade and availability',
-          'Communicate the scheduled appointment time to the resident',
-          'Update service request status as work progresses: assigned, in progress, completed',
-          'Record work performed, parts used, and time on the service request',
-          'Obtain resident sign-off on completion and close the service request',
-          'Follow up with the resident to confirm satisfaction and address any outstanding concerns',
+          'Log resident service/maintenance requests with priority',
+          'Assign and track work through to completion',
+          'Keep residents informed of status',
         ],
-        mri_title: 'Service Requests (RM > Service Requests)',
+        mri_title: 'Service Requests (Residential Management — operations)',
         mri_prereqs: [
-          'Property and unit records configured',
-          'Maintenance staff and vendor records set up',
-          'Service request priority and category codes defined',
+          'Units and residents set up',
         ],
         mri_assoc: [
-          { name: 'RM > Service Requests > Adding Service Requests', desc: 'Creates a work order linked to a specific unit and the resident\'s reported defect' },
-          { name: 'RM > Service Requests > Updating/Closing', desc: 'Updates service request status, records work and materials, and closes on resident sign-off' },
-          { name: 'RM > Role Pages > Service Manager', desc: 'Role-specific dashboard for maintenance team — open requests, scheduled work, and overdue items' },
+          { name: 'Residential Management > Residents', desc: 'Resident service-request logging and tracking' },
         ],
+        subs: [],
       },
       {
         id: 'rm-maintenance-makeready',
         title: 'Unit Make-Ready & Turnover',
         type: 'process',
-        desc: 'Manage the unit turnover process from move-out to re-leasing — coordinating all make-ready tasks, tracking costs, and returning the unit to a marketable condition as quickly as possible to minimise vacancy loss.',
+        desc: 'Turning a vacated unit around and getting it back to lease-ready — the turnover work that minimises vacancy loss between residents.',
         activities: [
-          'Initiate the make-ready workflow immediately after the resident\'s departure is confirmed',
-          'Create a task list for the unit covering cleaning, repairs, painting, and appliance checks',
-          'Assign tasks to maintenance staff or external contractors',
-          'Track task completion and update unit make-ready status',
-          'Record and categorise all make-ready costs: chargeable to resident vs property expense',
-          'Update unit status to available on make-ready completion to trigger the unit\'s return to the leasing pool',
+          'Schedule and track make-ready work after move-out',
+          'Confirm the unit is inspection-passed and lease-ready',
+          'Update unit status so it can be re-marketed',
         ],
-        mri_title: 'Make-Ready Process (RM > Service Requests > Make-Ready)',
+        mri_title: 'Make-Ready (Residential Management — operations)',
         mri_prereqs: [
-          'Unit moved to vacant status on resident departure',
-          'Make-ready task templates configured',
-          'Vendor or staff records set up for trade assignment',
+          'Move-out recorded; unit status available for turnover',
         ],
         mri_assoc: [
-          { name: 'RM > Service Requests > Make-Ready', desc: 'Unit make-ready tracking — task list, assignments, completion status, and cost recording' },
-          { name: 'RM > Inquiries > Unit Availability', desc: 'Confirms unit status change from vacant to available when make-ready is marked complete' },
+          { name: 'Residential Management > Leasing', desc: 'Unit make-ready and status for re-marketing' },
         ],
+        subs: [],
       },
     ],
   },
+
+  /* ── 12. VENDOR & PAYABLES MANAGEMENT (operational; link-referenced) ─────── */
   {
     id: 'rm-vendor',
     title: 'Vendor & Payables Management',
@@ -480,164 +827,57 @@ export const rm = [
         id: 'rm-vendor-onboarding',
         title: 'Vendor Onboarding & Maintenance',
         type: 'process',
-        desc: 'Establish and maintain vendor master records for all suppliers used by the residential property portfolio — ensuring vendor data is accurate, tax reporting requirements are met, and only approved vendors can receive payments.',
+        desc: 'Setting up and maintaining the vendors that service residential properties. (Property-level payables area; the vendor master itself lives in AP, so this maps closely to the AP module and the Source-to-Pay value stream.)',
         activities: [
-          'Collect and verify new vendor details: legal name, address, tax ID, bank account, and insurance certificates',
-          'Obtain approval for the new vendor before creating an active record',
-          'Create the vendor record with correct payment terms, default GL account, and tax classification',
-          'Set up alternate payment addresses for vendors with multiple remittance locations',
-          'Record vendor attributes: trade category, licence number, and insurance expiry date',
-          'Review and update vendor records periodically to ensure data accuracy and insurance compliance',
+          'Onboard vendors that service the property and capture their details',
+          'Maintain vendor records for accurate payment and reporting',
         ],
-        mri_title: 'Vendor Management (RM > AP Processing > Vendors)',
+        mri_title: 'Vendor Maintenance (Accounts Payable > Utilities > Vendor Maintenance, via RM > Payables)',
         mri_prereqs: [
-          'Entity and AP chart of accounts configured',
-          'New vendor approval process documented',
-          'Tax classification rules agreed (1099 reporting requirements)',
+          'AP configured — RM vendor/payables flow through AP',
         ],
         mri_assoc: [
-          { name: 'RM > AP Processing > Vendors > Add/Modify Vendors', desc: 'Vendor master record creation and maintenance — payment terms, default GL, and tax classification' },
-          { name: 'RM > AP Processing > Vendors > Alternate Addresses', desc: 'Additional remittance and payment address records for multi-location vendors' },
-          { name: 'RM > AP Processing > Vendors > Attributes', desc: 'Trade category, licence, and insurance certificate tracking for compliance management' },
+          { name: 'Accounts Payable > Utilities > Vendor Maintenance', desc: 'Vendor setup used by RM payables' },
         ],
+        subs: [],
       },
       {
         id: 'rm-vendor-invoices',
         title: 'Purchase Order & Invoice Processing',
         type: 'process',
-        desc: 'Control property expenditure through a disciplined purchase order and invoice processing workflow — ensuring all spend is pre-authorised, invoices are matched to approved POs, and payables are posted accurately to the GL.',
+        desc: 'Raising POs and processing supplier invoices for residential property costs, feeding the AP payment cycle.',
         activities: [
-          'Raise a purchase order before committing spend — capturing vendor, property, GL account, and approved amount',
-          'Receive the vendor invoice and match it against the relevant purchase order',
-          'Verify invoice accuracy: amounts, GST/VAT, coding, and PO reference',
-          'Enter the invoice in an AP session, coding to the correct property, GL account, and cost category',
-          'Post the AP session to create the payable in the GL',
-          'Configure joint payee details where lease or lender requirements mandate split payments',
+          'Raise purchase orders for property goods/services',
+          'Process supplier invoices for payment through AP',
         ],
-        mri_title: 'Purchase Orders & Invoices (RM > AP Processing > Invoices)',
+        mri_title: 'Invoice Entry (Accounts Payable > Invoice Entry Management, via RM > Payables)',
         mri_prereqs: [
-          'Vendor records approved and active',
-          'Property records set up with AP cost centres',
-          'GL accounts for all expenditure categories defined',
-          'Purchase order approval limits agreed',
+          'Vendors onboarded; AP invoice processing configured',
         ],
         mri_assoc: [
-          { name: 'RM > AP Processing > Invoices > Adding a PO', desc: 'Creates a purchase order — pre-authorises spend against a vendor, property, and GL account' },
-          { name: 'RM > AP Processing > Invoices > Adding Invoice Against PO', desc: 'Records the vendor invoice matched against an existing purchase order' },
-          { name: 'RM > AP Processing > Sessions', desc: 'Batch processing sessions — groups invoice entries for review and posting' },
-          { name: 'RM > AP Processing > Open Session List', desc: 'Lists all open AP sessions awaiting posting for the property' },
-          { name: 'RM > AP Processing > Invoices > Joint Payee', desc: 'Configures split payment instructions where multiple payees share an invoice' },
+          { name: 'Accounts Payable > Invoice Entry Management', desc: 'PO and invoice processing for RM property costs' },
         ],
+        subs: [],
       },
       {
         id: 'rm-vendor-expense',
         title: 'Expense Approval & Control',
         type: 'process',
-        desc: 'Review and manage property operating expenditure through a structured approval workflow — ensuring all expenses are within budget, properly authorised, and that any exceptions are escalated before payment is processed.',
+        desc: 'Approving property expenditure before payment — the control that ensures residential property spend is authorised.',
         activities: [
-          'Access the expense overview to review all pending expenditure awaiting approval for the property',
-          'Assess each pending expense against the approved budget and delegation of authority policy',
-          'Approve expenses that comply with policy and fall within the budget envelope',
-          'Reject non-compliant or over-budget expenses with a documented reason and return to the submitter',
-          'Escalate expenses that exceed individual authority limits to the next approval tier',
-          'Monitor overall property spend against budget on a rolling basis through the expense overview',
+          'Route property invoices/POs through the approval workflow',
+          'Approve, reject or modify pending expenditure within authority limits',
         ],
-        mri_title: 'Expense Control (RM > AP Processing > Expense Control)',
+        mri_title: 'Expense Control (Accounts Payable > Expense Control, via RM > Payables)',
         mri_prereqs: [
-          'Invoices entered in AP sessions',
-          'Approval authority matrix configured in the system',
-          'Budget loaded for the entity and period for comparison',
+          'Expense control and approval hierarchy configured in AP',
         ],
         mri_assoc: [
-          { name: 'RM > AP Processing > Expense Control > Expense Overview', desc: 'Dashboard showing pending, approved, and rejected expenses — filterable by property, date, and vendor' },
-          { name: 'RM > AP Processing > Expense Control > Approving/Rejecting', desc: 'Approval and rejection workflow — posts approval or returns expense to submitter with reason' },
+          { name: 'Accounts Payable > Expense Control', desc: 'Approval of RM property expenditure' },
         ],
+        subs: [],
       },
     ],
   },
-  {
-    id: 'rm-close',
-    title: 'Month-End Processing & Close',
-    processes: [
-      {
-        id: 'rm-close-monthly',
-        title: 'Monthly Processing Activities',
-        type: 'process',
-        desc: 'Execute all required monthly processing steps before closing the period — charge generation, interest calculations, late fees, and auto-apply — ensuring the AR ledger is complete, accurate, and ready for the period close.',
-        activities: [
-          'Advance the property date to trigger the new period\'s charge generation',
-          'Generate next month\'s recurring charges and verify against the rent roll',
-          'Calculate and post security deposit interest where legally required',
-          'Assess and post late fees against eligible delinquent accounts',
-          'Run auto-apply for prepayments and non-cash credits',
-          'Review all generated transactions for anomalies before proceeding to close',
-        ],
-        mri_title: 'Monthly Activities (RM > Monthly Processing)',
-        mri_prereqs: [
-          'All AR receipts and adjustments for the current period entered and posted',
-          'Late fee formulas and auto-apply mapping configured and current',
-          'Property date advanced to the correct period',
-        ],
-        mri_assoc: [
-          { name: 'RM > Monthly Processing > Next Month\'s Charges', desc: 'Generates the upcoming period recurring charge batch from active lease billing schedules' },
-          { name: 'RM > Monthly Processing > Security Deposit Interest', desc: 'Calculates and posts deposit interest — driven by configured rate and current deposit balances' },
-          { name: 'RM > Monthly Processing > Late Fees', desc: 'Assesses late fee charges against delinquent accounts per the property\'s configured formula' },
-          { name: 'RM > Monthly Processing > Auto-Apply Prepayments', desc: 'Applies held prepayment balances to newly generated charges' },
-          { name: 'RM > Monthly Processing > Auto-Apply Non-Cash Credits', desc: 'Applies concession credits per auto-apply mapping rules' },
-        ],
-      },
-      {
-        id: 'rm-close-period',
-        title: 'Period Close & GL Integration',
-        type: 'process',
-        desc: 'Close the residential accounting period through the journal entry preview, posting, authorisation, and close completion workflow — ensuring the RM sub-ledger is fully integrated with the GL before the period is locked.',
-        activities: [
-          'Preview the period\'s AR journal entries and review GL account distributions for correctness',
-          'Resolve any coding errors or missing account mappings before posting',
-          'Post the journal entries to the GL',
-          'Obtain management authorisation confirming the period is ready to close',
-          'Acknowledge the close notification and complete the close to lock the period',
-          'Confirm the RM sub-ledger reconciles to the GL AR control account before the GL period is closed',
-        ],
-        mri_title: 'Period Close (RM > Monthly Processing > Period Close)',
-        mri_prereqs: [
-          'All monthly activities completed: charges, interest, late fees, auto-apply',
-          'All AR batches posted for the period',
-          'AP sessions posted for the period',
-        ],
-        mri_assoc: [
-          { name: 'RM > Monthly Processing > Period Close > Preview Journal Entries', desc: 'Displays the AR-to-GL journal entries for review before posting — last chance to identify coding errors' },
-          { name: 'RM > Monthly Processing > Period Close > Post Journal Entries', desc: 'Posts the period AR journal entries to the GL' },
-          { name: 'RM > Monthly Processing > Period Close > Authorise Close', desc: 'Manager authorisation step confirming the period is complete and ready to lock' },
-          { name: 'RM > Monthly Processing > Period Close > Complete Close', desc: 'Final step — locks the period from further modification' },
-        ],
-      },
-      {
-        id: 'rm-close-reporting',
-        title: 'Portfolio Reporting & Analytics',
-        type: 'process',
-        desc: 'Produce and distribute the standard residential portfolio report pack — occupancy, delinquency, leasing activity, rent roll, and financial summaries — for property management, ownership, and investor reporting.',
-        activities: [
-          'Run the rent roll and confirm current billing rates match active lease records',
-          'Produce the occupancy and vacancy report for the property and portfolio',
-          'Generate the delinquency report and circulate to property management for follow-up',
-          'Run leasing activity reports covering new leases, renewals, and move-outs for the period',
-          'Produce the resident ledger and statement reports for resident queries and audit',
-          'Schedule recurring reports in the Communication Center for automatic distribution to stakeholders',
-        ],
-        mri_title: 'RM Reporting (RM > Reports / Communication Center)',
-        mri_prereqs: [
-          'Period closed and all transactions posted',
-          'Report templates configured in the Communication Center',
-        ],
-        mri_assoc: [
-          { name: 'RM > Inquiries > Unit Availability', desc: 'Real-time availability query — vacant, occupied, and notice units with pricing' },
-          { name: 'RM > Inquiries > Resident Ledger', desc: 'AR ledger detail view by resident — used for audit, query resolution, and collections review' },
-          { name: 'RM > Inquiries > Vendor Inquiries', desc: 'Vendor payment history and open invoice inquiry for AP reconciliation' },
-          { name: 'RM > Reports > Communication Center', desc: 'Central hub for report generation, scheduling, and distribution — favourites and auto-delivery' },
-          { name: 'RM > Role Pages > Regional Manager', desc: 'Portfolio summary dashboard — occupancy, delinquency, leasing activity, and alert management across properties' },
-        ],
-      },
-    ],
-  },
+
 ];

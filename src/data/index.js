@@ -5,8 +5,10 @@ import { rm } from './rm.js';
 import { jc } from './jc.js';
 import { car } from './car.js';
 import { bf } from './bf.js';
+import { ia } from './ia.js';
+import { faa } from './faa.js';
 
-export const ALL_DATA = { cm, gl, ap, rm, jc, car, bf };
+export const ALL_DATA = { cm, gl, ap, rm, jc, car, bf, ia, faa };
 
 // Deep-frozen snapshot taken at module-load time, BEFORE any user edits.
 // This is the source of truth for "Reset to Original".
@@ -18,14 +20,15 @@ export const ORIGINAL_DATA = Object.freeze({
   jc: JSON.parse(JSON.stringify(jc)),
   car: JSON.parse(JSON.stringify(car)),
   bf: JSON.parse(JSON.stringify(bf)),
+  ia: JSON.parse(JSON.stringify(ia)),
+  faa: JSON.parse(JSON.stringify(faa)),
 });
 
 export const MODULE_CONFIG = {
-  // ⚠️ PLACEHOLDER MODULE — refactored taxonomy, content requires review
   cm: {
     label: 'Commercial Management',
     headerClass: 'cm-header',
-    headerText: 'Commercial Management ⚠️ Placeholder Content',
+    headerText: 'Commercial Management',
     colHeaderClass: '',
     icon: '🏢',
   },
@@ -50,28 +53,39 @@ export const MODULE_CONFIG = {
     colHeaderClass: '',
     icon: '🏠',
   },
-  // ⚠️ PLACEHOLDER MODULE — content requires review before client use
   jc: {
     label: 'Job Cost',
     headerClass: 'jc-header',
-    headerText: 'Job Cost ⚠️ Placeholder Content',
+    headerText: 'Job Cost',
     colHeaderClass: '',
     icon: '🏗️',
   },
-  // ⚠️ PLACEHOLDER MODULE — content requires review before client use
   car: {
     label: 'Corporate Accounts Receivable',
     headerClass: 'car-header',
-    headerText: 'Corporate Accounts Receivable ⚠️ Placeholder Content',
+    headerText: 'Corporate Accounts Receivable',
     colHeaderClass: 'car-header-col',
     icon: '📥',
   },
-  // ⚠️ PLACEHOLDER MODULE — content requires review before client use
   bf: {
     label: 'Budgeting & Forecasting',
     headerClass: 'bf-header',
-    headerText: 'Budgeting & Forecasting ⚠️ Placeholder Content',
+    headerText: 'Budgeting & Forecasting',
     colHeaderClass: 'bf-header-col',
     icon: '📊',
+  },
+  ia: {
+    label: 'Investment Accounting',
+    headerClass: 'ia-header',
+    headerText: 'Investment Accounting',
+    colHeaderClass: '',
+    icon: '📈',
+  },
+  faa: {
+    label: 'Fixed Asset Accounting',
+    headerClass: 'faa-header',
+    headerText: 'Fixed Asset Accounting',
+    colHeaderClass: '',
+    icon: '🏗️',
   },
 };

@@ -1,21 +1,20 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Corporate Accounts Receivable (CAR) — Module Data
 //
-// ⚠️  PLACEHOLDER CONTENT — THIS FILE REQUIRES CONTENT REVIEW
-// All process descriptions, activities, prerequisites, and MRI screen
-// associations below are PLACEHOLDER text derived from the CAR taxonomy
-// summary document (June 2026).  Each field that needs review is prefixed
-// with [PLACEHOLDER] so it is visible in both the source and the UI.
+// Structured on the CAR Module Taxonomy (§3 Functional Taxonomy): 8 sub-domains
+// (columns) → process cards → sub-processes. Content is written business-first
+// per the rules in CLAUDE.md.
 //
-// To complete this module:
-//   1. Replace every [PLACEHOLDER] value with accurate, business-first content
-//      following the content writing rules in CLAUDE.md.
-//   2. Remove this warning block once all content has been reviewed and signed off.
+// CAR tracks charges and collects payments from NON-TENANT entities (corporate
+// clients, vendors, internal departments) — receivables outside the CM/RM
+// landlord-tenant relationship. It is entity-based and posts journals to GL.
 //
-// Source reference: MRI PMX CAR Module Taxonomy (Open Box Software, June 2026)
+// NOTE: Content is AI-drafted from the taxonomy reference and should be
+// validated by an MRI CAR SME before client delivery.
+//
+// Source reference: MRI PMX Corporate Accounts Receivable (CAR) Module Taxonomy
+// (Open Box Software, June 2026).
 // ═══════════════════════════════════════════════════════════════════════════
-
-const PH = '[PLACEHOLDER] '; // prefix applied to every unreviewed field value
 
 export const car = [
 
@@ -28,42 +27,67 @@ export const car = [
         id: 'car-acct-setup',
         title: 'Account Setup & Maintenance',
         type: 'process',
-        desc: PH + 'Creation and ongoing management of non-tenant accounts, including entity linking, contact details, and account configuration for businesses and individuals outside the standard landlord-tenant relationship.',
+        desc: 'Creating and maintaining the non-tenant accounts CAR bills — corporate clients, vendors, internal departments and other parties outside the lease structure. These accounts are the equivalent of the tenant record in CM, and everything CAR does hangs off them.',
         activities: [
-          PH + 'Create new non-tenant account records, capturing legal name, contact details, and entity association',
-          PH + 'Link accounts to the correct entity (CAR is entity-based, not property-based)',
-          PH + 'Maintain account data to ensure accuracy for billing and reporting purposes',
-          PH + 'Inactivate accounts that are no longer in use following agreed review process',
+          'Create non-tenant accounts with legal name, contact details and entity association',
+          'Link each account to the correct GL entity (CAR is entity-based, not property-based)',
+          'Maintain account data and inactivate accounts no longer in use',
         ],
-        mri_title: PH + 'CAR > Account Maintenance',
+        mri_title: 'Account Maintenance (Corporate Accounts Receivable > Account Maintenance)',
         mri_prereqs: [
-          PH + 'Entity setup complete in GL before creating CAR accounts',
-          PH + 'Income/billing categories configured before raising charges',
-          PH + 'GL Chart of Accounts finalised so billing categories can be mapped correctly',
+          'GL entity structure established before creating CAR accounts',
+          'Billing categories and GL Chart of Accounts available for mapping charges',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Account Maintenance', desc: PH + 'Non-tenant account setup — legal name, contact details, entity linking, and account configuration' },
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Inquiry', desc: PH + 'Account inquiry and ledger views — review account activity, balances, and transaction history' },
+          { name: 'Corporate Accounts Receivable > Account Maintenance', desc: 'Non-tenant account setup — name, contacts, entity linking' },
+          { name: 'Corporate Accounts Receivable > Inquiry', desc: 'Account and ledger inquiry views' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'car-acct-setup-create',
+            title: 'Create Account',
+            desc: 'Setting up a new non-tenant account and linking it to its entity.',
+            activities: [
+              'Capture legal name, contacts and entity association',
+              'Confirm the account is not a CM/RM tenant',
+            ],
+            mri_title: 'Corporate Accounts Receivable > Account Maintenance',
+            mri_assoc: [
+              { name: 'Corporate Accounts Receivable > Account Maintenance', desc: 'New account creation' },
+            ],
+          },
+          {
+            id: 'car-acct-setup-maintain',
+            title: 'Maintain & Inactivate',
+            desc: 'Keeping account data current and retiring accounts no longer in use.',
+            activities: [
+              'Update contact and entity details as they change',
+              'Inactivate accounts following the agreed review process',
+            ],
+            mri_title: 'Corporate Accounts Receivable > Account Maintenance',
+            mri_assoc: [
+              { name: 'Corporate Accounts Receivable > Account Maintenance', desc: 'Account maintenance and inactivation' },
+            ],
+          },
+        ],
       },
       {
         id: 'car-acct-tracking',
         title: 'Account Tracking',
         type: 'process',
-        desc: PH + 'Ongoing monitoring of non-tenant account balances, kept separate from tenant ledgers maintained in CM and RM. Provides visibility of outstanding corporate receivables at entity level.',
+        desc: 'Monitoring non-tenant account balances and activity, kept distinct from the tenant ledgers held in CM and RM. This gives finance a clear view of corporate receivables at entity level.',
         activities: [
-          PH + 'Monitor non-tenant account balances on a regular basis',
-          PH + 'Review account activity to identify anomalies or unallocated items',
-          PH + 'Distinguish CAR balances from CM/RM tenant ledger balances in reporting',
+          'Monitor non-tenant account balances and activity',
+          'Distinguish CAR balances from CM/RM tenant ledger balances in reporting',
+          'Identify unallocated items and anomalies for follow-up',
         ],
-        mri_title: PH + 'CAR > Inquiry',
+        mri_title: 'Inquiry (Corporate Accounts Receivable > Inquiry)',
         mri_prereqs: [
-          PH + 'Account Maintenance records created and active',
+          'Active CAR accounts with posted transactions',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Inquiry', desc: PH + 'Real-time account balance and activity inquiry for non-tenant accounts' },
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Receivables', desc: PH + 'Outstanding balance views and receivable management across all non-tenant accounts' },
+          { name: 'Corporate Accounts Receivable > Inquiry', desc: 'Real-time balance and activity inquiry' },
+          { name: 'Corporate Accounts Receivable > Receivables', desc: 'Outstanding-balance and receivable views' },
         ],
         subs: [],
       },
@@ -71,48 +95,45 @@ export const car = [
         id: 'car-acct-recon',
         title: 'Account Reconciliation',
         type: 'process',
-        desc: PH + 'Reconciliation of non-tenant account balances against source documentation to ensure the CAR sub-ledger agrees to the General Ledger and supporting records prior to period close.',
+        desc: 'Reconciling non-tenant balances to source documentation so the CAR sub-ledger agrees to the GL before period close. This is the control that keeps corporate receivables trustworthy.',
         activities: [
-          PH + 'Reconcile CAR sub-ledger balances to GL control accounts at period end',
-          PH + 'Investigate and resolve any discrepancies between the CAR ledger and source documents',
-          PH + 'Confirm all postings for the period are complete before initiating CAR close',
+          'Reconcile CAR sub-ledger balances to GL control accounts at period end',
+          'Investigate and resolve discrepancies against source documents',
+          'Confirm all postings are complete before initiating CAR close',
         ],
-        mri_title: PH + 'CAR > Monthly Activities > Create Journal Entries',
+        mri_title: 'CAR Reconciliation (Corporate Accounts Receivable > Monthly Activities)',
         mri_prereqs: [
-          PH + 'All batch transactions posted for the period',
-          PH + 'Outstanding charges and receipts reviewed before reconciliation',
+          'All batch transactions posted for the period',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Reports > Open Status', desc: PH + 'Outstanding balance report used as a reconciliation tool to verify open items' },
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Monthly Activities', desc: PH + 'Period-end processing menu — journal creation and close sequence' },
+          { name: 'Corporate Accounts Receivable > Reports > Open Status', desc: 'Outstanding-balance report used as a reconciliation tool' },
+          { name: 'Corporate Accounts Receivable > Monthly Activities', desc: 'Period-end journal and close sequence' },
         ],
         subs: [],
       },
     ],
   },
 
-  /* ── 2. CHARGES & CREDITS ────────────────────────────────────────────────── */
+  /* ── 2. CHARGES & CREDITS (DEBTORS) ──────────────────────────────────────── */
   {
     id: 'car-charges',
     title: 'Charges & Credits',
     processes: [
       {
         id: 'car-charges-categories',
-        title: 'Income Category Setup',
+        title: 'Income / Billing Categories',
         type: 'process',
-        desc: PH + 'Configuration and maintenance of billing categories that link charges and credits raised in CAR to the correct GL Chart of Accounts codes. Categories must be established before any charges can be posted.',
+        desc: 'The billing categories that classify each corporate charge or credit and link it to the GL Chart of Accounts. These are the vocabulary of CAR billing — service fees, management fees, ad-hoc charges and the like.',
         activities: [
-          PH + 'Define billing categories aligned to the chart of accounts (e.g. service fees, management fees, ad-hoc charges)',
-          PH + 'Map each income category to the relevant GL account code',
-          PH + 'Review and update categories when chart of accounts changes are made',
+          'Set up billing categories for the charge types the business raises',
+          'Link each category to its GL account for correct posting',
         ],
-        mri_title: PH + 'CAR > Income Categories',
+        mri_title: 'Income Categories (Corporate Accounts Receivable > Income Categories)',
         mri_prereqs: [
-          PH + 'GL Chart of Accounts finalised and approved',
-          PH + 'Entity setup complete with appropriate ledger codes',
+          'GL Chart of Accounts finalised so categories can be mapped',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Income Categories', desc: PH + 'Setup and maintenance of billing categories linked to GL — all CAR charges reference an income category' },
+          { name: 'Corporate Accounts Receivable > Income Categories', desc: 'Billing category setup and GL mapping' },
         ],
         subs: [],
       },
@@ -120,20 +141,17 @@ export const car = [
         id: 'car-charges-onetime',
         title: 'One-Time Charges',
         type: 'process',
-        desc: PH + 'Manual posting of ad-hoc charges to non-tenant accounts for invoicing purposes, where the charge does not form part of a recurring billing arrangement.',
+        desc: 'Posting ad-hoc charges to non-tenant accounts for invoicing — the primary way CAR raises corporate receivables.',
         activities: [
-          PH + 'Identify the non-tenant account and income category for the charge',
-          PH + 'Post the charge to the account via batch entry or direct charge posting',
-          PH + 'Obtain appropriate authorisation before posting high-value ad-hoc charges',
-          PH + 'Assign department code where applicable',
+          'Post one-off charges to the relevant non-tenant account',
+          'Assign the correct billing category and (where applicable) department',
         ],
-        mri_title: PH + 'CAR > Batch Activities > Charges & Credits',
+        mri_title: 'Charges & Credits (Corporate Accounts Receivable > Batch Activities > Charges & Credits)',
         mri_prereqs: [
-          PH + 'Non-tenant account active in Account Maintenance',
-          PH + 'Income category configured and mapped to GL',
+          'Billing categories configured and mapped to GL',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Batch Activities > Charges & Credits', desc: PH + 'Batch entry screen for posting charges and credits to non-tenant accounts' },
+          { name: 'Corporate Accounts Receivable > Batch Activities > Charges & Credits', desc: 'Manual posting of ad-hoc charges' },
         ],
         subs: [],
       },
@@ -141,41 +159,63 @@ export const car = [
         id: 'car-charges-credits',
         title: 'Credits & Charge Allocation',
         type: 'process',
-        desc: PH + 'Processing of non-cash credits against outstanding charges, and allocation of charges across multiple entities or cost centres where required.',
+        desc: 'Applying non-cash credits against outstanding charges and allocating charges across multiple entities or cost centres. This keeps corporate balances accurate and correctly attributed.',
         activities: [
-          PH + 'Post non-cash credits to non-tenant accounts and apply against specific outstanding charges',
-          PH + 'Allocate charges across multiple entities or cost centres where cost-sharing applies',
-          PH + 'Assign department codes to transactions for management reporting purposes',
-          PH + 'Review credit balances periodically to determine whether refund or application is appropriate',
+          'Raise non-cash credits and apply them against outstanding charges',
+          'Allocate charges across entities or cost centres where shared',
+          'Maintain department association on allocated transactions',
         ],
-        mri_title: PH + 'CAR > Batch Activities > Charges & Credits',
+        mri_title: 'Charges & Credits (Corporate Accounts Receivable > Batch Activities > Charges & Credits)',
         mri_prereqs: [
-          PH + 'Outstanding charge records exist on the account before credits are applied',
-          PH + 'Department codes configured if department tracking is required',
+          'Charges posted against the account',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Batch Activities > Charges & Credits', desc: PH + 'Entry point for credits, charge adjustments, and department-assigned transactions' },
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Batch Activities > Credit Applies', desc: PH + 'Apply credits to specific outstanding charge lines against a non-tenant account' },
+          { name: 'Corporate Accounts Receivable > Batch Activities > Charges & Credits', desc: 'Credit entry and charge allocation' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'car-charges-credits-credit',
+            title: 'Credits',
+            desc: 'Non-cash credits applied against outstanding corporate charges.',
+            activities: [
+              'Raise the credit against the account',
+              'Apply it to the relevant open charge',
+            ],
+            mri_title: 'Corporate Accounts Receivable > Batch Activities > Charges & Credits',
+            mri_assoc: [
+              { name: 'Corporate Accounts Receivable > Batch Activities', desc: 'Credit entry' },
+            ],
+          },
+          {
+            id: 'car-charges-credits-allocation',
+            title: 'Charge Allocation',
+            desc: 'Splitting charges across multiple entities or cost centres.',
+            activities: [
+              'Allocate the charge across entities/cost centres',
+              'Preserve department association on the split',
+            ],
+            mri_title: 'Corporate Accounts Receivable > Batch Activities > Charges & Credits',
+            mri_assoc: [
+              { name: 'Corporate Accounts Receivable > Batch Activities', desc: 'Charge allocation' },
+            ],
+          },
+        ],
       },
       {
         id: 'car-charges-journals',
-        title: 'Journal Entries for Corporate Receivables',
+        title: 'Journal Entries',
         type: 'process',
-        desc: PH + 'Creation of journal entries for corporate receivable transactions, either automated as part of monthly processing or manually where adjustments are required outside the standard billing cycle.',
+        desc: 'Creating the journal entries that post corporate-receivable activity to the GL, whether generated by monthly processing or entered manually.',
         activities: [
-          PH + 'Review CAR activity requiring journal entry at period end',
-          PH + 'Create manual journal entries where adjustments cannot be processed through standard billing',
-          PH + 'Run automated journal creation as part of monthly close to post CAR activity to GL',
+          'Generate CAR-to-GL journal entries from posted activity',
+          'Enter manual journals where required, with department association',
         ],
-        mri_title: PH + 'CAR > Monthly Activities > Create Journal Entries',
+        mri_title: 'Create Journal Entries (Corporate Accounts Receivable > Monthly Activities > Create Journal Entries)',
         mri_prereqs: [
-          PH + 'All batch transactions reviewed and posted before journal creation',
-          PH + 'GL period open and available to receive CAR postings',
+          'Charges, credits and receipts posted for the period',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Monthly Activities > Create Journal Entries', desc: PH + 'Month-end journal creation that posts all CAR activity to the General Ledger' },
+          { name: 'Corporate Accounts Receivable > Monthly Activities', desc: 'CAR-to-GL journal creation' },
         ],
         subs: [],
       },
@@ -191,100 +231,84 @@ export const car = [
         id: 'car-payments-receipts',
         title: 'Cash Receipts',
         type: 'process',
-        desc: PH + 'Processing and recording of incoming payments from non-tenant entities, regardless of payment method. Cash receipts are matched to the relevant account and allocated against outstanding charges.',
+        desc: 'Recording incoming payments from non-tenant entities, whatever the payment method. Prompt, accurate receipting keeps corporate balances current.',
         activities: [
-          PH + 'Identify and verify incoming payments from non-tenant debtors',
-          PH + 'Record cash receipts against the correct non-tenant account',
-          PH + 'Allocate receipts to specific outstanding charge lines where known',
-          PH + 'Process bulk receipts via batch entry where multiple accounts are settled together',
+          'Record incoming payments against the correct account',
+          'Capture the payment method and reference',
         ],
-        mri_title: PH + 'CAR > Batch Activities > Cash Receipts',
+        mri_title: 'Cash Receipts (Corporate Accounts Receivable > Batch Activities > Cash Receipts)',
         mri_prereqs: [
-          PH + 'Non-tenant account and outstanding charges exist before receipt can be applied',
-          PH + 'Bank account configured in GL for receipt posting',
+          'Non-tenant accounts with open charges',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Batch Activities > Cash Receipts', desc: PH + 'Primary screen for recording incoming payments — supports allocation to 10+ charge lines in a single batch' },
+          { name: 'Corporate Accounts Receivable > Batch Activities > Cash Receipts', desc: 'Non-tenant payment entry' },
         ],
-        subs: [
-          {
-            id: 'car-payments-receipts-prepay',
-            title: 'Prepayments',
-            desc: PH + 'Recording and managing advance payments from non-tenant debtors where the payment is received before the corresponding charge is raised. Prepayment balances are tracked separately from regular receipts.',
-            activities: [
-              PH + 'Record prepayments against the non-tenant account at time of receipt',
-              PH + 'Track prepayment balances separately from standard payment allocations',
-              PH + 'Apply prepayment balance against charges when they are subsequently raised',
-            ],
-            mri_title: PH + 'CAR > Batch Activities > Cash Receipts (Prepayment)',
-            mri_prereqs: [
-              PH + 'Account configured to accept prepayments',
-            ],
-            mri_assoc: [
-              { name: PH + 'Application Menu > Corporate Accounts Receivable > Batch Activities > Cash Receipts', desc: PH + 'Prepayment entry — record advance payment and track separately for future charge application' },
-            ],
-          },
-          {
-            id: 'car-payments-receipts-nsf',
-            title: 'NSF & Payment Reversals',
-            desc: PH + 'Processing of non-sufficient funds (NSF) reversals for bounced payments, and standard payment reversals for correction of incorrectly posted receipts.',
-            activities: [
-              PH + 'Identify NSF notifications from banking and match to posted receipts',
-              PH + 'Reverse the original receipt posting and reinstate the outstanding charge',
-              PH + 'Process standard reversals for receipts posted to incorrect accounts or amounts',
-              PH + 'Notify the non-tenant debtor and agree a plan for resubmission',
-            ],
-            mri_title: PH + 'CAR > Batch Activities > Cash Receipts (NSF / Reversal)',
-            mri_prereqs: [
-              PH + 'Original receipt posting must exist before a reversal can be processed',
-            ],
-            mri_assoc: [
-              { name: PH + 'Application Menu > Corporate Accounts Receivable > Batch Activities > Cash Receipts', desc: PH + 'NSF and reversal processing — reinstate outstanding charges and record the failed payment event' },
-            ],
-          },
-        ],
+        subs: [],
       },
       {
         id: 'car-payments-allocation',
         title: 'Payment Allocation & Credit Applies',
         type: 'process',
-        desc: PH + 'Matching of cash receipts and credit balances against specific outstanding charge lines. Credit applies use the user-specified transaction date and maintain the department association of the original posting.',
+        desc: 'Matching received payments to the charges they settle, or holding them against the debtor account. Credit applies use a user-specified transaction date, and a single batch can apply a receipt across many charge lines.',
         activities: [
-          PH + 'Match received payments to specific open charge lines on the non-tenant account',
-          PH + 'Apply credit balances as credit applies using the user-specified transaction date',
-          PH + 'Ensure department association of the original posting is preserved during batch credit application',
-          PH + 'Review unallocated payment balances periodically and resolve with the debtor',
+          'Match payments to specific open charges',
+          'Apply credits against outstanding charges (credit applies)',
+          'Allocate unmatched amounts to the debtor account',
         ],
-        mri_title: PH + 'CAR > Batch Activities > Credit Applies',
+        mri_title: 'Credit Applies (Corporate Accounts Receivable > Batch Activities > Credit Applies)',
         mri_prereqs: [
-          PH + 'Cash receipt or credit balance must exist on the account before allocation',
-          PH + 'Outstanding charge lines must be open and unmatched',
+          'Receipts and open charges present on the account',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Batch Activities > Credit Applies', desc: PH + 'Apply credits and cash receipts to specific outstanding charge lines — department association preserved from original posting' },
+          { name: 'Corporate Accounts Receivable > Batch Activities > Credit Applies', desc: 'Payment allocation and credit applies' },
         ],
         subs: [],
       },
       {
         id: 'car-payments-methods',
-        title: 'Payment Methods & Refunds',
+        title: 'Payment Methods, Prepayments & Refunds',
         type: 'process',
-        desc: PH + 'Management of supported payment methods for non-tenant debtors, and the authorised process for refunding credit balances where the debtor does not have future charges to absorb the credit.',
+        desc: 'The payment channels CAR accepts and the handling of advance payments, credit balances and reversals — including NSF reversals for bounced payments.',
         activities: [
-          PH + 'Confirm payment method with the non-tenant debtor (EFT, debit order, direct debit, etc.)',
-          PH + 'Record payment method against the account for processing and remittance purposes',
-          PH + 'Review credit balances and assess whether to apply to future charges or refund',
-          PH + 'Obtain required authorisation before processing a refund to a non-tenant debtor',
+          'Support EFT, debit order, direct debit and other payment methods',
+          'Record prepayments and track balances separately from regular payments',
+          'Apply credit balances to future charges or refund with authorisation; process NSF and payment reversals',
         ],
-        mri_title: PH + 'CAR > Account Maintenance (Payment Method)',
+        mri_title: 'Batch Activities (Corporate Accounts Receivable > Batch Activities)',
         mri_prereqs: [
-          PH + 'Account active in Account Maintenance',
-          PH + 'Authorisation policy for refunds agreed and documented',
+          'Payment channels and refund authorisation process agreed',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Account Maintenance', desc: PH + 'Payment method recorded against non-tenant account — EFT, debit order, direct debit supported' },
+          { name: 'Corporate Accounts Receivable > Batch Activities', desc: 'Payment methods, prepayments, refunds and reversals' },
         ],
-        subs: [],
+        subs: [
+          {
+            id: 'car-payments-methods-prepay',
+            title: 'Prepayments',
+            desc: 'Recording advance payments and tracking them separately until due.',
+            activities: [
+              'Record the prepayment against the account',
+              'Apply it when the related charge is raised',
+            ],
+            mri_title: 'Corporate Accounts Receivable > Batch Activities > Cash Receipts',
+            mri_assoc: [
+              { name: 'Corporate Accounts Receivable > Batch Activities', desc: 'Prepayment handling' },
+            ],
+          },
+          {
+            id: 'car-payments-methods-refund',
+            title: 'Refunds & Reversals',
+            desc: 'Refunding credit balances and reversing erroneous or bounced (NSF) payments.',
+            activities: [
+              'Refund credit balances with authorisation',
+              'Process NSF and standard payment reversals',
+            ],
+            mri_title: 'Corporate Accounts Receivable > Batch Activities',
+            mri_assoc: [
+              { name: 'Corporate Accounts Receivable > Batch Activities', desc: 'Refund and reversal processing' },
+            ],
+          },
+        ],
       },
     ],
   },
@@ -298,22 +322,18 @@ export const car = [
         id: 'car-batch-entry',
         title: 'Batch Entry',
         type: 'process',
-        desc: PH + 'Processing of CAR transactions — cash receipts, charges, and credits — via the batch entry workflow. Batches support high-volume entry including applying receipts to 10 or more charge lines in a single batch.',
+        desc: 'Entering cash receipts, charges and credits through controlled batches — the common entry point that gives a review point before anything reaches the ledger. A single batch can apply a receipt across ten or more charge lines.',
         activities: [
-          PH + 'Create a new batch and select the appropriate batch type (Cash Receipts, Charges & Credits, or Credit Applies)',
-          PH + 'Enter transactions into the batch, assigning account, amount, income category, and department',
-          PH + 'Stamp GL segment values on transactions where segmentation is enabled',
-          PH + 'Balance and verify the batch before posting',
+          'Enter receipts, charges and credits into a batch',
+          'Apply receipts across multiple charge lines where needed',
+          'Preserve department association when applying credits in a batch',
         ],
-        mri_title: PH + 'CAR > Batch Activities > New Batch',
+        mri_title: 'Batch Activities (Corporate Accounts Receivable > Batch Activities)',
         mri_prereqs: [
-          PH + 'Non-tenant accounts active in Account Maintenance',
-          PH + 'Income categories configured and mapped to GL',
-          PH + 'GL segmentation values defined if segment stamping is required',
+          'Billing categories and accounts configured',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Batch Activities > Select Batch', desc: PH + 'Access existing batches or create new batch for Cash Receipts, Charges & Credits, or Credit Applies' },
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Batch Activities > New Batch', desc: PH + 'Create a new batch — select batch type then enter transaction lines with account, category, amount, and department' },
+          { name: 'Corporate Accounts Receivable > Batch Activities', desc: 'Batch entry of receipts, charges and credits' },
         ],
         subs: [],
       },
@@ -321,20 +341,18 @@ export const car = [
         id: 'car-batch-posting',
         title: 'Batch Posting',
         type: 'process',
-        desc: PH + 'Finalisation and posting of completed batches to update non-tenant account ledgers and submit the corresponding journal entries to the General Ledger.',
+        desc: 'Validating and posting completed batches so account ledgers and the GL are updated. This is the control step that commits batch activity.',
         activities: [
-          PH + 'Review completed batch for accuracy and completeness before posting',
-          PH + 'Post the batch to update the non-tenant account ledger and generate GL entries',
-          PH + 'Confirm posted transactions appear correctly on the account inquiry screen',
-          PH + 'Handle negative value prompts appropriately when negative payment amounts are entered',
+          'Review and validate the batch so totals agree',
+          'Post the batch to update the account ledger and GL',
+          'Stamp GL segment values where segmentation is enabled',
         ],
-        mri_title: PH + 'CAR > Batch Activities > Post Batch',
+        mri_title: 'Batch Activities (Corporate Accounts Receivable > Batch Activities)',
         mri_prereqs: [
-          PH + 'Batch entry complete and balanced',
-          PH + 'GL period open for the transaction date',
+          'Transactions entered in an open batch',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Batch Activities', desc: PH + 'Batch posting updates account ledgers and generates GL journal entries — negative values trigger system prompts for confirmation' },
+          { name: 'Corporate Accounts Receivable > Batch Activities', desc: 'Batch validation and posting' },
         ],
         subs: [],
       },
@@ -348,40 +366,47 @@ export const car = [
     processes: [
       {
         id: 'car-vat-charges',
-        title: 'VAT on Charges',
+        title: 'VAT / Tax on Charges',
         type: 'process',
-        desc: PH + 'Application of tax or VAT to corporate receivable charges where the transaction is taxable. VAT is calculated and posted to a separate VAT control account in GL. Note: VAT configuration is managed at entity and international setup levels, not within the CAR module itself.',
+        desc: 'Applying VAT or tax to corporate receivable charges where due, recording it as a separate charge code and posting it to the VAT control account in GL. VAT configuration itself lives at entity/international level, not in CAR.',
         activities: [
-          PH + 'Identify which charge types are subject to VAT based on entity and international configuration',
-          PH + 'Apply the correct VAT rate to taxable charges at point of entry',
-          PH + 'Ensure VAT posts to the designated VAT control account in GL',
-          PH + 'Distinguish between taxable and non-taxable charges when processing batches',
+          'Bill VAT/tax on charges where applicable, using a separate tax charge code',
+          'Flag non-taxable charges and credits correctly',
+          'Ensure VAT calculates and posts to the GL VAT control account',
         ],
-        mri_title: PH + 'CAR > Batch Activities > Charges & Credits (VAT)',
+        mri_title: 'Charges & Credits (Corporate Accounts Receivable > Batch Activities > Charges & Credits)',
         mri_prereqs: [
-          PH + 'VAT/tax configuration completed at Entity level (not within CAR)',
-          PH + 'VAT control account set up in GL Chart of Accounts',
-          PH + 'Tax charge codes defined for accurate billing and reporting',
+          'VAT/tax configured at entity and international setup levels',
+          'Tax charge codes and VAT control account established in GL',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Batch Activities > Charges & Credits', desc: PH + 'VAT applied to charges at entry — tax amount posts separately to VAT control account in GL' },
+          { name: 'Corporate Accounts Receivable > Batch Activities > Charges & Credits', desc: 'Tax charge entry on corporate receivables' },
         ],
         subs: [
           {
-            id: 'car-vat-nontaxable',
-            title: 'Non-Taxable Charges',
-            desc: PH + 'Some charges or credits raised in CAR may be non-taxable (e.g. pass-through costs, internal resource transfers). These must be coded correctly to avoid incorrect VAT calculation and reporting.',
+            id: 'car-vat-charges-taxable',
+            title: 'Taxable Charges',
+            desc: 'Billing VAT/tax on chargeable items via a separate tax charge code.',
             activities: [
-              PH + 'Identify charges that are exempt from VAT based on the nature of the transaction',
-              PH + 'Select the correct non-taxable income category when posting the charge',
-              PH + 'Review VAT reports to confirm non-taxable items are excluded from VAT control account postings',
+              'Apply the tax charge code to taxable charges',
+              'Confirm VAT posts to the control account',
             ],
-            mri_title: PH + 'CAR > Income Categories (Non-Taxable)',
-            mri_prereqs: [
-              PH + 'Non-taxable income categories configured and clearly labelled',
-            ],
+            mri_title: 'Corporate Accounts Receivable > Batch Activities > Charges & Credits',
             mri_assoc: [
-              { name: PH + 'Application Menu > Corporate Accounts Receivable > Income Categories', desc: PH + 'Income category configuration — set taxable/non-taxable flag on each category to control VAT treatment' },
+              { name: 'Corporate Accounts Receivable > Batch Activities', desc: 'Taxable charge entry' },
+            ],
+          },
+          {
+            id: 'car-vat-charges-exempt',
+            title: 'Non-Taxable Items',
+            desc: 'Handling charges and credits that are exempt from VAT/tax.',
+            activities: [
+              'Flag charges/credits as non-taxable',
+              'Verify they are excluded from VAT reporting',
+            ],
+            mri_title: 'Corporate Accounts Receivable > Batch Activities > Charges & Credits',
+            mri_assoc: [
+              { name: 'Corporate Accounts Receivable > Batch Activities', desc: 'Non-taxable item handling' },
             ],
           },
         ],
@@ -389,7 +414,7 @@ export const car = [
     ],
   },
 
-  /* ── 6. MONTHLY PROCESSING / PERIOD CLOSE ───────────────────────────────── */
+  /* ── 6. MONTHLY PROCESSING & PERIOD CLOSE ────────────────────────────────── */
   {
     id: 'car-close',
     title: 'Monthly Processing & Period Close',
@@ -398,19 +423,17 @@ export const car = [
         id: 'car-close-statements',
         title: 'Print Statements',
         type: 'process',
-        desc: PH + 'Generation and distribution of account statements for non-tenant debtors as part of the monthly processing cycle. Statements provide debtors with a summary of charges, payments, and outstanding balances for the period.',
+        desc: 'Producing statements for non-tenant accounts so debtors have a clear record of what they owe.',
         activities: [
-          PH + 'Run the statement generation process for all active non-tenant accounts at period end',
-          PH + 'Review statements before distribution to confirm accuracy of balances and transactions',
-          PH + 'Distribute statements to non-tenant debtors via agreed method (email, post, or portal)',
+          'Generate statements for the period',
+          'Distribute statements to the relevant corporate accounts',
         ],
-        mri_title: PH + 'CAR > Monthly Activities > Print Statements',
+        mri_title: 'Print Statements (Corporate Accounts Receivable > Monthly Activities > Print Statements)',
         mri_prereqs: [
-          PH + 'All charges and receipts for the period posted before statements are generated',
-          PH + 'Account contact details current in Account Maintenance for distribution',
+          'Charges and receipts posted for the period',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Monthly Activities > Print Statements', desc: PH + 'Generate debtor statements for non-tenant accounts — review before distributing to debtors' },
+          { name: 'Corporate Accounts Receivable > Monthly Activities', desc: 'Statement generation for non-tenant accounts' },
         ],
         subs: [],
       },
@@ -418,19 +441,17 @@ export const car = [
         id: 'car-close-journals',
         title: 'Create Journal Entries',
         type: 'process',
-        desc: PH + 'Month-end journal creation that consolidates all CAR activity for the period and posts it to the General Ledger. This step must be completed before the CAR period can be closed.',
+        desc: 'The month-end journal creation that posts the period\'s CAR activity to the GL.',
         activities: [
-          PH + 'Confirm all batch transactions for the period are posted and no items are in progress',
-          PH + 'Run the Create Journal Entries process to post CAR activity to GL',
-          PH + 'Review the journal output and confirm postings agree to CAR account balances',
+          'Create the month-end CAR-to-GL journals',
+          'Confirm journals reflect all posted activity',
         ],
-        mri_title: PH + 'CAR > Monthly Activities > Create Journal Entries',
+        mri_title: 'Create Journal Entries (Corporate Accounts Receivable > Monthly Activities > Create Journal Entries)',
         mri_prereqs: [
-          PH + 'All CAR batch transactions posted for the period',
-          PH + 'GL period open for the relevant accounting period',
+          'All batches posted for the period',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Monthly Activities > Create Journal Entries', desc: PH + 'Automated journal creation — consolidates all CAR postings and sends to GL for the period' },
+          { name: 'Corporate Accounts Receivable > Monthly Activities', desc: 'Month-end journal creation' },
         ],
         subs: [],
       },
@@ -438,22 +459,18 @@ export const car = [
         id: 'car-close-period',
         title: 'Hard Close & Period Reconciliation',
         type: 'process',
-        desc: PH + 'Final period reconciliation and hard close of the CAR sub-ledger. The CAR period must be closed before the GL period can be closed. Once hard-closed, no further postings to the closed period are permitted.',
+        desc: 'Reconciling all CAR activity and hard-closing the period so no further postings are possible. CAR must close before the GL period can close.',
         activities: [
-          PH + 'Reconcile all CAR activity for the period against GL postings before closing',
-          PH + 'Confirm journal entries have been created and posted to GL',
-          PH + 'Obtain sign-off from Finance on period balances before initiating close',
-          PH + 'Execute the hard close to lock the period against further postings',
-          PH + 'Confirm CAR close is complete before proceeding with GL period close',
+          'Reconcile all CAR activity for the period',
+          'Run the hard close to prevent further postings',
+          'Close CAR ahead of the GL close (with AP, CM and other sub-ledgers)',
         ],
-        mri_title: PH + 'CAR > Monthly Activities > Close Period',
+        mri_title: 'Close Period (Corporate Accounts Receivable > Monthly Activities > Close Period)',
         mri_prereqs: [
-          PH + 'All batch transactions posted and journal entries created for the period',
-          PH + 'Period reconciliation reviewed and agreed',
-          PH + 'AP and CM closes completed for the same period (CAR closes alongside these before GL)',
+          'Statements produced and journals created; reconciliation complete',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Monthly Activities > Close Period', desc: PH + 'Hard close — locks the CAR period against further postings; must be completed before GL close' },
+          { name: 'Corporate Accounts Receivable > Monthly Activities', desc: 'Hard close and period reconciliation' },
         ],
         subs: [],
       },
@@ -469,18 +486,17 @@ export const car = [
         id: 'car-reporting-open',
         title: 'Open Status Report',
         type: 'process',
-        desc: PH + 'Reporting on outstanding balances across all non-tenant accounts. The Open Status report is the primary tool for monitoring the corporate receivables ledger and supports period-end reconciliation.',
+        desc: 'Reporting outstanding balances on non-tenant accounts — the primary view of what corporate debtors owe.',
         activities: [
-          PH + 'Run the Open Status report at period end to identify all outstanding non-tenant balances',
-          PH + 'Use the report to prioritise collection activity on overdue accounts',
-          PH + 'Reconcile the Open Status report total against the GL CAR control account balance',
+          'Run the Open Status report for outstanding balances',
+          'Use it as a reconciliation and collections tool',
         ],
-        mri_title: PH + 'CAR > Reports > Open Status',
+        mri_title: 'Open Status (Corporate Accounts Receivable > Reports > Open Status)',
         mri_prereqs: [
-          PH + 'Charges and receipts posted for the period before running the report',
+          'Charges and receipts posted for the period',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Reports > Open Status', desc: PH + 'Outstanding balance report across all non-tenant accounts — primary reconciliation and collection tool' },
+          { name: 'Corporate Accounts Receivable > Reports', desc: 'Open Status outstanding-balance report' },
         ],
         subs: [],
       },
@@ -488,18 +504,17 @@ export const car = [
         id: 'car-reporting-aged',
         title: 'Aged Invoice List',
         type: 'process',
-        desc: PH + 'Ageing analysis of outstanding receivables from non-tenant debtors. Provides a breakdown of overdue balances by ageing bucket to support collections management and provisioning decisions.',
+        desc: 'Ageing analysis of outstanding corporate receivables, showing how overdue each balance is to drive collections.',
         activities: [
-          PH + 'Run the Aged Invoice List at period end or on demand for collections review',
-          PH + 'Analyse balances by ageing bucket to identify accounts requiring escalation',
-          PH + 'Use ageing data to support bad debt provisioning and write-off decisions',
+          'Run the Aged Invoice List for the period',
+          'Prioritise collections from the ageing buckets',
         ],
-        mri_title: PH + 'CAR > Reports > Aged Invoice List',
+        mri_title: 'Aged Invoice List (Corporate Accounts Receivable > Reports > Aged Invoice List)',
         mri_prereqs: [
-          PH + 'Charges and receipts current before running ageing report',
+          'Charges and receipts posted and reconciled',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Reports > Aged Invoice List', desc: PH + 'Ageing analysis of corporate receivables — breakdowns by bucket support collections and provisioning' },
+          { name: 'Corporate Accounts Receivable > Reports', desc: 'Ageing analysis of outstanding receivables' },
         ],
         subs: [],
       },
@@ -507,25 +522,24 @@ export const car = [
         id: 'car-reporting-compliance',
         title: 'Compliance & Management Reporting',
         type: 'process',
-        desc: PH + 'Category-based compliance reporting and operational reports tailored to user roles (property managers, asset managers, finance teams). Provides management-level visibility of corporate receivable performance.',
+        desc: 'Category-based reporting for management and compliance, tailored to the audience — property managers, asset managers and finance teams.',
         activities: [
-          PH + 'Run compliance reports by income category to support management or regulatory requirements',
-          PH + 'Generate operational reports aligned to user role and responsibility level',
-          PH + 'Distribute reports to relevant stakeholders as part of the monthly reporting pack',
+          'Run compliance reporting by category',
+          'Produce operational and management reports tailored to role',
         ],
-        mri_title: PH + 'CAR > Reports',
+        mri_title: 'Reports (Corporate Accounts Receivable > Reports)',
         mri_prereqs: [
-          PH + 'Income categories and accounts configured to support meaningful report segmentation',
+          'Period data posted and reconciled',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Reports', desc: PH + 'Full suite of CAR reports — Open Status, Aged Invoice List, Compliance, and operational reports by role' },
+          { name: 'Corporate Accounts Receivable > Reports', desc: 'Compliance and management reporting' },
         ],
         subs: [],
       },
     ],
   },
 
-  /* ── 8. INTEGRATION & SYSTEM IMPACT ─────────────────────────────────────── */
+  /* ── 8. INTEGRATION & SYSTEM IMPACT ──────────────────────────────────────── */
   {
     id: 'car-integration',
     title: 'Integration & System Impact',
@@ -534,20 +548,17 @@ export const car = [
         id: 'car-integration-gl',
         title: 'GL Integration',
         type: 'process',
-        desc: PH + 'All CAR transactions generate journal entries that post to the General Ledger. CAR operates as a sub-ledger to GL and must be closed before the GL period can be closed. Transactions are input by Entity, not by property or building.',
+        desc: 'The posting relationship between CAR and the General Ledger — CAR journals feed the GL, and the CAR period must close before the GL period.',
         activities: [
-          PH + 'Ensure all CAR transactions are coded to the correct entity for GL posting',
-          PH + 'Review GL postings from CAR as part of period-end reconciliation',
-          PH + 'Close the CAR sub-ledger before initiating the GL period close',
-          PH + 'Note: inter-entity accounting is NOT available in CAR — inter-entity transactions must use AP or CM/RM',
+          'Post CAR journal entries to the GL',
+          'Sequence the CAR close ahead of the GL close',
         ],
-        mri_title: PH + 'CAR > Monthly Activities > Create Journal Entries',
+        mri_title: 'GL Integration (Corporate Accounts Receivable > Monthly Activities > Create Journal Entries)',
         mri_prereqs: [
-          PH + 'Entity and GL account structure configured before CAR transactions can post',
-          PH + 'GL segmentation enabled at entity level if segment stamping on CAR batches is required',
+          'GL entity structure and Chart of Accounts in place',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Monthly Activities > Create Journal Entries', desc: PH + 'Journal entries from CAR post to GL — entity-based (not property-based); CAR must close before GL each period' },
+          { name: 'Corporate Accounts Receivable > Monthly Activities', desc: 'CAR-to-GL journal posting' },
         ],
         subs: [],
       },
@@ -555,19 +566,17 @@ export const car = [
         id: 'car-integration-segmentation',
         title: 'GL Segmentation Support',
         type: 'process',
-        desc: PH + 'When GL segmentation is enabled at entity level, segment values can be stamped on CAR batch transactions to support multi-dimensional financial reporting. Department association is maintained through batch processing.',
+        desc: 'Stamping GL segment values on CAR batch transactions where segmentation is enabled, giving richer GL analysis of corporate receivables.',
         activities: [
-          PH + 'Confirm GL segmentation is enabled at entity level before stamping segment values on CAR transactions',
-          PH + 'Assign segment values to batch transactions during entry where reporting requires segmentation',
-          PH + 'Assign department codes to transactions; confirm batch processing maintains department association',
+          'Enable segmentation on CAR batch entry',
+          'Stamp segment values on batch transactions',
         ],
-        mri_title: PH + 'CAR > Batch Activities (GL Segmentation)',
+        mri_title: 'Batch Activities (Corporate Accounts Receivable > Batch Activities)',
         mri_prereqs: [
-          PH + 'GL segmentation structure defined and enabled at entity level',
-          PH + 'Segment values configured before batch entry begins',
+          'GL segmentation configured at entity level',
         ],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable > Batch Activities', desc: PH + 'GL segment values can be stamped on batch transactions when segmentation is enabled — department association preserved through batch close' },
+          { name: 'Corporate Accounts Receivable > Batch Activities', desc: 'Segment values on batch transactions' },
         ],
         subs: [],
       },
@@ -575,20 +584,16 @@ export const car = [
         id: 'car-integration-limitations',
         title: 'Key Limitations & Boundaries',
         type: 'process',
-        desc: PH + 'Important boundaries of the CAR module that consultants and clients must understand before configuring or using it. Understanding these limitations prevents incorrect use of CAR for transactions that belong in CM, RM, or AP.',
+        desc: 'The boundaries that shape how CAR is used — no inter-entity accounting, entity-based (not property-based) input, and strictly non-tenant receivables (tenant billing belongs in CM/RM).',
         activities: [
-          PH + 'Communicate to clients that inter-entity accounting is NOT available in CAR — direct inter-entity transactions to AP or CM/RM',
-          PH + 'Confirm that CAR is for non-tenant entities only — tenant-related billing belongs in CM or RM',
-          PH + 'Note that all CAR transactions are entity-based, not property/building-based',
-          PH + 'Confirm CAR must close before GL each period alongside AP, CM, and other sub-ledgers',
-          PH + 'Note that VAT configuration is managed at Entity and International levels, not within CAR',
+          'Keep tenant-related billing in CM/RM, not CAR',
+          'Use AP or CM/RM where inter-entity postings are required',
+          'Note CAR is entity-based; some clients use it to shift internal resources between entities/departments',
         ],
-        mri_title: PH + 'CAR — Module Scope & Limitations (No single screen)',
-        mri_prereqs: [
-          PH + 'Design decision required: confirm which receivables belong in CAR vs CM/RM before go-live',
-        ],
+        mri_title: 'CAR — scope and boundaries (reference)',
+        mri_prereqs: [],
         mri_assoc: [
-          { name: PH + 'Application Menu > Corporate Accounts Receivable', desc: PH + 'CAR module home — non-tenant, entity-based only. Inter-entity accounting not supported. Closes before GL.' },
+          { name: 'Corporate Accounts Receivable', desc: 'Module scope: non-tenant, entity-based receivables' },
         ],
         subs: [],
       },

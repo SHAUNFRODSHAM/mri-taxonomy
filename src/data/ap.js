@@ -1,180 +1,328 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// Accounts Payable (AP) — Module Data
+//
+// Structured on the AP Module Taxonomy (§3 Functional Taxonomy): 10 sub-domains
+// (columns) → process cards → sub-processes. Content is written business-first
+// per the rules in CLAUDE.md.
+//
+// AP is the supplier-facing sub-ledger — money going OUT. It runs the full
+// payables lifecycle (PO → vendor → invoice → approval → payment → bank rec),
+// posts journals to GL, and must close BEFORE the GL period. MRI Vendor Pay
+// (MVP, powered by AvidXchange) is an AP add-on for automated payments.
+//
+// NOTE: Content is AI-drafted from the taxonomy reference and should be
+// validated by an MRI AP SME before client delivery. Several core setup
+// functions (AP Management Options, Tax Options, Expense Control) remain in the
+// MRI for Windows client.
+//
+// Source reference: MRI PMX Accounts Payable (AP) Module Taxonomy
+// (Open Box Software, June 2026).
+// ═══════════════════════════════════════════════════════════════════════════
+
 export const ap = [
 
-  /* ── 1. SUPPLIER MANAGEMENT ──────────────────────────────────────────────── */
+  /* ── 1. SETUP & CONFIGURATION ────────────────────────────────────────────── */
+  {
+    id: 'ap_setup',
+    title: 'Setup & Configuration',
+    processes: [
+      {
+        id: 'ap_setup_options',
+        title: 'AP Management Options',
+        type: 'process',
+        desc: 'The module-wide switches that govern how AP journalises, defaults invoice behaviour and numbers documents. Set at implementation (in the MRI for Windows client), these shape how every invoice and payment behaves.',
+        activities: [
+          'Choose the journalising approach — Real-Time JE (AUTOJE) or run APCREAJE manually (VS/DP clients must use manual)',
+          'Set the default JE detail level (detail vs summary) and whether cash-account JEs are summarised',
+          'Set default invoice status (Hold, Information Only, Pay, Release) and default cash type; configure alternate numbering',
+        ],
+        mri_title: 'AP Management Options (MRI for Windows > MGNT-MRI > Accounts Payable Options)',
+        mri_prereqs: [
+          'GL entities and chart of accounts established',
+          'Decision on Real-Time JE vs APCREAJE agreed (do not toggle later)',
+        ],
+        mri_assoc: [
+          { name: 'MRI for Windows > MGNT-MRI > Accounts Payable Options', desc: 'Real-time JE, detail/summary JE, default status and numbering' },
+        ],
+        subs: [
+          {
+            id: 'ap_setup_options_je',
+            title: 'Journalising & Detail Level',
+            desc: 'How and at what level AP posts journals to GL.',
+            activities: [
+              'Set Real-Time JE (AUTOJE) or manual APCREAJE',
+              'Set detail vs summary JE and cash summarisation',
+            ],
+            mri_title: 'MRI for Windows > MGNT-MRI > Accounts Payable Options',
+            mri_assoc: [
+              { name: 'MRI for Windows > MGNT-MRI > Accounts Payable Options', desc: 'Journalising options' },
+            ],
+          },
+          {
+            id: 'ap_setup_options_defaults',
+            title: 'Invoice Defaults & Numbering',
+            desc: 'Default invoice status/cash type and document numbering.',
+            activities: [
+              'Set default invoice status and cash type',
+              'Configure alternate invoice/document numbering',
+            ],
+            mri_title: 'MRI for Windows > MGNT-MRI > Accounts Payable Options',
+            mri_assoc: [
+              { name: 'MRI for Windows > MGNT-MRI > Accounts Payable Options', desc: 'Invoice defaults and numbering' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'ap_setup_entity',
+        title: 'Entity AP Setup',
+        type: 'process',
+        desc: 'The per-entity control accounts that tell AP where payables, inter-entity balances, retainage and withholding post. Correct entity setup is what lets AP journals land in the right GL accounts.',
+        activities: [
+          'Set the AP account (credited on invoice, debited on payment) and inter-entity account per entity',
+          'Set the retainage account and vendor withholding account',
+          'Choose the type of payable entry (agency vs regular) for the entity',
+        ],
+        mri_title: 'Entity AP Setup (Setup and Maintenance > General Ledger > Entities)',
+        mri_prereqs: [
+          'GL entities and chart of accounts in place',
+        ],
+        mri_assoc: [
+          { name: 'Setup and Maintenance > General Ledger > Entities', desc: 'AP, inter-entity, retainage and withholding account setup per entity' },
+        ],
+        subs: [],
+      },
+    ],
+  },
+
+  /* ── 2. BANK SETUP ───────────────────────────────────────────────────────── */
+  {
+    id: 'ap_bank',
+    title: 'Bank Setup',
+    processes: [
+      {
+        id: 'ap_bank_setup',
+        title: 'Bank & Check Setup',
+        type: 'process',
+        desc: 'Setting up the banks AP pays from and configuring check processing against them. Every payment draws from a bank, so accurate bank and check setup is a prerequisite to paying anyone.',
+        activities: [
+          'Set up each bank used for withdrawals/deposits with address, payer, account number and base currency',
+          'Manage bank account status (active/inactive) to retain historical banks',
+          'Configure check processing — printing setup, last check number (auto-sequenced per bank) and electronic signatures',
+        ],
+        mri_title: 'Banks (Setup and Maintenance > Accounts Payable > Banks)',
+        mri_prereqs: [
+          'Entities established; cash accounts available in GL',
+        ],
+        mri_assoc: [
+          { name: 'Setup and Maintenance > Accounts Payable > Banks', desc: 'Bank details, status and check processing setup' },
+        ],
+        subs: [
+          {
+            id: 'ap_bank_setup_details',
+            title: 'Bank Details & Status',
+            desc: 'The bank record itself and its active/inactive status.',
+            activities: [
+              'Capture bank address, payer, account and currency',
+              'Set active/inactive to retain historical banks',
+            ],
+            mri_title: 'Setup and Maintenance > Accounts Payable > Banks',
+            mri_assoc: [
+              { name: 'Setup and Maintenance > Accounts Payable > Banks', desc: 'Bank record maintenance' },
+            ],
+          },
+          {
+            id: 'ap_bank_setup_checks',
+            title: 'Check Processing & Signatures',
+            desc: 'Check printing configuration and electronic signatures.',
+            activities: [
+              'Configure check printing and last check number',
+              'Set up electronic signatures on checks',
+            ],
+            mri_title: 'Setup and Maintenance > Accounts Payable > Banks',
+            mri_assoc: [
+              { name: 'Setup and Maintenance > Accounts Payable > Banks', desc: 'Check processing options' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'ap_bank_ach',
+        title: 'ACH, Inter-Entity & Vendor Pay Banks',
+        type: 'process',
+        desc: 'Configuring the electronic-payment and cross-entity banking arrangements, plus the MRI Vendor Pay bank setup. These enable ACH runs, distributive/inter-entity processing and automated payments.',
+        activities: [
+          'Set up ACH bank records (one linked to multiple accounts) with routing for electronic payments',
+          'Configure site and inter-entity/intercompany banking and auto check-clearing file formats',
+          'Set up MRI Vendor Pay banks (Mark as Approved / Send to Vendor Pay / Send to Avid)',
+        ],
+        mri_title: 'Vendor Pay Banks (Setup and Maintenance > Accounts Payable > Vendor Pay Banks)',
+        mri_prereqs: [
+          'Bank records created; ACH routing details available from the bank',
+        ],
+        mri_assoc: [
+          { name: 'Setup and Maintenance > Accounts Payable > Banks', desc: 'ACH and inter-entity banking' },
+          { name: 'Setup and Maintenance > Accounts Payable > Vendor Pay Banks', desc: 'MRI Vendor Pay (MVP) bank setup' },
+        ],
+        subs: [],
+      },
+    ],
+  },
+
+  /* ── 3. VENDOR MANAGEMENT ────────────────────────────────────────────────── */
   {
     id: 'ap_sup',
-    title: 'Supplier Management',
+    title: 'Vendor Management',
     processes: [
       {
         id: 'ap_sup_main',
-        title: 'Vendor Master Governance',
+        title: 'Vendor Setup & Master Data',
         type: 'process',
-        desc: 'Establish and govern the authoritative record of every supplier the organisation pays — ensuring vendor data is accurate, properly authorised, and fit for purpose across onboarding, payment processing, tax reporting, and compliance obligations.',
+        desc: 'Creating and maintaining the vendor records (the VEND table) that AP can pay — you can only pay a set-up vendor. The vendor record holds the banking, ACH, tax and address detail that drives every payment, so its accuracy is central to AP control.',
         activities: [
-          'Define and enforce the vendor onboarding policy: required data, approval authority, and activation controls',
-          'Maintain vendor master records covering legal name, payment terms, bank details, and tax registration',
-          'Conduct periodic vendor master reviews to identify inactive, duplicate, or erroneous records',
-          'Apply data quality controls: single-person bank detail change controls, audit trail of all amendments',
-          'Archive or inactivate vendors with no activity within the agreed review period',
+          'Create vendors with ID (alpha/numeric), name (required for checks and 1099) and general information — address, terms, type, check priority',
+          'Capture ACH information (bank account type, encrypted transit/account number, pre-note, remittance email)',
+          'Maintain alternate addresses (payment vs PO) and vendor attributes/types for classification and reporting',
         ],
-        mri_title: 'AP > Setup > Vendors',
+        mri_title: 'Vendor Maintenance (Accounts Payable > Utilities > Vendor Maintenance)',
         mri_prereqs: [
-          'Entity setup complete in GL with AP sub-tab configured',
-          'Vendor type codes defined before creating vendor records',
-          'Vendor attribute categories established for insurance, trade, and licence tracking',
-          'AP ledger codes configured and assigned to entities',
+          'Banks configured before vendor banking details are added',
+          'Vendor ID convention agreed (avoid ACH-incompatible characters)',
         ],
         mri_assoc: [
-          { name: 'AP > Setup > Vendors', desc: 'Vendor master record — legal name, address, tax ID, payment terms, default GL account, and bank details' },
-          { name: 'AP > Setup > Vendor Types', desc: 'Classifies vendors by category (contractor, utility, professional services) — used for reporting and filtering' },
-          { name: 'AP > Setup > Vendor Attributes', desc: 'Records insurance certificate expiry, trade licence numbers, and other compliance attributes against the vendor' },
-          { name: 'AP > Setup > Vendor Priorities', desc: 'Sets payment priority ranking — used to sequence vendors when cash availability constrains the payment run' },
+          { name: 'Accounts Payable > Utilities > Vendor Maintenance', desc: 'Vendor (VEND) setup — general, ACH, addresses and attributes' },
         ],
         subs: [
           {
-            id: 'ap_sup_onboard',
-            title: 'Vendor Onboarding & Due Diligence',
-            desc: 'Manage the structured approval process for registering new suppliers — conducting due diligence checks and obtaining the required authorisation — before any invoices can be raised against the vendor.',
+            id: 'ap_sup_main_general',
+            title: 'Vendor ID & General Info',
+            desc: 'The core vendor record — identity, address, terms and type.',
             activities: [
-              'Receive and validate new supplier request: legal name, registration number, bank details, and tax ID',
-              'Conduct financial and reputational due diligence appropriate to the spend value',
-              'Screen against sanctions lists before activating the vendor record',
-              'Obtain Finance Manager or Accounts Payable Manager approval before activating',
-              'Create the vendor record in MRI and confirm the first invoice can be raised',
-              'Issue the supplier with confirmation of registration and agreed payment terms',
+              'Set vendor ID and name (required for checks/1099)',
+              'Capture address, discount terms, type and check priority',
             ],
-            mri_title: 'AP > Setup > Vendors (Add New Vendor)',
-            mri_prereqs: [
-              'Vendor type codes and attribute categories configured before onboarding begins',
-              'Approval workflow for new vendors defined and communicated',
-              'Vendor set to inactive status until all due diligence is complete and approved',
-            ],
+            mri_title: 'Accounts Payable > Utilities > Vendor Maintenance',
             mri_assoc: [
-              { name: 'AP > Setup > Vendors', desc: 'New vendor record entry — populate all required fields before activating: legal name, address, tax ID, bank details, and payment terms' },
-              { name: 'AP > Setup > Vendors > Alternate Addresses', desc: 'Add alternate remittance addresses for vendors with multiple locations or different payment destinations' },
-              { name: 'AP > Setup > Vendor Attributes', desc: 'Record insurance certificate expiry, trade licence, and compliance data at the point of onboarding' },
+              { name: 'Accounts Payable > Utilities > Vendor Maintenance', desc: 'Vendor general information' },
             ],
           },
           {
-            id: 'ap_sup_maintenance',
-            title: 'Vendor Master Maintenance',
-            desc: 'Maintain the accuracy and completeness of all vendor master records on an ongoing basis — managing changes to bank details, payment terms, and contact information with appropriate authorisation controls to prevent fraud and ensure payment accuracy.',
+            id: 'ap_sup_main_ach',
+            title: 'ACH & Banking Details',
+            desc: 'The (encrypted) banking details that enable electronic payment.',
             activities: [
-              'Process bank detail change requests with dual authorisation and independent supplier confirmation',
-              'Update payment terms following renegotiation with the supplier',
-              'Maintain remittance email addresses, escalation contacts, and alternate payment addresses',
-              'Manage supplier name changes, mergers, and entity restructures',
-              'Run the duplicate vendor report quarterly and resolve any identified duplicates',
+              'Flag the vendor as ACH and capture bank details',
+              'Run a pre-note and set the remittance email',
             ],
-            mri_title: 'AP > Setup > Vendors (Modify Vendor)',
-            mri_prereqs: [
-              'Change authorisation process documented — bank detail changes must not be made by the same person who requested them',
-              'Vendor change audit trail enabled to record all amendments with user identity and timestamp',
-            ],
+            mri_title: 'Accounts Payable > Utilities > Vendor Maintenance',
             mri_assoc: [
-              { name: 'AP > Setup > Vendors', desc: 'Modify existing vendor record — payment terms, default GL account, status (active/inactive), and contact details' },
-              { name: 'AP > Setup > Vendors > Alternate Addresses', desc: 'Update or add remittance addresses — used to route specific invoice payments to a different location' },
+              { name: 'Accounts Payable > Utilities > Vendor Maintenance', desc: 'Vendor ACH/banking (encrypted fields)' },
             ],
           },
           {
-            id: 'ap_sup_statement',
-            title: 'Supplier Statement Reconciliation',
-            desc: 'Reconcile supplier account statements against the AP ledger balance in MRI — identifying timing differences, unregistered invoices, unapplied credits, or disputed items — and resolving discrepancies within the agreed timeframe.',
+            id: 'ap_sup_main_addresses',
+            title: 'Alternate Addresses & Attributes',
+            desc: 'Separate payment/PO addresses and classification attributes.',
             activities: [
-              'Request or receive supplier statements for all active vendors on a monthly or quarterly cycle',
-              'Compare supplier statement balance to MRI AP ledger balance per vendor',
-              'Identify reconciling items: unregistered invoices, unapplied credits, or disputed amounts',
-              'Investigate and resolve discrepancies, registering any missing invoices and applying outstanding credits',
-              'Obtain AP Manager sign-off on reconciliation for key or high-value vendors',
+              'Maintain alternate payment vs PO addresses',
+              'Set vendor attributes and types for reporting',
             ],
-            mri_title: 'AP > Inquiries > Vendor Inquiry / AP > Reports > Open Invoice Listing',
-            mri_prereqs: [
-              'Posted AP transactions exist for the vendor and period being reconciled',
-              'Vendor inquiry access configured for the AP team',
-            ],
+            mri_title: 'Accounts Payable > Utilities > Vendor Maintenance',
             mri_assoc: [
-              { name: 'AP > Inquiries > Vendor Inquiry', desc: 'Displays full vendor transaction history — invoices, payments, and open balances — used as the AP side of the statement reconciliation' },
-              { name: 'AP > Reports > Open Invoice Listing', desc: 'Lists all unpaid invoices by vendor — compared to the supplier\'s outstanding items on their statement' },
-              { name: 'AP > Reports > Invoice Register', desc: 'Complete invoice register for the period — supports identification of items on the supplier statement not yet in MRI' },
+              { name: 'Accounts Payable > Utilities > Vendor Maintenance', desc: 'Alternate addresses and attributes' },
             ],
           },
         ],
       },
+      {
+        id: 'ap_sup_compliance',
+        title: 'Withholding, Certification & Special Vendors',
+        type: 'process',
+        desc: 'The compliance and edge-case aspects of vendor management — withholding/certification status, once-off and non-true vendors, and lifecycle controls. These keep AP compliant and the vendor master clean.',
+        activities: [
+          'Record withholding status and certification (UK CIS registration/subcontractor certificate, insurance expiry)',
+          'Handle once-off/one-time vendors and non-true vendors (investors, entities, tenants, refunds, owner distributions)',
+          'Manage active/inactive status, deletion/purge control and vendor-level early-payment discounts',
+        ],
+        mri_title: 'Vendor Maintenance (Accounts Payable > Utilities > Vendor Maintenance)',
+        mri_prereqs: [
+          'Withholding accounts configured per entity where CIS/withholding applies',
+        ],
+        mri_assoc: [
+          { name: 'Accounts Payable > Utilities > Vendor Maintenance', desc: 'Withholding, certification and vendor lifecycle' },
+        ],
+        subs: [],
+      },
     ],
   },
 
-  /* ── 2. INVOICE APPROVAL & EXPENDITURE CONTROL ───────────────────────────── */
+  /* ── 4. PURCHASE ORDERS (PROCUREMENT) ────────────────────────────────────── */
   {
-    id: 'ap_commit',
-    title: 'Invoice Approval & Expenditure Control',
+    id: 'ap_po',
+    title: 'Purchase Orders (Procurement)',
     processes: [
       {
-        id: 'ap_commit_main',
-        title: 'Invoice Approval & Hold Management',
+        id: 'ap_po_entry',
+        title: 'PO Entry & Approval',
         type: 'process',
-        desc: 'Ensure all supplier invoices are reviewed and approved by the appropriate authority before payment — applying holds to disputed or unverified items and releasing only approved invoices into the payment run — to maintain financial control and prevent erroneous or unauthorised payments.',
+        desc: 'Raising purchase orders for goods and services and routing them for approval before commitment. POs are the front end of expense control — approving spend before it is incurred.',
         activities: [
-          'Establish the delegation of authority matrix: who can approve invoices at each value threshold',
-          'Route invoices to the appropriate budget holder or cost centre owner for approval',
-          'Place invoices on hold where approval is pending, the invoice is disputed, or budget is exceeded',
-          'Release approved invoices from hold status to make them eligible for payment selection',
-          'Track and chase outstanding approvals to avoid late payment penalties',
-          'Report on invoices on hold by age and approver to maintain AP processing velocity',
+          'Create purchase orders for goods/services, obtaining bids/RFQs from multiple vendors where needed',
+          'Route POs for approval (Expense Control in Web; PUSR in Windows — POs entered in Windows cannot be approved in Web)',
+          'Apply Held status so POs can be modified before approval; handle open-ended/emergency POs with retrospective documentation',
         ],
-        mri_title: 'AP > Invoices > Change Invoice Payment Status',
+        mri_title: 'Purchase Orders (Accounts Payable > Purchase Orders)',
         mri_prereqs: [
-          'Invoice approval workflow defined with named approvers per entity and spend category',
-          'Delegation of authority limits agreed and communicated',
-          'Invoice hold reason codes configured',
+          'Vendors set up; expense control configured for PO approval',
         ],
         mri_assoc: [
-          { name: 'AP > Invoices > Change Invoice Payment Status', desc: 'Places an invoice on hold (preventing payment selection) or releases it — used to manage approval status and dispute holds' },
-          { name: 'AP > Invoices > Enter Invoice', desc: 'Invoice entry screen — invoices can be saved with a held status at entry pending approval' },
-          { name: 'AP > Reports > Open Invoice Listing', desc: 'Lists all open (unpaid) invoices including held items — primary tool for monitoring approval backlog' },
+          { name: 'Accounts Payable > Purchase Orders', desc: 'PO entry, bids and held/emergency POs' },
+          { name: 'Accounts Payable > Expense Control', desc: 'PO approval routing' },
+        ],
+        subs: [],
+      },
+      {
+        id: 'ap_po_match',
+        title: 'Receipting, Matching & Budget Control',
+        type: 'process',
+        desc: 'Confirming what was received, matching it to the invoice, and controlling commitments against budget. Two- and three-way matching is the core control that stops paying for goods not ordered or not received.',
+        activities: [
+          'Record receipt of items via goods received vouchers (GRV/receipting)',
+          'Match PO to invoice (2-way / 3-way) before payment',
+          'Track budget and commitments against POs (PBUD) and apply PO tax codes for partial invoicing',
+        ],
+        mri_title: 'Purchase Orders — Receipting & Matching (Accounts Payable > Purchase Orders)',
+        mri_prereqs: [
+          'POs raised and approved; budgets in place for commitment tracking',
+        ],
+        mri_assoc: [
+          { name: 'Accounts Payable > Purchase Orders', desc: 'Receipting/GRV and invoice matching' },
         ],
         subs: [
           {
-            id: 'ap_commit_alloc',
-            title: 'Predefined Allocations & Cost Coding',
-            desc: 'Define and apply predefined allocation templates that automatically split invoice costs across multiple GL accounts, departments, or entities — reducing manual coding effort, improving consistency, and ensuring expenditure is attributed correctly across the portfolio.',
+            id: 'ap_po_match_grv',
+            title: 'Receipting / GRV',
+            desc: 'Recording goods/services received against the PO.',
             activities: [
-              'Identify recurring invoice types that are consistently split across multiple cost centres',
-              'Build predefined allocation templates with percentage splits by GL account and department',
-              'Apply predefined allocations at invoice entry to auto-populate the cost distribution',
-              'Review allocation distributions for accuracy before posting',
-              'Maintain allocation templates when property ownership, entity structure, or GL accounts change',
+              'Record receipt via goods received vouchers',
+              'Confirm quantities before matching',
             ],
-            mri_title: 'AP > Setup > Predefined Allocations',
-            mri_prereqs: [
-              'Chart of accounts finalised before allocation templates are built',
-              'Entity and department structure configured in GL',
-              'Recurring invoice types identified and allocation percentages agreed with finance',
-            ],
+            mri_title: 'Accounts Payable > Purchase Orders',
             mri_assoc: [
-              { name: 'AP > Setup > Predefined Allocations', desc: 'Creates reusable cost split templates — percentage distributions across GL accounts, entities, and departments' },
-              { name: 'AP > Invoices > Enter Invoice', desc: 'Predefined allocations are applied at invoice entry — the template populates all distribution lines automatically' },
+              { name: 'Accounts Payable > Purchase Orders', desc: 'Receipting / GRV' },
             ],
           },
           {
-            id: 'ap_commit_recurring',
-            title: 'Recurring Invoice Management',
-            desc: 'Set up and manage recurring invoice schedules for suppliers with regular periodic charges — such as maintenance contracts, utilities, and standing orders — ensuring invoices are generated consistently each period without manual re-entry.',
+            id: 'ap_po_match_match',
+            title: 'Matching & Budget Control',
+            desc: 'Two/three-way matching and PO budget/commitment control.',
             activities: [
-              'Identify suppliers whose invoices repeat on a predictable schedule with consistent amounts',
-              'Create recurring invoice records with amount, GL coding, frequency, and expiry',
-              'Generate recurring invoices each period and review before posting',
-              'Amend recurring invoice templates when contract amounts change or agreements end',
-              'Confirm recurring invoices appear in the payment run and are not duplicated',
+              'Match PO to invoice (2-way/3-way)',
+              'Track commitments against budget (PBUD)',
             ],
-            mri_title: 'AP > Invoices > Recurring Invoices',
-            mri_prereqs: [
-              'Vendor records active',
-              'GL accounts for all recurring expense types defined',
-              'Contract or agreement amounts confirmed before building the recurring template',
-            ],
+            mri_title: 'Accounts Payable > Purchase Orders',
             mri_assoc: [
-              { name: 'AP > Invoices > Recurring Invoices', desc: 'Template-based recurring invoice setup — defines vendor, amount, GL coding, and generation schedule' },
-              { name: 'AP > Periodic > AP Closing > Recurring Invoices', desc: 'Generates the recurring invoice batch as part of the period-end AP closing process' },
+              { name: 'Accounts Payable > Purchase Orders', desc: 'Invoice matching and budget control' },
             ],
           },
         ],
@@ -182,55 +330,127 @@ export const ap = [
     ],
   },
 
-  /* ── 3. INVOICE MANAGEMENT ───────────────────────────────────────────────── */
+  /* ── 5. INVOICE ENTRY & PROCESSING ───────────────────────────────────────── */
   {
     id: 'ap_inv',
-    title: 'Invoice Management',
+    title: 'Invoice Entry & Processing',
     processes: [
       {
         id: 'ap_inv_main',
-        title: 'Invoice Registration & Coding',
+        title: 'Invoice Entry & Coding',
         type: 'process',
-        desc: 'Receive, validate, and register all supplier invoices in the AP ledger — ensuring invoices are correctly coded to the right entity, GL account, department, and period before they enter the approval and payment workflow.',
+        desc: 'Capturing supplier invoices and coding them to the right accounts, entities and periods. This is the heart of AP volume — where a bill becomes a payable the business can control and pay.',
         activities: [
-          'Receive invoices from suppliers (paper, email, or portal) and validate basic information: vendor, amount, GST/VAT, and invoice date',
-          'Confirm the invoice relates to goods or services that have been received and approved',
-          'Code the invoice to the correct entity, GL account, department, and accounting period',
-          'Apply predefined allocation templates where the cost is split across multiple cost centres',
-          'Enter the invoice in MRI, confirm distribution lines balance to the invoice total, and save',
-          'Review posted invoices in the open invoice listing to confirm registration is complete',
+          'Create invoices for goods/services with parent/detail line items, grouped into sessions that set the expense period (MMYY)',
+          'Split line items across accounts/entities/properties and apply predefined allocations',
+          'Handle applications for payment (progress/stage payments) and attach supporting documents; set invoice status (Ready to Pay, Hold, Information Only)',
         ],
-        mri_title: 'AP > Invoices > Enter Invoice',
+        mri_title: 'Invoice Entry Management (Accounts Payable > Invoice Entry Management)',
         mri_prereqs: [
-          'Vendor record active in the system',
-          'GL accounts for all expenditure categories defined in the chart of accounts',
-          'Accounting period open for the invoice date',
-          'Entity AP sub-tab configured with default AP ledger code',
+          'Vendors and banks set up; sessions/expense period defined',
         ],
         mri_assoc: [
-          { name: 'AP > Invoices > Enter Invoice', desc: 'Primary invoice entry screen — header (vendor, entity, date, amount) and distribution lines (GL account, department, amount)' },
-          { name: 'AP > Setup > Predefined Allocations', desc: 'Reusable cost split templates — applied at invoice entry to auto-populate multi-line GL distributions' },
-          { name: 'AP > Reports > Invoice Register', desc: 'Complete register of all invoices entered in the period — used to confirm registration is complete and accurate' },
-          { name: 'AP > Reports > Open Invoice Listing', desc: 'Lists all unpaid registered invoices — primary tool for monitoring what is in the AP pipeline awaiting payment' },
+          { name: 'Accounts Payable > Invoice Entry Management', desc: 'Invoice entry, sessions, splitting and attachments' },
         ],
         subs: [
           {
-            id: 'ap_inv_dispute',
-            title: 'Invoice Exception & Dispute Resolution',
-            desc: 'Manage invoices that cannot be processed in the normal workflow due to errors, missing PO references, pricing discrepancies, or receipt disputes — resolving exceptions promptly to avoid late payment penalties while protecting the organisation from paying for incorrect or unauthorised charges.',
+            id: 'ap_inv_main_entry',
+            title: 'Basic Entry, Sessions & Period',
+            desc: 'Core invoice capture and the session/expense-period framework.',
             activities: [
-              'Log the invoice exception with nature of dispute and responsible party for resolution',
-              'Place the invoice on hold in MRI pending resolution',
-              'Engage the budget holder, procurement team, or supplier to resolve the discrepancy',
-              'Obtain a corrected invoice or credit note from the supplier where the original is incorrect',
-              'Release the hold once the exception is resolved and the invoice is approved for payment',
-              'Track exception volumes and resolution times to identify recurring supplier issues',
+              'Enter invoices with parent/detail lines',
+              'Group into sessions that set the expense period',
             ],
-            mri_title: 'AP > Invoices > Change Invoice Payment Status',
-            mri_prereqs: ['Invoice registered in the system', 'Hold status codes configured'],
+            mri_title: 'Accounts Payable > Invoice Entry Management',
             mri_assoc: [
-              { name: 'AP > Invoices > Change Invoice Payment Status', desc: 'Places a hold on a registered invoice to prevent it entering the payment run until the dispute is resolved' },
-              { name: 'AP > Inquiries > Vendor Inquiry', desc: 'Reviews the vendor\'s full invoice and payment history — used to investigate discrepancies and trace prior credits' },
+              { name: 'Accounts Payable > Invoice Entry Management', desc: 'Invoice entry and sessions' },
+            ],
+          },
+          {
+            id: 'ap_inv_main_split',
+            title: 'Splitting & Allocations',
+            desc: 'Distributing invoice amounts across accounts, entities and properties.',
+            activities: [
+              'Split line items across accounts/entities/properties',
+              'Apply predefined allocations',
+            ],
+            mri_title: 'Accounts Payable > Invoice Entry Management',
+            mri_assoc: [
+              { name: 'Accounts Payable > Invoice Entry Management', desc: 'Line-item splitting and allocations' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'ap_inv_import',
+        title: 'Import, Proration & Status',
+        type: 'process',
+        desc: 'The bulk and housekeeping side of invoice processing — importing invoices at volume, prorating expense, and changing invoice status en masse. These keep high-volume AP efficient and controllable.',
+        activities: [
+          'Bulk-import AP invoices (reviewing the TB_AP_INVC_IMPORTLOG error log)',
+          'Apply proration of expense where the management option is enabled',
+          'Change invoice status in bulk by entity/project/session/vendor',
+        ],
+        mri_title: 'Invoice Import & Status (Accounts Payable > Invoice Entry Management)',
+        mri_prereqs: [
+          'Import file format prepared; proration option configured where used',
+        ],
+        mri_assoc: [
+          { name: 'Accounts Payable > Invoice Entry Management', desc: 'Invoice import, proration and bulk status change' },
+        ],
+        subs: [],
+      },
+    ],
+  },
+
+  /* ── 6. EXPENSE CONTROL ──────────────────────────────────────────────────── */
+  {
+    id: 'ap_commit',
+    title: 'Expense Control',
+    processes: [
+      {
+        id: 'ap_commit_main',
+        title: 'Invoice & PO Approval',
+        type: 'process',
+        desc: 'The approval workflow that authorises spend before it is paid — routing POs and invoices through the right approvers by value and role. This is AP\'s primary financial control and a key segregation-of-duties point.',
+        activities: [
+          'Enable Expense Control (invoice authorisation required) and work the My Expense Approval Activities queue — approve, reject or modify',
+          'Route approvals through multiple levels, creating the next pending approval for the next approver',
+          'Apply delegation-of-authority (DOA) thresholds for value-based routing and manage web vs Windows approval and account funding',
+        ],
+        mri_title: 'Expense Control (Accounts Payable > Expense Control > My Expense Approval Activities)',
+        mri_prereqs: [
+          'Expense Control Processing option enabled (MGNT-MRI)',
+          'Approval hierarchy and DOA thresholds agreed',
+        ],
+        mri_assoc: [
+          { name: 'Accounts Payable > Expense Control > My Expense Approval Activities', desc: 'Approve/reject/modify pending POs and invoices' },
+        ],
+        subs: [
+          {
+            id: 'ap_commit_main_queue',
+            title: 'Approval Queue',
+            desc: 'Working the pending PO/invoice approval activities.',
+            activities: [
+              'Review pending POs and invoices',
+              'Approve, reject or modify items',
+            ],
+            mri_title: 'Accounts Payable > Expense Control > My Expense Approval Activities',
+            mri_assoc: [
+              { name: 'Accounts Payable > Expense Control', desc: 'Approval activities queue' },
+            ],
+          },
+          {
+            id: 'ap_commit_main_routing',
+            title: 'Routing & DOA',
+            desc: 'Multi-level routing and delegation-of-authority thresholds.',
+            activities: [
+              'Route approvals through the required levels',
+              'Apply value-based DOA thresholds',
+            ],
+            mri_title: 'Accounts Payable > Expense Control',
+            mri_assoc: [
+              { name: 'Accounts Payable > Expense Control', desc: 'Approval routing and DOA' },
             ],
           },
         ],
@@ -238,55 +458,98 @@ export const ap = [
     ],
   },
 
-  /* ── 4. SUPPLIER PAYMENT EXECUTION ──────────────────────────────────────── */
+  /* ── 7. PAYMENT PROCESSING ───────────────────────────────────────────────── */
   {
     id: 'ap_pay',
-    title: 'Supplier Payment Execution',
+    title: 'Payment Processing',
     processes: [
       {
         id: 'ap_pay_main',
-        title: 'Payment Selection & Preparation',
+        title: 'Payment Selection & Checks',
         type: 'process',
-        desc: 'Select approved invoices for payment, prepare the payment batch, and execute the payment run — ensuring suppliers are paid accurately, on time, and from the correct bank account in compliance with the organisation\'s payment controls.',
+        desc: 'Selecting which approved invoices to pay and producing the check run. This is the disbursement step — turning authorised payables into payments while keeping tight control over what goes out.',
         activities: [
-          'Review the open invoice listing and identify invoices due for payment in the current run',
-          'Select invoices to pay by vendor, entity, due date, or manual selection',
-          'Review the proposed payment batch for completeness and accuracy before generating checks or EFT files',
-          'Obtain the required second-level authorisation before executing the payment run',
-          'Generate and print checks or create the electronic payment file',
-          'Post the payment batch to the AP ledger and confirm GL cash account entries are correct',
-          'Distribute remittance advice to suppliers confirming payment details and invoice references',
+          'Select invoices for payment via the Payment Preview report (by entity/vendor/date/bank/status), including Pay Immediate',
+          'Process invoices into check batches by bank and print checks in priority order (last check number auto-sequenced)',
         ],
-        mri_title: 'AP > Payments > Manual Payment (Multiple) / Check Preparation',
+        mri_title: 'Check Processing (Accounts Payable > Check Processing)',
         mri_prereqs: [
-          'Invoices registered and approved (not on hold)',
-          'Bank accounts configured with correct GL cash account mapping',
-          'Check or EFT format configured for each bank account',
-          'Payment authorisation controls agreed and user permissions set accordingly',
+          'Invoices approved and released for payment; banks and check setup complete',
         ],
         mri_assoc: [
-          { name: 'AP > Payments > Manual Payment (Multiple)', desc: 'Batch payment selection — choose invoices by vendor, entity, or due date criteria to build the payment run' },
-          { name: 'AP > Payments > Manual Payment (Individual)', desc: 'Single-vendor payment — processes one vendor\'s selected invoices outside the standard batch cycle' },
-          { name: 'AP > Payments > Check Preparation', desc: 'Prepares the check run — selects invoices, previews the check register, and prints checks from the configured format' },
-          { name: 'AP > Payments > Preview Checks', desc: 'Review the check register before printing — last opportunity to remove invoices from the run without voiding' },
+          { name: 'Accounts Payable > Check Processing', desc: 'Select invoices, batch and print checks' },
         ],
         subs: [
           {
-            id: 'ap_pay_void',
-            title: 'Check Voiding & Reissuance',
-            desc: 'Manage the controlled voiding of issued checks — whether lost, stale, or incorrectly produced — and reissue replacement payments to suppliers, maintaining a complete and auditable payment record.',
+            id: 'ap_pay_main_select',
+            title: 'Invoice Selection',
+            desc: 'Choosing which invoices to pay via the Payment Preview.',
             activities: [
-              'Identify the need to void a check: lost in post, stale-dated, or incorrectly printed',
-              'Obtain management authorisation before voiding',
-              'Void the check in MRI to reverse the payment and reinstate the invoice as unpaid',
-              'Confirm the AP ledger and GL cash account are updated correctly after voiding',
-              'Reissue the replacement check or EFT payment to the supplier',
-              'Notify the bank to stop payment on the original check where it may still be presented',
+              'Select invoices by entity/vendor/date/bank/status',
+              'Use Pay Immediate where required',
             ],
-            mri_title: 'AP > Payments > Void Check',
-            mri_prereqs: ['Original check posted and recorded in MRI', 'Void authorisation level defined'],
+            mri_title: 'Accounts Payable > Check Processing',
             mri_assoc: [
-              { name: 'AP > Payments > Void Check', desc: 'Voids the selected check — reverses the payment entry and reinstates the invoice as open for re-payment' },
+              { name: 'Accounts Payable > Check Processing', desc: 'Payment selection / preview' },
+            ],
+          },
+          {
+            id: 'ap_pay_main_checks',
+            title: 'Check Batch & Printing',
+            desc: 'Processing and printing check batches by bank.',
+            activities: [
+              'Create check batches by bank',
+              'Print checks in priority order',
+            ],
+            mri_title: 'Accounts Payable > Check Processing',
+            mri_assoc: [
+              { name: 'Accounts Payable > Check Processing', desc: 'Check batch processing and printing' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'ap_pay_electronic',
+        title: 'ACH, Manual & Vendor Pay',
+        type: 'process',
+        desc: 'The non-check payment channels and payment corrections — ACH files, manual/wire/EFT payments, MRI Vendor Pay automation, and voiding/reissuing payments. These broaden how AP pays and how it fixes payment errors.',
+        activities: [
+          'Generate ACH files (a pre-note test run in update mode is required first) with remittance notifications',
+          'Record manual/paid invoices for wire/EFT/credit-card payments (a check number is required regardless of method)',
+          'Pay via MRI Vendor Pay (check/ACH/virtual card, positive-pay fraud mitigation); void, reissue and reprint payments as needed',
+        ],
+        mri_title: 'Check Processing — Electronic & Manual (Accounts Payable > Check Processing)',
+        mri_prereqs: [
+          'ACH banks set up and pre-note completed; MVP configured where used',
+        ],
+        mri_assoc: [
+          { name: 'Accounts Payable > Check Processing', desc: 'ACH, manual payments, MVP, void & manage payments' },
+        ],
+        subs: [
+          {
+            id: 'ap_pay_electronic_ach',
+            title: 'ACH & Manual Payments',
+            desc: 'Electronic ACH runs and manually-recorded wire/EFT/card payments.',
+            activities: [
+              'Generate ACH files with remittance (pre-note first)',
+              'Record manual payments with a check number',
+            ],
+            mri_title: 'Accounts Payable > Check Processing',
+            mri_assoc: [
+              { name: 'Accounts Payable > Check Processing', desc: 'ACH and manual payments' },
+            ],
+          },
+          {
+            id: 'ap_pay_electronic_void',
+            title: 'MVP & Void/Manage',
+            desc: 'MRI Vendor Pay automation and payment corrections.',
+            activities: [
+              'Pay via MRI Vendor Pay (check/ACH/virtual card)',
+              'Void, reissue and reprint payments',
+            ],
+            mri_title: 'Accounts Payable > Check Processing',
+            mri_assoc: [
+              { name: 'Accounts Payable > Check Processing', desc: 'MVP and void/manage payments' },
             ],
           },
         ],
@@ -294,167 +557,243 @@ export const ap = [
     ],
   },
 
-  /* ── 5. RECONCILIATION & CONTROLS ───────────────────────────────────────── */
+  /* ── 8. TAX, VAT & WITHHOLDING ───────────────────────────────────────────── */
+  {
+    id: 'ap_tax',
+    title: 'Tax, VAT & Withholding',
+    processes: [
+      {
+        id: 'ap_tax_1099',
+        title: '1099 Processing (US)',
+        type: 'process',
+        desc: 'US regulatory reporting of payments to vendors — producing 1099 forms for reportable spend. This is a statutory obligation for US operations, driven off the vendor and payment data AP already holds.',
+        activities: [
+          'Produce 1099-MISC / 1099-NEC forms for payments over the reporting threshold ($600)',
+          'File on paper or electronically (IRS Pub 1220) with payer/state setup',
+          'Run the 1099 Preview Listing and Worksheet Exception reports to validate before filing',
+        ],
+        mri_title: '1099 Processing (Accounts Payable > Utilities > 1099)',
+        mri_prereqs: [
+          'Vendor names and tax details complete; payer/state 1099 setup done',
+        ],
+        mri_assoc: [
+          { name: 'Accounts Payable > Utilities', desc: '1099 processing and reporting (US only)' },
+        ],
+        subs: [],
+      },
+      {
+        id: 'ap_tax_vat',
+        title: 'VAT & Withholding',
+        type: 'process',
+        desc: 'Non-US tax handling — VAT on payables and withholding deductions such as UK CIS. These ensure AP reclaims and withholds the right amounts and posts them to the correct control accounts.',
+        activities: [
+          'Set up VAT with reclaimable tax percentage and a VAT control account, and enable tax event processing',
+          'Configure vendor withholding (e.g. UK CIS deductions for tax and National Insurance) with a withholding account per entity',
+          'Maintain sales tax codes and tax accounts per entity; apply EMEA country packs (France, Germany, Italy) for e-invoicing/tax compliance',
+        ],
+        mri_title: 'Tax / VAT Setup (Accounts Payable > Setup and Maintenance; MGNT-MRI Tax Options)',
+        mri_prereqs: [
+          'VAT/withholding accounts established in GL; tax event processing enabled (MGNT-MRI)',
+        ],
+        mri_assoc: [
+          { name: 'Setup and Maintenance > Accounts Payable', desc: 'VAT, sales tax and withholding setup' },
+          { name: 'MRI for Windows > MGNT-MRI > AP Tax Options', desc: 'Tax event processing options' },
+        ],
+        subs: [
+          {
+            id: 'ap_tax_vat_vat',
+            title: 'VAT Setup & Processing',
+            desc: 'VAT configuration, reclaim and control-account posting.',
+            activities: [
+              'Set reclaimable VAT % and control account',
+              'Enable tax event processing',
+            ],
+            mri_title: 'Setup and Maintenance > Accounts Payable',
+            mri_assoc: [
+              { name: 'Setup and Maintenance > Accounts Payable', desc: 'VAT setup' },
+            ],
+          },
+          {
+            id: 'ap_tax_vat_withholding',
+            title: 'Withholding & Country Packs',
+            desc: 'Vendor withholding (CIS) and EMEA country-pack compliance.',
+            activities: [
+              'Configure withholding (e.g. UK CIS) per entity',
+              'Apply EMEA e-invoicing/tax country packs',
+            ],
+            mri_title: 'Setup and Maintenance > Accounts Payable',
+            mri_assoc: [
+              { name: 'Setup and Maintenance > Accounts Payable', desc: 'Withholding and country packs' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+
+  /* ── 9. RECURRING INVOICES & MONTHLY PROCESSING ──────────────────────────── */
   {
     id: 'ap_recon',
-    title: 'Reconciliation & Controls',
+    title: 'Recurring Invoices & Monthly Processing',
     processes: [
+      {
+        id: 'ap_recon_recurring',
+        title: 'Recurring Invoices & Journal Creation',
+        type: 'process',
+        desc: 'Automating regularly-scheduled payables and posting AP activity to the GL. Recurring invoices remove repetitive keying; journal creation is how AP feeds the ledger.',
+        activities: [
+          'Set up recurring invoice templates for regular payments (rent, retainers, service contracts)',
+          'Run APCREAJE to create journals for AP invoices and payments and update GL (unless Real-Time JE is on)',
+        ],
+        mri_title: 'Recurring Invoices & APCREAJE (Accounts Payable > Utilities / Closing Procedures)',
+        mri_prereqs: [
+          'Vendors and expense accounts set up; JE approach configured',
+        ],
+        mri_assoc: [
+          { name: 'Accounts Payable > Utilities', desc: 'Recurring invoice templates' },
+          { name: 'Accounts Payable > Closing Procedures', desc: 'Create journal entries (APCREAJE)' },
+        ],
+        subs: [],
+      },
       {
         id: 'ap_recon_bank',
         title: 'Bank Reconciliation',
         type: 'process',
-        desc: 'Reconcile the GL cash account balance to the bank statement balance each period — identifying outstanding checks, uncleared deposits, and bank errors — to confirm the organisation\'s actual cash position and detect fraudulent or erroneous transactions.',
+        desc: 'Reconciling the MRI bank to the real bank statement so cash is accurate and discrepancies or fraud are caught. This is a core month-end financial control.',
         activities: [
-          'Obtain the bank statement for each bank account at the period-end date',
-          'Match checks issued in MRI against checks cleared on the bank statement',
-          'Identify outstanding checks not yet cleared at the period-end date',
-          'Record and investigate any bank charges, interest, or transactions not yet in MRI',
-          'Post any bank-initiated entries not yet in MRI (bank fees, interest received)',
-          'Confirm the reconciled GL balance agrees to the adjusted bank statement balance',
-          'Obtain Finance Manager sign-off on the bank reconciliation before the period is closed',
+          'Match cash balances to the bank statement and identify discrepancies/fraud (require in-balance before commit where the option is set)',
+          'Use the new bank reconciliation with auto check-clearing files, and make bank adjustments where needed',
+          'Adopt Auto Bank Reconciliation (ABR) where available to automate the match',
         ],
-        mri_title: 'AP > Periodic > Bank Reconciliation',
+        mri_title: 'Bank Reconciliation (Accounts Payable > Closing Procedures > Bank Reconciliations)',
         mri_prereqs: [
-          'Bank accounts configured in AP with correct GL cash account mapping',
-          'All payments and receipts for the period posted to MRI before reconciliation begins',
-          'Bank statement received for each account being reconciled',
+          'Payments processed; electronic clearing files available from the bank',
         ],
         mri_assoc: [
-          { name: 'AP > Periodic > Bank Reconciliation > Setup', desc: 'Configures bank reconciliation parameters — balance type, bank account, and starting balance for the period' },
-          { name: 'AP > Periodic > Bank Reconciliation > Processing', desc: 'Main reconciliation screen — mark checks as cleared, enter bank-side adjustments, and view the running difference' },
-          { name: 'AP > Periodic > Bank Reconciliation > Clear Automatically', desc: 'Imports bank statement data to auto-match and clear transactions — reduces manual matching effort' },
-          { name: 'AP > Periodic > Bank Reconciliation > Summary', desc: 'Reconciliation summary report — shows GL balance, cleared items, outstanding items, and bank statement balance' },
-          { name: 'AP > Periodic > Bank Reconciliation > GL Reconciliation', desc: 'Confirms the bank reconciliation ties to the GL cash account — final sign-off step' },
+          { name: 'Accounts Payable > Closing Procedures > Bank Reconciliations', desc: 'Bank statement reconciliation and adjustments' },
+        ],
+        subs: [
+          {
+            id: 'ap_recon_bank_match',
+            title: 'Statement Reconciliation',
+            desc: 'Matching MRI cash to the bank statement.',
+            activities: [
+              'Match balances and identify discrepancies',
+              'Use auto check-clearing files',
+            ],
+            mri_title: 'Accounts Payable > Closing Procedures > Bank Reconciliations',
+            mri_assoc: [
+              { name: 'Accounts Payable > Closing Procedures', desc: 'Bank statement reconciliation' },
+            ],
+          },
+          {
+            id: 'ap_recon_bank_adjust',
+            title: 'Adjustments & ABR',
+            desc: 'Bank adjustments and automated bank reconciliation.',
+            activities: [
+              'Make bank adjustments where needed',
+              'Use Auto Bank Reconciliation where available',
+            ],
+            mri_title: 'Accounts Payable > Closing Procedures > Bank Reconciliations',
+            mri_assoc: [
+              { name: 'Accounts Payable > Closing Procedures', desc: 'Bank adjustments and ABR' },
+            ],
+          },
         ],
       },
       {
         id: 'ap_recon_period',
-        title: 'AP Period Close & Sub-Ledger Reconciliation',
+        title: 'GL Reconciliation & Period Close',
         type: 'process',
-        desc: 'Close the AP accounting period to prevent further posting and ensure the AP sub-ledger reconciles to the GL creditors control account — producing a complete and auditable AP position for the period.',
+        desc: 'Reconciling the AP sub-ledger to the GL and closing the AP period — which must happen before the GL closes. This is the control gate confirming the month\'s payables are complete and agree to the ledger.',
         activities: [
-          'Confirm all invoices and payments for the period are entered and posted',
-          'Generate recurring invoices for the period as part of the AP close process',
-          'Create and review the AP-to-GL journal entries for the period',
-          'Reconcile the AP sub-ledger total to the GL creditors control account',
-          'Resolve any variance between AP ledger and GL before closing the period',
-          'Close the AP accounting period to lock it from further modification',
-          'Distribute the period-end AP reports: aged creditor, open invoice listing, and YTD disbursements',
+          'Reconcile the AP sub-ledger to the GL control account',
+          'Work the pre-closing questions, reports and corrections',
+          'Close the AP period ahead of the GL close (with CM, CAR and other sub-ledgers)',
         ],
-        mri_title: 'AP > Periodic > AP Closing',
+        mri_title: 'Closing Procedures (Accounts Payable > Closing Procedures)',
         mri_prereqs: [
-          'All invoices and payments for the period entered and posted',
-          'Bank reconciliation completed and signed off',
-          'GL period still open to receive AP journal entries',
+          'All invoices and payments posted; journals created (APCREAJE) for the period',
         ],
         mri_assoc: [
-          { name: 'AP > Periodic > AP Closing > Create Journal Entries', desc: 'Generates the AP-to-GL journal entries for the period — review distributions before posting to GL' },
-          { name: 'AP > Periodic > AP Closing > Close Period', desc: 'Locks the AP accounting period from further modification — run after all invoices and payments are confirmed complete' },
-          { name: 'AP > Periodic > AP Closing > Recurring Invoices', desc: 'Generates the period\'s recurring invoice batch as part of the AP close process' },
-          { name: 'AP > Reports > Open Invoice Listing', desc: 'Lists all unpaid invoices — used to confirm period-end AP liability position before closing' },
-          { name: 'AP > Inquiries > Vendor Inquiry', desc: 'Vendor-level balance and transaction inquiry — used to verify AP ledger balances in the reconciliation' },
+          { name: 'Accounts Payable > Closing Procedures', desc: 'GL reconciliation and AP period close' },
         ],
-      },
-      {
-        id: 'ap_recon_aged',
-        title: 'Aged Creditor Review & Management',
-        type: 'process',
-        desc: 'Review and manage the aged creditor report to ensure supplier balances are current, long-outstanding items are investigated, and the AP position fairly reflects the organisation\'s genuine payment obligations.',
-        activities: [
-          'Run the aged creditor report at each period-end and review for anomalies',
-          'Investigate items aged beyond the payment terms to identify disputes, missing credits, or processing errors',
-          'Action old credit balances: confirm they are valid liabilities or return to the supplier',
-          'Escalate long-outstanding invoices that have not been approved for payment',
-          'Provide the aged creditor report to finance management as part of the period-end reporting pack',
-        ],
-        mri_title: 'AP > Reports > Open Invoice Listing / Vendor Inquiry',
-        mri_prereqs: ['AP period closed or all transactions for the period posted'],
-        mri_assoc: [
-          { name: 'AP > Reports > Open Invoice Listing', desc: 'Primary aged creditor tool — lists all unpaid invoices with invoice date, due date, and ageing bucket' },
-          { name: 'AP > Inquiries > Vendor Inquiry', desc: 'Drill into individual vendor balances — trace open items and payment history to resolve aged items' },
-          { name: 'AP > Reports > YTD Vendor Disbursements', desc: 'Year-to-date payment summary by vendor — used for supplier spend analysis and payment pattern review' },
-        ],
+        subs: [],
       },
     ],
   },
 
-  /* ── 6. COMPLIANCE & STATUTORY REPORTING ────────────────────────────────── */
+  /* ── 10. INQUIRY, REPORTING & DATA MANAGEMENT ────────────────────────────── */
   {
-    id: 'ap_compliance',
-    title: 'Compliance & Statutory Reporting',
+    id: 'ap_reporting',
+    title: 'Inquiry, Reporting & Data Management',
     processes: [
       {
-        id: 'ap_compliance_main',
-        title: '1099 & Withholding Tax Reporting',
+        id: 'ap_reporting_inquiry',
+        title: 'Vendor Inquiry & Data Management',
         type: 'process',
-        desc: 'Ensure all vendor payments subject to IRS 1099 reporting or withholding tax obligations are correctly classified in the system, accurately extracted at year-end, and submitted to the relevant tax authority within the statutory deadline.',
+        desc: 'Looking into vendor account activity and managing AP data retention. Inquiry answers "what have we paid this supplier?"; purging keeps the vendor and invoice data controlled.',
         activities: [
-          'Confirm all vendors subject to 1099 reporting are correctly classified (vendor type, tax ID, 1099 code) in the vendor master',
-          'Review 1099 amounts quarterly to catch misclassifications before year-end',
-          'Run the year-end 1099 extract and review for completeness and accuracy',
-          'Correct any vendor records with missing or incorrect TIN data before filing',
-          'Submit 1099 forms to vendors and file with the IRS within the statutory deadline',
-          'Manage B-Notices from the IRS relating to mismatched vendor TINs',
+          'Use Vendor Inquiry to view vendor account activity and history',
+          'Purge vendors/invoices under the agreed data-retention controls',
         ],
-        mri_title: 'AP > Setup > Vendors (Tax Classification) / AP Reporting',
+        mri_title: 'Vendor Inquiry (Accounts Payable > Utilities > Vendor Inquiry)',
         mri_prereqs: [
-          'Vendor records created with 1099 type and TIN populated for all reportable vendors',
-          'Vendor type and tax classification configured to flag 1099-eligible payments',
-          'All payments for the reporting year posted before the 1099 extract is run',
+          'Vendor and invoice activity posted',
         ],
         mri_assoc: [
-          { name: 'AP > Setup > Vendors', desc: 'Tax classification fields — 1099 code, TIN, and tax status — must be accurate before payments are posted to ensure correct 1099 capture' },
-          { name: 'AP > Reports > YTD Vendor Disbursements', desc: 'Year-to-date payment totals by vendor — primary source data for 1099 amount verification before filing' },
-          { name: 'AP > Reports > Communication Center', desc: 'Report generation and scheduling hub — used to produce and distribute compliance reports on a defined schedule' },
+          { name: 'Accounts Payable > Utilities > Vendor Inquiry', desc: 'Vendor account activity inquiry' },
+          { name: 'Accounts Payable > Utilities', desc: 'Data purge (retention control)' },
         ],
+        subs: [],
       },
       {
-        id: 'ap_compliance_audit',
-        title: 'AP Audit Trail & Control Reporting',
+        id: 'ap_reporting_reports',
+        title: 'AP Reporting',
         type: 'process',
-        desc: 'Maintain a complete, tamper-evident audit trail of all AP transactions — invoices, approvals, payments, and voids — and produce the control reports required for internal audit, external audit, and regulatory review.',
+        desc: 'The reporting suite that gives finance and management visibility of payables, cash and supplier spend — from open payables through bank rec to statutory and B-BBEE supplier-spend reporting.',
         activities: [
-          'Confirm the AP system retains a complete change log: who entered, modified, or approved each transaction and when',
-          'Produce the invoice register and payment register for audit evidence',
-          'Run the YTD vendor disbursements report to support audit of significant supplier relationships',
-          'Respond to internal and external audit queries by providing MRI transaction evidence',
-          'Review user access controls periodically: confirm payment approval and vendor master change permissions are appropriate',
-          'Schedule and distribute standard AP compliance reports through the Communication Center',
+          'Run vendor and payables reports — Vendor Listing, Open Status (incl. multi-currency), Current Period Listing',
+          'Run cash and reconciliation reports — Bank Reconciliation and Cash Balance',
+          'Produce ACH, 1099 and supplier-spend reporting (incl. B-BBEE spend, South Africa) and the combined CM+AP Client Statement',
         ],
-        mri_title: 'AP > Reports > Communication Center / Reporting Suite',
+        mri_title: 'Reports (Accounts Payable > Reports)',
         mri_prereqs: [
-          'User access roles defined with appropriate segregation of duties',
-          'All AP transactions posted for the reporting period',
+          'Period activity posted and reconciled',
         ],
         mri_assoc: [
-          { name: 'AP > Reports > Invoice Register', desc: 'Complete invoice register for the period — lists every invoice entered with vendor, amount, GL coding, and status' },
-          { name: 'AP > Reports > YTD Vendor Disbursements', desc: 'Year-to-date payment summary by vendor — supports audit of significant or related-party supplier payments' },
-          { name: 'AP > Reports > Open Invoice Listing', desc: 'Period-end open (unpaid) invoice listing — supports AP accrual and liability disclosure for audit' },
-          { name: 'AP > Reports > Communication Center', desc: 'Centralised report generation, scheduling, and distribution hub — set up recurring compliance report packs for audit and management' },
+          { name: 'Accounts Payable > Reports', desc: 'Vendor Listing, Open Status, Cash Balance, ACH and 1099 reports' },
         ],
         subs: [
           {
-            id: 'ap_compliance_reporting',
-            title: 'AP Reporting & Communication Center',
-            desc: 'Produce, schedule, and distribute the standard AP reporting suite — vendor disbursements, aged creditor, open invoice, and period-end summary reports — through the MRI Communication Center to ensure stakeholders receive timely and accurate AP information.',
+            id: 'ap_reporting_reports_payables',
+            title: 'Payables & Cash Reports',
+            desc: 'Open payables, vendor listing and cash/bank-rec reports.',
             activities: [
-              'Access the Communication Center and select the relevant AP report',
-              'Set report parameters: entity, period, vendor range, and output format',
-              'Save report settings as a favourite for repeatable use',
-              'Schedule recurring AP reports to run automatically after each period close',
-              'Share reports with finance management, property managers, or auditors',
-              'Export reports in PDF or Excel format for distribution outside the system',
+              'Run Vendor Listing and Open Status',
+              'Run Bank Reconciliation and Cash Balance',
             ],
-            mri_title: 'AP > Reports > Communication Center',
-            mri_prereqs: ['AP period closed or transactions posted for the reporting period', 'User access to Communication Center granted'],
+            mri_title: 'Accounts Payable > Reports',
             mri_assoc: [
-              { name: 'AP > Reports > Communication Center', desc: 'Central hub for generating, scheduling, and distributing all AP reports — supports favourites, recurring schedules, and export' },
-              { name: 'AP > Reports > YTD Vendor Disbursements', desc: 'Year-to-date payment totals by vendor — available through the Communication Center for scheduled distribution' },
-              { name: 'AP > Reports > Open Invoice Listing', desc: 'Period-end open invoice report — scheduled for automatic distribution after each AP period close' },
+              { name: 'Accounts Payable > Reports', desc: 'Payables and cash reporting' },
+            ],
+          },
+          {
+            id: 'ap_reporting_reports_spend',
+            title: 'Statutory & Spend Reporting',
+            desc: 'ACH/1099 and supplier-spend (B-BBEE) reporting.',
+            activities: [
+              'Produce ACH and 1099 reports',
+              'Produce supplier-spend / B-BBEE reporting',
+            ],
+            mri_title: 'Accounts Payable > Reports',
+            mri_assoc: [
+              { name: 'Accounts Payable > Reports', desc: 'Statutory and supplier-spend reporting' },
             ],
           },
         ],
       },
     ],
   },
+
 ];
