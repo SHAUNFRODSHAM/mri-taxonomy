@@ -1309,6 +1309,84 @@ body {
 .map-pair .xlink[data-xview="business"] { border-left-color: #373C3C; }
 .map-pair-link { text-align: center; color: var(--ink3); font-size: 0.8rem; }
 
+/* Coverage map cell detail — flow layout */
+.cell-flow-legend {
+  display: flex; gap: 14px; flex-wrap: wrap;
+  padding: 8px 0 14px; font-size: 0.7rem; color: var(--ink2);
+}
+.cell-flow-legend-item { display: flex; align-items: center; gap: 5px; }
+.cell-flow-pip {
+  display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+}
+.cell-flow-pip-full    { background: #5a8f1a; }
+.cell-flow-pip-partial { background: #a06820; }
+.cell-flow-pip-outside { background: #6E7878; }
+
+.cell-flow-list { display: flex; flex-direction: column; gap: 2px; }
+
+.cell-flow-row {
+  display: grid; grid-template-columns: 1fr 52px 1fr;
+  align-items: flex-start; padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 0;
+}
+.cell-flow-row:last-child { border-bottom: none; }
+
+.cell-flow-biz {
+  display: flex; flex-direction: column; gap: 2px;
+  text-align: left; background: none; border: none; cursor: pointer;
+  padding: 4px 10px 4px 0; border-radius: 6px;
+  transition: background var(--dur);
+}
+.cell-flow-biz:hover { background: var(--surface2); }
+.cell-flow-biz-bc {
+  font-size: 0.58rem; color: var(--ink3); font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.cell-flow-biz-title {
+  font-size: 0.8rem; font-weight: 600; color: var(--ink); line-height: 1.3;
+}
+
+.cell-flow-conn {
+  display: flex; align-items: center; justify-content: center;
+  padding-top: 14px; gap: 0;
+}
+.cell-flow-conn-line {
+  display: block; height: 2px; width: 20px; background: var(--green); flex-shrink: 0;
+}
+.cell-flow-conn-arrow { color: var(--green); font-size: 1.1rem; line-height: 1; margin-left: -3px; }
+
+.cell-flow-sys {
+  display: flex; flex-direction: column; gap: 5px; padding: 2px 0;
+}
+
+.cell-flow-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 6px; padding: 5px 10px 5px 6px;
+  font-size: 0.72rem; cursor: pointer; font-family: var(--font);
+  border: 1px solid transparent; text-align: left;
+  transition: filter var(--dur), box-shadow var(--dur);
+}
+.cell-flow-chip:hover { filter: brightness(1.06); box-shadow: var(--elev1); }
+.cell-flow-chip-full    { background: #eef7e6; border-color: #b5d98a; }
+.cell-flow-chip-partial { background: #fff4e6; border-color: #f0c888; }
+.cell-flow-chip-outside { background: var(--surface3); border-color: var(--border2); }
+
+.cell-flow-cov-tag {
+  font-size: 0.54rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; border-radius: 4px; padding: 1px 5px; flex-shrink: 0;
+}
+.cell-flow-cov-tag-full    { background: #5a8f1a; color: #fff; }
+.cell-flow-cov-tag-partial { background: #a06820; color: #fff; }
+.cell-flow-cov-tag-outside { background: #6E7878; color: #fff; }
+
+.cell-flow-chip-mod {
+  font-size: 0.6rem; font-weight: 700; color: var(--ink2);
+  text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0;
+}
+.cell-flow-chip-sep { color: var(--border2); flex-shrink: 0; }
+.cell-flow-chip-title { font-weight: 500; color: var(--ink); }
+
 /* ═══════════════════════════════════════════════════════════════════════════
    LINK EDITING (Phase 4) — coverage badges, edit controls, picker
    ═══════════════════════════════════════════════════════════════════════════ */

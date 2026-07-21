@@ -12,7 +12,7 @@
 
 import { state } from '../state.js';
 import { BUSINESS_CONFIG } from '../data/business/index.js';
-import { buildMappingMatrix, cellPairs, COVERAGE, coverageTooltip } from '../data/links.js';
+import { buildMappingMatrix, cellPairs, COVERAGE, COVERAGE_ORDER, coverageTooltip } from '../data/links.js';
 
 let onNavigate = () => {};
 export function initMappingView({ navigate }) { onNavigate = navigate || (() => {}); }
@@ -119,33 +119,60 @@ function showCell(domainId, sysMod) {
     `<span class="badge badge-business">Business</span><span class="badge badge-mri">MRI PMX</span>
      <span class="badge">${pairs.length} link${pairs.length > 1 ? 's' : ''}</span>`;
 
-  const covBadge = (cov) => {
-    if (!cov || !COVERAGE[cov]) return '';
-    const c = COVERAGE[cov];
-    return `<span class="cov-badge" style="--cov:${c.color}" title="System coverage: ${esc(coverageTooltip(cov))}">${esc(c.short)}</span>`;
-  };
+  // Group pairs by business process id so each biz row shows all its system chips
+  const byBiz = new Map();
+  pairs.forEach(p => {
+    if (!byBiz.has(p.b.id)) byBiz.set(p.b.id, { biz: p.b, sys: [] });
+    byBiz.get(p.b.id).sys.push({ s: p.s, coverage: p.coverage || 'full' });
+  });
 
-  const rows = pairs.map(p => `
-    <div class="map-pair">
-      ${p.coverage ? `<div class="map-pair-head">${covBadge(p.coverage)}</div>` : ''}
-      <button class="xlink" data-xview="business" data-xid="${esc(p.b.id)}">
-        <span class="xlink-mod">Business</span><span class="xlink-arrow">→</span>
-        <span class="xlink-body"><span class="xlink-title">${esc(p.b.title)}</span>
-          <span class="xlink-bc">${esc(p.b.breadcrumb)}</span></span>
-      </button>
-      <span class="map-pair-link">⇄</span>
-      <button class="xlink" data-xview="system" data-xid="${esc(p.s.id)}">
-        <span class="xlink-mod">${esc(p.s.moduleLabel)}</span><span class="xlink-arrow">→</span>
-        <span class="xlink-body"><span class="xlink-title">${esc(p.s.title)}</span>
-          <span class="xlink-bc">${esc(p.s.breadcrumb)}</span></span>
-      </button>
-    </div>`).join('');
+  // Build flow rows
+  const flowRows = [...byBiz.values()].map(({ biz, sys }) => {
+    const chips = sys.map(({ s, coverage }) => {
+      const cov = COVERAGE[coverage] || COVERAGE.full;
+      return `<button class="cell-flow-chip cell-flow-chip-${coverage}" data-xview="system" data-xid="${esc(s.id)}"
+        title="${esc(s.breadcrumb)} · ${esc(coverageTooltip(coverage))}">
+        <span class="cell-flow-cov-tag cell-flow-cov-tag-${coverage}">${esc(cov.short)}</span>
+        <span class="cell-flow-chip-mod">${esc(s.moduleLabel)}</span>
+        <span class="cell-flow-chip-sep">·</span>
+        <span class="cell-flow-chip-title">${esc(s.title)}</span>
+      </button>`;
+    }).join('');
+
+    return `
+      <div class="cell-flow-row">
+        <button class="cell-flow-biz" data-xview="business" data-xid="${esc(biz.id)}">
+          <span class="cell-flow-biz-bc">${esc(biz.breadcrumb)}</span>
+          <span class="cell-flow-biz-title">${esc(biz.title)}</span>
+        </button>
+        <span class="cell-flow-conn"><span class="cell-flow-conn-line"></span><span class="cell-flow-conn-arrow">›</span></span>
+        <div class="cell-flow-sys">${chips}</div>
+      </div>`;
+  }).join('');
+
+  // Legend
+  const covCounts = { full: 0, partial: 0, outside: 0 };
+  pairs.forEach(p => { const k = p.coverage || 'full'; if (k in covCounts) covCounts[k]++; });
+  const legendParts = COVERAGE_ORDER
+    .filter(k => covCounts[k] > 0)
+    .map(k => `<span class="cell-flow-legend-item">
+      <span class="cell-flow-pip cell-flow-pip-${k}"></span>${esc(COVERAGE[k].label)} <strong>${covCounts[k]}</strong>
+    </span>`).join('');
 
   document.getElementById('panel-body').innerHTML = `
     <div class="psec">
-      <div class="psec-label">Linked Process Pairs <span class="xlink-count">${pairs.length}</span></div>
-      <div class="map-pair-list">${rows}</div>
+      <div class="psec-label">
+        Business Process → System Coverage
+        <span class="xlink-count">${pairs.length}</span>
+      </div>
+      <div class="cell-flow-legend">${legendParts}</div>
+      <div class="cell-flow-list">${flowRows}</div>
     </div>`;
+
+  // Wire up navigation clicks
+  document.getElementById('panel-body').querySelectorAll('[data-xview]').forEach(btn => {
+    btn.addEventListener('click', () => onNavigate(btn.dataset.xview, null, btn.dataset.xid));
+  });
 
   document.getElementById('panel-overlay').classList.add('open');
 }
