@@ -132,9 +132,10 @@ function showCell(domainId, sysMod) {
       const cov = COVERAGE[coverage] || COVERAGE.full;
       return `<button class="cell-flow-chip cell-flow-chip-${coverage}" data-xview="system" data-xid="${esc(s.id)}"
         title="${esc(s.breadcrumb)} · ${esc(coverageTooltip(coverage))}">
-        <span class="cell-flow-cov-tag cell-flow-cov-tag-${coverage}">${esc(cov.short)}</span>
-        <span class="cell-flow-chip-mod">${esc(s.moduleLabel)}</span>
-        <span class="cell-flow-chip-sep">·</span>
+        <span class="cell-flow-chip-top">
+          <span class="cell-flow-cov-tag cell-flow-cov-tag-${coverage}">${esc(cov.short)}</span>
+          <span class="cell-flow-chip-mod">${esc(s.moduleLabel)}</span>
+        </span>
         <span class="cell-flow-chip-title">${esc(s.title)}</span>
       </button>`;
     }).join('');
