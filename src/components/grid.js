@@ -48,7 +48,7 @@ export function render(callbacks) {
   const grid = document.getElementById('grid');
   const cfg  = MODULE_CONFIG[state.currentTab] || {};
   grid.innerHTML = '';
-  grid.classList.toggle('edit-active', state.editMode);
+  grid.className = 'grid' + (state.editMode ? ' edit-active' : '');
 
   // Update canvas header
   const header     = document.getElementById('main-header');
