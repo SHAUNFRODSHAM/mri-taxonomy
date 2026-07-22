@@ -77,8 +77,8 @@ function switchView(mode) {
   const hint = document.getElementById('view-switcher-hint');
   if (hint) hint.textContent = VIEW_HINTS[mode];
 
-  // Leaving the system view drops edit mode so chrome stays clean
-  if (mode !== 'system' && state.editMode) toggleEdit();
+  // Leaving system/mapping views drops edit mode so chrome stays clean
+  if (mode !== 'system' && mode !== 'mapping' && state.editMode) toggleEdit();
 
   if (mode === 'business')      renderBusiness();
   else if (mode === 'mapping')  renderMapping();
