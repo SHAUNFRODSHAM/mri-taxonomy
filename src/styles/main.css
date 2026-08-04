@@ -187,12 +187,20 @@ body {
 .edit-active-tabs .tab-add-btn { display: flex; }
 
 /* ── CANVAS ────────────────────────────────────────────────────────────────── */
-.canvas { padding: 20px 20px 60px; overflow-x: auto; }
+.canvas {
+  display: flex; flex-direction: column;
+  padding: 20px 20px 60px; overflow: visible;
+}
+
+/* Wrapper that clips horizontal scroll to just the grid area */
+.canvas-scroll {
+  overflow-x: auto; overflow-y: visible;
+}
 
 .main-header {
   border-radius: var(--radius) var(--radius) 0 0;
-  padding: 16px 28px; text-align: center; min-width: 900px;
-  box-shadow: var(--elev1);
+  padding: 16px 28px; text-align: center;
+  box-shadow: var(--elev1); flex-shrink: 0;
 }
 .main-header-text {
   color: #fff; font-size: 0.95rem; font-weight: 700;
