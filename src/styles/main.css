@@ -211,7 +211,7 @@ body {
 
 /* ── GRID ──────────────────────────────────────────────────────────────────── */
 .grid {
-  display: flex; min-width: 900px;
+  display: inline-flex; min-width: 100%;
   border: 1px solid var(--border2); border-top: none;
   border-radius: 0 0 var(--radius) var(--radius);
   background: var(--surface2); overflow: hidden;
