@@ -55,6 +55,8 @@ export function render(callbacks) {
   const headerText = document.getElementById('main-header-text');
   if (header)     { header.className = 'main-header ' + (cfg.headerClass || 'cm-header'); header.style.background = ''; }
   if (headerText) headerText.textContent = cfg.headerText || cfg.label || state.currentTab;
+  const existingSub = header && header.querySelector('.main-header-sub');
+  if (existingSub) existingSub.remove();
 
   const ALL_SCOPE_KEYS = ['core', 'custom', 'out-of-scope', 'untagged'];
   const filters = Array.isArray(state.scopeFilters) ? state.scopeFilters : ALL_SCOPE_KEYS;

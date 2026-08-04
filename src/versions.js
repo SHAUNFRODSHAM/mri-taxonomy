@@ -66,6 +66,25 @@ export function updateVersionData(id, dataSnapshot, customModules = [], moduleVi
   localStorage.setItem(STORAGE_KEY, JSON.stringify(versions));
 }
 
+/**
+ * Duplicate an existing version under a new name.
+ * @param {string} sourceId  — id of the version to copy
+ * @param {string} newName   — name for the duplicate
+ * @returns {string|null}    — new version id, or null if source not found
+ */
+export function duplicateVersion(sourceId, newName) {
+  const source = getVersion(sourceId);
+  if (!source) return null;
+  return saveNewVersion(
+    newName.trim(),
+    JSON.parse(JSON.stringify(source.data)),
+    JSON.parse(JSON.stringify(source.customModules || [])),
+    JSON.parse(JSON.stringify(source.moduleVisibility || {})),
+    JSON.parse(JSON.stringify(source.links || [])),
+    source.businessData ? JSON.parse(JSON.stringify(source.businessData)) : null,
+  );
+}
+
 /** Format an ISO date string for display. */
 export function formatDate(isoStr) {
   try {

@@ -12,7 +12,7 @@ import { renderMapping, initMappingView } from './components/mappingView.js';
 import { makeMultiSelect } from './components/multiSelect.js';
 import { systemLinksFor, businessLinksFor, systemItemModule, initLinks, seedLinks } from './data/links.js';
 import { findBusinessItem, BUSINESS_DATA, BUSINESS_ORIGINAL, BUSINESS_CONFIG, BUSINESS_MODULES } from './data/business/index.js';
-import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData } from './versions.js';
+import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData, duplicateVersion } from './versions.js';
 
 // ── CALLBACKS passed to grid renderer ─────────────────────────────────────────
 
@@ -798,6 +798,11 @@ document.addEventListener('mri:switchTab',     e => switchTab(e.detail));
 document.addEventListener('mri:toggleModule',  e => toggleModuleVisible(e.detail));
 document.addEventListener('mri:loadVersion',   e => loadVersion(e.detail));
 document.addEventListener('mri:deleteVersion', e => handleDeleteVersion(e.detail));
+document.addEventListener('mri:duplicateVersion', e => {
+  const { sourceId, name } = e.detail;
+  duplicateVersion(sourceId, name);
+  renderVersionPanel();
+});
 document.addEventListener('mri:renameVersion', e => {
   renameVersion(e.detail.id, e.detail.name);
   // If the renamed version is active, update the badge

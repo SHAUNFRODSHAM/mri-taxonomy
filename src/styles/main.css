@@ -206,6 +206,11 @@ body {
   color: #fff; font-size: 0.95rem; font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase; font-family: var(--font);
 }
+.main-header-sub {
+  color: rgba(255,255,255,0.7); font-size: 0.72rem; font-weight: 400;
+  letter-spacing: 0.02em; font-family: var(--font); margin-top: 5px;
+  text-transform: none;
+}
 
 .cm-header  { background: #373C3C; }   /* OB charcoal */
 .gl-header  { background: #4D90A8; }   /* OB services blue */
@@ -752,7 +757,7 @@ body {
 
 /* ── VERSION PANEL (left slide-in) ────────────────────────────────────────── */
 .ver-panel {
-  position: fixed; top: 0; left: 0; bottom: 0; width: 320px;
+  position: fixed; top: 0; left: 0; bottom: 0; width: 360px;
   background: var(--surface); z-index: 301;
   transform: translateX(-100%);
   transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
@@ -829,10 +834,10 @@ body {
 .ver-empty-icon { font-size: 2rem; margin-bottom: 10px; }
 .ver-empty strong { color: var(--ink2); }
 
-/* Version card */
+/* Version card — two-row layout */
 .ver-card {
-  display: flex; align-items: center; gap: 10px;
-  padding: 11px 10px;
+  display: flex; flex-direction: column; gap: 0;
+  padding: 10px 12px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius);
   margin-bottom: 6px;
@@ -850,52 +855,94 @@ body {
 }
 .ver-card-active:hover { border-color: var(--green-dk) !important; }
 
-.ver-card-icon { font-size: 1.15rem; flex-shrink: 0; }
-
+/* Row 1: icon + name/meta */
+.ver-card-top {
+  display: flex; align-items: center; gap: 10px; min-width: 0;
+}
+.ver-card-icon { font-size: 1.1rem; flex-shrink: 0; }
 .ver-card-info { flex: 1; min-width: 0; }
-
 .ver-card-name {
-  font-size: 0.72rem; font-weight: 700; color: var(--ink);
-  font-family: var(--font); margin-bottom: 3px;
+  font-size: 0.73rem; font-weight: 700; color: var(--ink);
+  font-family: var(--font);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-
 .ver-card-meta {
-  font-size: 0.58rem; color: var(--ink3); font-family: var(--font); line-height: 1.4;
+  font-size: 0.58rem; color: var(--ink3); font-family: var(--font);
+  margin-top: 2px; line-height: 1.3;
 }
 
-.ver-card-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+/* Row 2: action buttons */
+.ver-card-actions {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 9px; padding-top: 8px;
+  border-top: 1px solid var(--border);
+  flex-wrap: nowrap;
+}
+.ver-card-actions-left  { display: flex; gap: 6px; flex: 1; }
+.ver-card-actions-right { display: flex; gap: 6px; align-items: center; }
 
 /* Version action buttons */
 .ver-btn {
   background: transparent;
   border: 1px solid var(--border2);
   border-radius: 4px; cursor: pointer;
-  font-family: var(--font); font-size: 0.6rem; font-weight: 700;
-  padding: 0 8px; height: 26px;
+  font-family: var(--font); font-size: 0.62rem; font-weight: 600;
+  padding: 0 10px; height: 26px;
   display: flex; align-items: center; justify-content: center;
   transition: all var(--dur); white-space: nowrap; color: var(--ink2);
 }
 .ver-btn-load {
   background: var(--green); color: #373C3C; border-color: var(--green);
   letter-spacing: 0.04em; text-transform: uppercase; font-weight: 700;
+  padding: 0 14px;
 }
 .ver-btn-load:hover { background: var(--green-dk); border-color: var(--green-dk); }
-
+.ver-btn-rename { padding: 0 8px; }
 .ver-btn-rename:hover { border-color: var(--green); color: var(--green-dk); background: var(--green-lt); }
-
+.ver-btn-dup { padding: 0 8px; }
+.ver-btn-dup:hover { border-color: var(--green); color: var(--green-dk); background: var(--green-lt); }
+.ver-btn-del { padding: 0 8px; }
 .ver-btn-del:hover { border-color: var(--red); color: var(--red); background: #fff5f5; }
 
-.ver-active-dot { font-size: 1rem; color: var(--green); padding: 0 4px; }
+.ver-active-dot { font-size: 1rem; color: var(--green); padding: 0 2px; }
 
 /* Inline rename input */
 .ver-rename-input {
-  flex: 1; padding: 3px 7px;
+  width: 100%; padding: 4px 8px;
   border: 1.5px solid var(--green);
   border-radius: 4px;
-  font-family: var(--font); font-size: 0.72rem;
+  font-family: var(--font); font-size: 0.73rem;
   outline: none; color: var(--ink);
   box-shadow: 0 0 0 3px rgba(143,184,58,0.15);
+  box-sizing: border-box;
+}
+
+/* ── DUPLICATE VERSION MODAL ───────────────────────────────────────────────── */
+.ver-dup-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+}
+.ver-dup-modal {
+  background: var(--surface); border-radius: var(--radius);
+  box-shadow: var(--elev3); padding: 24px 28px;
+  width: 360px; display: flex; flex-direction: column; gap: 12px;
+  font-family: var(--font);
+}
+.ver-dup-title {
+  font-size: 0.9rem; font-weight: 700; color: var(--ink);
+}
+.ver-dup-sub {
+  font-size: 0.75rem; color: var(--ink2);
+}
+.ver-dup-input {
+  padding: 8px 10px; border: 1.5px solid var(--border2);
+  border-radius: 6px; font-family: var(--font); font-size: 0.78rem;
+  color: var(--ink); outline: none; transition: border-color var(--dur);
+}
+.ver-dup-input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(143,184,58,0.15); }
+.ver-dup-actions {
+  display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px;
 }
 
 /* ── SAVE AS MODAL ─────────────────────────────────────────────────────────── */

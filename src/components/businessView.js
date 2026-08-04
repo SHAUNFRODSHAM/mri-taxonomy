@@ -96,7 +96,6 @@ function renderBusinessTabs() {
     btn.className = 'biz-tab-btn' + (mod === state.businessTab ? ' active' : '')
       + (cfg.supporting ? ' biz-tab-conditional' : '');
     btn.dataset.btab = mod;
-    btn.title = cfg.note || '';
     btn.innerHTML = `<span class="tab-icon">${cfg.icon}</span>${cfg.label}`;
     btn.addEventListener('click', () => onSwitchBusinessTab(mod));
     tabBar.appendChild(btn);
@@ -152,7 +151,16 @@ function renderBusinessGrid() {
     header.className = 'main-header';
     header.style.background = cfg.color || '#2d4a0a';
   }
-  if (headerText) headerText.textContent = cfg.label;
+  if (headerText) {
+    headerText.textContent = cfg.label;
+    let sub = header.querySelector('.main-header-sub');
+    if (cfg.note) {
+      if (!sub) { sub = document.createElement('div'); sub.className = 'main-header-sub'; header.appendChild(sub); }
+      sub.textContent = cfg.note;
+    } else if (sub) {
+      sub.remove();
+    }
+  }
 
   const grid = document.getElementById('grid');
   grid.className = 'grid' + (state.editMode ? ' edit-active' : '');

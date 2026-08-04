@@ -118,15 +118,20 @@ function buildOrigCard() {
     'ver-card ver-card-original' + (isActive ? ' ver-card-active' : '');
 
   card.innerHTML =
-    `<div class="ver-card-icon">🔒</div>` +
-    `<div class="ver-card-info">` +
-      `<div class="ver-card-name">Original</div>` +
-      `<div class="ver-card-meta">Factory content · Read-only</div>` +
+    `<div class="ver-card-top">` +
+      `<div class="ver-card-icon">🔒</div>` +
+      `<div class="ver-card-info">` +
+        `<div class="ver-card-name">Original</div>` +
+        `<div class="ver-card-meta">Factory content · Read-only</div>` +
+      `</div>` +
     `</div>` +
     `<div class="ver-card-actions">` +
-      (isActive
-        ? `<span class="ver-active-dot" title="Currently loaded">●</span>`
-        : `<button class="ver-btn ver-btn-load" title="Load original content">Load</button>`) +
+      `<div class="ver-card-actions-left"></div>` +
+      `<div class="ver-card-actions-right">` +
+        (isActive
+          ? `<span class="ver-active-dot" title="Currently loaded">● Active</span>`
+          : `<button class="ver-btn ver-btn-load" title="Load original content">Load</button>`) +
+      `</div>` +
     `</div>`;
 
   if (!isActive) {
@@ -144,17 +149,24 @@ function buildVersionCard(v) {
   card.className = 'ver-card' + (isActive ? ' ver-card-active' : '');
 
   card.innerHTML =
-    `<div class="ver-card-icon">📄</div>` +
-    `<div class="ver-card-info">` +
-      `<div class="ver-card-name">${escHtml(v.name)}</div>` +
-      `<div class="ver-card-meta">${formatDate(v.createdAt)}</div>` +
+    `<div class="ver-card-top">` +
+      `<div class="ver-card-icon">📄</div>` +
+      `<div class="ver-card-info">` +
+        `<div class="ver-card-name">${escHtml(v.name)}</div>` +
+        `<div class="ver-card-meta">${formatDate(v.createdAt)}</div>` +
+      `</div>` +
     `</div>` +
     `<div class="ver-card-actions">` +
-      `<button class="ver-btn ver-btn-rename" title="Rename this version">✎</button>` +
-      (isActive
-        ? `<span class="ver-active-dot" title="Currently loaded">●</span>`
-        : `<button class="ver-btn ver-btn-load" title="Load this version">Load</button>`) +
-      `<button class="ver-btn ver-btn-del" title="Delete this version">🗑</button>` +
+      `<div class="ver-card-actions-left">` +
+        `<button class="ver-btn ver-btn-rename" title="Rename">✎ Rename</button>` +
+        `<button class="ver-btn ver-btn-dup" title="Duplicate">⧉ Duplicate</button>` +
+        `<button class="ver-btn ver-btn-del" title="Delete">🗑 Delete</button>` +
+      `</div>` +
+      `<div class="ver-card-actions-right">` +
+        (isActive
+          ? `<span class="ver-active-dot" title="Currently loaded">● Active</span>`
+          : `<button class="ver-btn ver-btn-load" title="Load this version">Load</button>`) +
+      `</div>` +
     `</div>`;
 
   // Load
@@ -177,6 +189,11 @@ function buildVersionCard(v) {
     startRename(card, v);
   });
 
+  // Duplicate
+  card.querySelector('.ver-btn-dup').addEventListener('click', () => {
+    startDuplicate(card, v);
+  });
+
   return card;
 }
 
@@ -187,13 +204,13 @@ function startRename(card, v) {
   const renameBtn = card.querySelector('.ver-btn-rename');
   const current   = nameEl.textContent;
 
-  // Replace name span with an input
+  // Swap the name span for an input that fills the same space
   const input = document.createElement('input');
   input.className = 'ver-rename-input';
   input.value = current;
   nameEl.replaceWith(input);
 
-  renameBtn.textContent = '✓';
+  renameBtn.innerHTML = '✓ Save';
   renameBtn.title = 'Save name';
   input.focus();
   input.select();
@@ -216,8 +233,56 @@ function startRename(card, v) {
     if (e.key === 'Escape') { committed = true; renderVersionPanel(); }
   });
 
-  // Slight delay on blur so the ✓ button click fires first
   input.addEventListener('blur', () => setTimeout(commit, 160));
+}
+
+// ── Duplicate modal ────────────────────────────────────────────────────────
+
+function startDuplicate(card, v) {
+  // Build modal overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'ver-dup-overlay';
+
+  const modal = document.createElement('div');
+  modal.className = 'ver-dup-modal';
+  modal.innerHTML =
+    `<div class="ver-dup-title">Duplicate Version</div>` +
+    `<div class="ver-dup-sub">Creating a copy of <strong>${escHtml(v.name)}</strong></div>` +
+    `<input class="ver-dup-input" type="text" placeholder="New version name" maxlength="60" />` +
+    `<div class="ver-dup-actions">` +
+      `<button class="btn btn-cancel ver-dup-cancel">Cancel</button>` +
+      `<button class="btn btn-save ver-dup-confirm">Create Duplicate</button>` +
+    `</div>`;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const input   = modal.querySelector('.ver-dup-input');
+  const confirm = modal.querySelector('.ver-dup-confirm');
+  const cancel  = modal.querySelector('.ver-dup-cancel');
+
+  input.value = v.name + ' — Copy';
+  input.focus();
+  input.select();
+
+  function close() { overlay.remove(); }
+
+  cancel.addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+  confirm.addEventListener('click', () => {
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    document.dispatchEvent(
+      new CustomEvent('mri:duplicateVersion', { detail: { sourceId: v.id, name } })
+    );
+    close();
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  { confirm.click(); }
+    if (e.key === 'Escape') { close(); }
+  });
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────

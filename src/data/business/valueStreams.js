@@ -22,7 +22,7 @@ const p = (title, desc, ...activities) => ({ title, desc, activities });
 export const VALUE_STREAMS = [
   {
     id: 'vs-l2c', label: 'Lease to Cash', icon: '💷', tag: 'overlay', color: '#155a5a',
-    note: 'The CRE revenue engine — the real-estate analog of Quote to Cash (landlord-side): winning tenants and turning leases into collected cash.',
+    note: 'A variation of revenue flow specific to leasing assets (like equipment or property), spanning lease agreement creation, billing cycles, and payment collection.',
     groups: [
       {
         title: 'Leasing & Deal Origination',
@@ -109,7 +109,7 @@ export const VALUE_STREAMS = [
 
   {
     id: 'vs-q2c', label: 'Quote to Cash', icon: '🧾', tag: 'official', color: '#2a6f97',
-    note: 'Generic non-tenant revenue stream — billing management-fee, corporate-client and other non-tenant customers. Complements the tenant-focused Lease to Cash.',
+    note: 'Covers every step from generating a customer price quote, negotiating contracts, and fulfilling orders to billing and collecting payment.',
     groups: [
       {
         title: 'Customer & Contract Management',
@@ -166,7 +166,7 @@ export const VALUE_STREAMS = [
 
   {
     id: 'vs-a2r', label: 'Acquire to Retire', icon: '🏢', tag: 'official', color: '#4a2a6a',
-    note: 'Investment & asset lifecycle — from sourcing and underwriting through ownership to disposition.',
+    note: 'Manages capital assets throughout their physical lifecycle, from initial purchase and tracking to depreciation and final disposal.',
     groups: [
       {
         title: 'Investment Strategy & Sourcing',
@@ -278,7 +278,7 @@ export const VALUE_STREAMS = [
 
   {
     id: 'vs-s2p', label: 'Source to Pay', icon: '🛒', tag: 'official', color: '#1a3f6a',
-    note: 'Property opex & capex procurement — from sourcing suppliers to paying invoices.',
+    note: 'Handles the procurement lifecycle, from identifying a need, sourcing and vetting suppliers, creating purchase orders, receiving goods, and processing invoice payments.',
     groups: [
       {
         title: 'Source to Contract (S2C)',
@@ -317,7 +317,7 @@ export const VALUE_STREAMS = [
 
   {
     id: 'vs-p2r', label: 'Project to Result', icon: '🏗️', tag: 'official', color: '#6a3a1a',
-    note: 'Development, construction & capital projects — from feasibility to a capitalised, stabilised asset.',
+    note: 'Manages the lifecycle of a project from initial scope, planning, and execution phases until final delivery and evaluation of results.',
     groups: [
       {
         title: 'Development & Entitlements',
@@ -356,7 +356,7 @@ export const VALUE_STREAMS = [
 
   {
     id: 'vs-r2r', label: 'Record to Report', icon: '📒', tag: 'official', color: '#34495e',
-    note: 'Property / fund / corporate accounting — capturing transactions through to financial and investor reporting.',
+    note: 'Captures financial data, processes journal entries, reconciles accounts, and produces compliance and performance reports.',
     groups: [
       {
         title: 'Transaction Processing & Sub-ledgers (T2R)',
@@ -401,7 +401,7 @@ export const VALUE_STREAMS = [
 
   {
     id: 'vs-tdm', label: 'Treasury & Debt Management', icon: '💰', tag: 'official', color: '#7a5a10',
-    note: 'Cash, debt and capital-markets management, and financial risk.',
+    note: 'Controls cash flow, liquidity, bank communications, investments, and corporate borrowing or debt repayment obligations.',
     groups: [
       {
         title: 'Cash & Liquidity Management',
@@ -437,7 +437,7 @@ export const VALUE_STREAMS = [
 
   {
     id: 'vs-pfo', label: 'Property & Facilities Operations', icon: '🛠️', tag: 'overlay', color: '#1a5a2a',
-    note: 'The "operate" value stream — running buildings, maintenance, space and sustainability. Typically IWMS-enabled.',
+    note: 'Oversees the day-to-day management, maintenance, safety, and utilization of physical corporate real estate and facilities.',
     groups: [
       {
         title: 'Property Management Operations',
