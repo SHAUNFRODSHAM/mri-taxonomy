@@ -45,6 +45,7 @@ VALUE_STREAMS.forEach(vs => {
         vertical: null,
         standards: [],
         needsEnrichment: !hasDetail,
+        coverage: 'full',      // factory default — full system coverage
       };
     }),
   }));

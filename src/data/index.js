@@ -10,6 +10,15 @@ import { faa } from './faa.js';
 
 export const ALL_DATA = { cm, gl, ap, rm, jc, car, bf, ia, faa };
 
+// Factory default: every system process/sub starts CORE (in scope). Consultants
+// de-scope per client version. Applied before the Original snapshot so both the
+// live data and "Reset to Original" carry the in-scope baseline.
+Object.values(ALL_DATA).forEach(mod =>
+  mod.forEach(col => col.processes.forEach(p => {
+    if (!p.scope) p.scope = 'core';
+    (p.subs || []).forEach(s => { if (!s.scope) s.scope = 'core'; });
+  })));
+
 // Deep-frozen snapshot taken at module-load time, BEFORE any user edits.
 // This is the source of truth for "Reset to Original".
 export const ORIGINAL_DATA = Object.freeze({
