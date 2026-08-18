@@ -374,6 +374,17 @@ function saveChangesToVersion() {
 
 // ── RESET TO ORIGINAL ─────────────────────────────────────────────────────────
 
+/** Blank every scope (system) and coverage (business) tag — the Discovery
+ *  Baseline state. Used on discovery load, boot, and reset-while-in-discovery. */
+function clearAllTags() {
+  Object.values(ALL_DATA).forEach(mod => mod.forEach(col => col.processes.forEach(p => {
+    p.scope = null; (p.subs || []).forEach(s => { s.scope = null; });
+  })));
+  Object.values(BUSINESS_DATA).forEach(mod => mod.forEach(col => col.processes.forEach(p => {
+    p.coverage = null; (p.subs || []).forEach(s => { s.coverage = null; });
+  })));
+}
+
 function openResetModal() {
   const cfg = MODULE_CONFIG[state.currentTab];
   document.getElementById('reset-tab-label').textContent = `Reset "${cfg?.label || state.currentTab}" only`;
@@ -391,6 +402,7 @@ function resetTab() {
     if (!BUSINESS_ORIGINAL[bt]) { closeResetModal(); return; }
     snapshot();
     BUSINESS_DATA[bt] = JSON.parse(JSON.stringify(BUSINESS_ORIGINAL[bt]));
+    if (state.activeVersionId === 'discovery') clearAllTags();  // keep it untagged
     closeResetModal();
     closePanel();
     renderBusiness();
@@ -406,6 +418,7 @@ function resetTab() {
   }
   snapshot();
   ALL_DATA[tab] = JSON.parse(JSON.stringify(ORIGINAL_DATA[tab]));
+  if (state.activeVersionId === 'discovery') clearAllTags();  // keep it untagged
   closeResetModal();
   closePanel();
   render(gridCallbacks);
@@ -424,6 +437,7 @@ function resetAll() {
   builtIn.forEach(tab => {
     ALL_DATA[tab] = JSON.parse(JSON.stringify(ORIGINAL_DATA[tab]));
   });
+  if (state.activeVersionId === 'discovery') clearAllTags();  // keep it untagged
 
   closeResetModal();
   closePanel();
@@ -578,12 +592,7 @@ function loadVersion(id) {
       // Discovery Baseline: everything Untagged (links kept). Clear the factory
       // scope tags (system) and coverage tags (business); suppressAutoScope
       // makes even unlinked items read Untagged rather than auto out-of-scope.
-      Object.values(ALL_DATA).forEach(mod => mod.forEach(col => col.processes.forEach(p => {
-        p.scope = null; (p.subs || []).forEach(s => { s.scope = null; });
-      })));
-      Object.values(BUSINESS_DATA).forEach(mod => mod.forEach(col => col.processes.forEach(p => {
-        p.coverage = null; (p.subs || []).forEach(s => { s.coverage = null; });
-      })));
+      clearAllTags();
       state.suppressAutoScope = true;
     } else {
       state.suppressAutoScope = false;
@@ -858,6 +867,12 @@ document.addEventListener('keydown', e => {
 
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 initLinks();
+// Default landing = Discovery Baseline (the new-client consulting start point):
+// everything Untagged, links maintained. Set directly (no undo entry at boot).
+state.activeVersionId   = 'discovery';
+state.activeVersionName = 'Discovery Baseline';
+state.suppressAutoScope = true;
+clearAllTags();
 updateUndoBtn();
 updateVersionBadge();
 applyModuleVisibility();
