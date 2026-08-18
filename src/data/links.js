@@ -67,14 +67,19 @@ const GROUP_LINKS = {
   'vs-q2c-g4': ['car-charges-journals', 'car-integration-gl'],
   'vs-q2c-g5': ['car-payments-receipts', 'car-payments-allocation', 'car-reporting-aged', 'car-close-statements'],
 
-  // Acquire to Retire → limited GL touchpoints (no investment / fixed-asset module)
-  'vs-a2r-g4': ['gl-framework-entity', 'gl-framework-coa'],
-  'vs-a2r-g6': ['gl-journals-operational'],
+  // Acquire to Retire → Investment Accounting (structure/investor) + Fixed Asset
+  // Accounting (asset lifecycle) + GL (entity, journals).
+  'vs-a2r-g1': ['ia-structure-portfolio', 'ia-investor-setup'],
+  'vs-a2r-g2': ['ia-structure-legal'],
+  'vs-a2r-g3': ['gl-framework-entity', 'ia-structure-portfolio', 'faa-acquisition-create'],
+  'vs-a2r-g4': ['gl-framework-entity', 'gl-framework-coa', 'faa-acquisition-policy', 'faa-acquisition-create', 'faa-register-structure'],
+  'vs-a2r-g5': ['faa-register-identify', 'faa-depreciation-posting', 'faa-lifecycle-transfers', 'faa-lifecycle-adjust', 'ia-investor-reporting-statements'],
+  'vs-a2r-g6': ['gl-journals-operational', 'faa-disposals-main', 'faa-lifecycle-adjust'],
 
   // Plan to Perform → Budgeting & Forecasting + GL
-  'vs-p2p-plan-g1': ['bf-process-ownership', 'bf-structure-versions'],
+  'vs-p2p-plan-g1': ['bf-process-ownership', 'bf-structure-versions', 'ia-structure-portfolio'],
   'vs-p2p-plan-g2': ['bf-creation-create', 'bf-creation-reforecast', 'bf-assumptions-income', 'bf-assumptions-expense', 'gl-budgets-planning', 'gl-budgets-revision'],
-  'vs-p2p-plan-g3': ['bf-variance-budgetactual', 'bf-reporting-board', 'gl-reporting-management'],
+  'vs-p2p-plan-g3': ['bf-variance-budgetactual', 'bf-reporting-board', 'gl-reporting-management', 'ia-investor-reporting-metrics'],
 
   // Source to Pay → Accounts Payable (+ RM vendor)
   'vs-s2p-g1': ['ap_sup_main', 'rm-vendor-onboarding'],
@@ -84,16 +89,18 @@ const GROUP_LINKS = {
   // Project to Result → Job Cost
   'vs-p2r-g1': ['jc-setup-config', 'jc-jobs-manage'],
   'vs-p2r-g2': ['jc-jobs-manage', 'jc-budgets-control', 'jc-contracts-lifecycle', 'jc-payments-draws'],
-  'vs-p2r-g3': ['jc-payments-draws', 'jc-reporting-reports', 'gl-framework-coa'],
+  'vs-p2r-g3': ['jc-payments-draws', 'jc-reporting-reports', 'gl-framework-coa', 'faa-acquisition-create'],
 
   // Record to Report → General Ledger (+ sub-ledger closes / reporting)
   'vs-r2r-g1': ['gl-journals-operational', 'gl-journals-subledger'],
   'vs-r2r-g2': ['gl-journals-operational', 'gl-reporting-management'],
-  'vs-r2r-g3': ['gl-close-period', 'gl-close-year', 'rm-close-period', 'car-close-period'],
-  'vs-r2r-g4': ['gl-reporting-management', 'gl-reporting-schedule', 'rm-close-reporting', 'car-reporting-compliance'],
+  'vs-r2r-g3': ['gl-close-period', 'gl-close-year', 'rm-close-period', 'car-close-period', 'ia-consolidation-eliminations', 'ia-reporting-consol-statements', 'ia-scheduling-main'],
+  'vs-r2r-g4': ['gl-reporting-management', 'gl-reporting-schedule', 'rm-close-reporting', 'car-reporting-compliance', 'ia-reporting-consol-statements', 'ia-investor-reporting-statements', 'ia-investor-reporting-metrics'],
 
-  // Treasury & Debt → limited AP / bank touchpoints (no treasury module)
-  'vs-tdm-g1': ['ap_recon_bank', 'cm-cash-receipts'],
+  // Treasury & Debt → GL bank/cash + AP bank rec + IA capital (capital raising)
+  'vs-tdm-g1': ['ap_recon_bank', 'cm-cash-receipts', 'gl-bank-setup', 'gl-bank-recon'],
+  'vs-tdm-g2': ['ia-investor-capital', 'ia-investor-setup', 'gl-recurring-allocations'],
+  // vs-tdm-g3 (Risk & Hedging) has no MRI PMX counterpart — gap.
 
   // Property & Facilities Operations → Residential ops + CM space
   'vs-pfo-g1': ['rm-residents-admin', 'rm-maintenance-requests'],
