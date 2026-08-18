@@ -30,8 +30,11 @@ function isConnected(item, parentProcess, linkedSet) {
 
 /** @returns {{scope: string|null, auto: boolean}} */
 export function effectiveScope(item, parentProcess, linkedSet) {
-  const set = linkedSet || linkedSystemIds();
   if (item.scope) return { scope: item.scope, auto: false };
+  // Discovery Baseline: everything reads Untagged — suppress the auto
+  // out-of-scope derivation so nothing is pre-decided before discovery.
+  if (state.suppressAutoScope) return { scope: null, auto: false };
+  const set = linkedSet || linkedSystemIds();
   if (isConnected(item, parentProcess, set)) return { scope: null, auto: false };
   return { scope: 'out-of-scope', auto: true };
 }

@@ -341,15 +341,18 @@ function toggleEdit() {
   else render(gridCallbacks);
 }
 
-/** Show Save Changes only when in edit mode on a non-original saved version. */
+/** Built-in read-only baselines that cannot be overwritten. */
+const BUILTIN_VERSIONS = new Set(['original', 'discovery']);
+
+/** Show Save Changes only when in edit mode on a saved (non-built-in) version. */
 function updateSaveChangesBtn() {
-  const visible = state.editMode && state.activeVersionId !== 'original';
+  const visible = state.editMode && !BUILTIN_VERSIONS.has(state.activeVersionId);
   document.getElementById('save-changes-btn').style.display = visible ? 'inline-flex' : 'none';
 }
 
 /** Overwrite the active saved version with the current ALL_DATA. */
 function saveChangesToVersion() {
-  if (state.activeVersionId === 'original') return;
+  if (BUILTIN_VERSIONS.has(state.activeVersionId)) return;
   const dataSnapshot = {};
   Object.keys(ALL_DATA).forEach(tab => {
     dataSnapshot[tab] = JSON.parse(JSON.stringify(ALL_DATA[tab]));
@@ -544,7 +547,7 @@ function confirmSaveAs() {
 function loadVersion(id) {
   const builtIn = new Set(Object.keys(ORIGINAL_DATA));
 
-  if (id === 'original') {
+  if (id === 'original' || id === 'discovery') {
     // Snapshot current state so load is undoable
     Object.keys(ALL_DATA).forEach(tab => {
       state.history.push({ tab, data: JSON.parse(JSON.stringify(ALL_DATA[tab])) });
@@ -564,12 +567,28 @@ function loadVersion(id) {
       }
     });
 
-    state.activeVersionId   = 'original';
-    state.activeVersionName = 'Original';
+    state.activeVersionId   = id;
+    state.activeVersionName = id === 'discovery' ? 'Discovery Baseline' : 'Original';
     state.isDirty           = false;
-    state.moduleVisibility  = {}; // original shows all modules
-    state.links             = seedLinks(); // original = the seed mapping
+    state.moduleVisibility  = {}; // built-ins show all modules
+    state.links             = seedLinks(); // links maintained for both baselines
     Object.keys(BUSINESS_ORIGINAL).forEach(m => { BUSINESS_DATA[m] = JSON.parse(JSON.stringify(BUSINESS_ORIGINAL[m])); });
+
+    if (id === 'discovery') {
+      // Discovery Baseline: everything Untagged (links kept). Clear the factory
+      // scope tags (system) and coverage tags (business); suppressAutoScope
+      // makes even unlinked items read Untagged rather than auto out-of-scope.
+      Object.values(ALL_DATA).forEach(mod => mod.forEach(col => col.processes.forEach(p => {
+        p.scope = null; (p.subs || []).forEach(s => { s.scope = null; });
+      })));
+      Object.values(BUSINESS_DATA).forEach(mod => mod.forEach(col => col.processes.forEach(p => {
+        p.coverage = null; (p.subs || []).forEach(s => { s.coverage = null; });
+      })));
+      state.suppressAutoScope = true;
+    } else {
+      state.suppressAutoScope = false;
+    }
+
     if (!ALL_DATA[state.currentTab]) state.currentTab = 'cm';
 
   } else {
@@ -600,6 +619,7 @@ function loadVersion(id) {
     state.activeVersionId   = id;
     state.activeVersionName = v.name;
     state.isDirty           = false;
+    state.suppressAutoScope = false;
     state.moduleVisibility  = { ...(v.moduleVisibility || {}) };
     state.links             = (v.links && v.links.length) ? JSON.parse(JSON.stringify(v.links)) : seedLinks();
     if (v.businessData) {

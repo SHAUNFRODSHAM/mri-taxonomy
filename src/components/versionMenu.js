@@ -28,6 +28,7 @@ export function renderVersionPanel() {
   body.appendChild(verSep);
 
   body.appendChild(buildOrigCard());
+  body.appendChild(buildDiscoveryCard());
 
   // ── Saved versions ─────────────────────────────────────────────────────
   if (versions.length) {
@@ -137,6 +138,38 @@ function buildOrigCard() {
   if (!isActive) {
     card.querySelector('.ver-btn-load').addEventListener('click', () => {
       document.dispatchEvent(new CustomEvent('mri:loadVersion', { detail: 'original' }));
+    });
+  }
+
+  return card;
+}
+
+function buildDiscoveryCard() {
+  const isActive = state.activeVersionId === 'discovery';
+  const card = document.createElement('div');
+  card.className =
+    'ver-card ver-card-original' + (isActive ? ' ver-card-active' : '');
+
+  card.innerHTML =
+    `<div class="ver-card-top">` +
+      `<div class="ver-card-icon">🧭</div>` +
+      `<div class="ver-card-info">` +
+        `<div class="ver-card-name">Discovery Baseline</div>` +
+        `<div class="ver-card-meta">Untagged · links kept · new-client start point</div>` +
+      `</div>` +
+    `</div>` +
+    `<div class="ver-card-actions">` +
+      `<div class="ver-card-actions-left"></div>` +
+      `<div class="ver-card-actions-right">` +
+        (isActive
+          ? `<span class="ver-active-dot" title="Currently loaded">● Active</span>`
+          : `<button class="ver-btn ver-btn-load" title="Load a blank, untagged baseline for a new client discovery session">Load</button>`) +
+      `</div>` +
+    `</div>`;
+
+  if (!isActive) {
+    card.querySelector('.ver-btn-load').addEventListener('click', () => {
+      document.dispatchEvent(new CustomEvent('mri:loadVersion', { detail: 'discovery' }));
     });
   }
 

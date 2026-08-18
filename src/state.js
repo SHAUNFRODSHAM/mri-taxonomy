@@ -36,6 +36,10 @@ export const state = {
   // Business ⇄ system links: [{ b, s, coverage, note }]. Seeded from
   // SEED_LINKS at boot, editable during discovery, persisted per version.
   links: [],
+  // Discovery Baseline flag — when true, the System view shows every untagged
+  // item as Untagged (suppresses the auto out-of-scope derivation). Set only
+  // while the built-in "Discovery Baseline" version is loaded.
+  suppressAutoScope: false,
   // Which processes are expanded to reveal their sub-processes (id -> true).
   // Collapsed by default; a scope filter force-expands so matches stay visible.
   expandedProcs: {},
