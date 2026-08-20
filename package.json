@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "npm run check:style && vite build",
+    "preview": "vite preview",
+    "check:style": "node scripts/check-house-style.mjs"
   },
   "devDependencies": {
     "pdf-parse": "^2.4.5",

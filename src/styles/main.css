@@ -598,51 +598,17 @@ body {
 .gen-body::-webkit-scrollbar { width: 4px; }
 .gen-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
 
-/* Document preview */
+/* Document preview — PANE CHROME ONLY.
+   The document's own typography (fonts, sizes, colours, headings, tables,
+   bullets, captions) is injected at runtime by houseStyleCSS() from
+   obDocStyle.js, scoped to #doc-out, so the preview matches the Word and PDF
+   output exactly. Do NOT add element-level rules here: anything set here that
+   houseStyleCSS() does not explicitly override will bleed into the preview and
+   silently break that match. */
 .doc-out {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 28px 32px;
-  font-family: var(--font); font-size: 0.72rem; line-height: 1.7; color: var(--ink);
 }
-.doc-out h1 {
-  font-size: 1.05rem; font-weight: 700; color: var(--ink);
-  border-bottom: 3px solid var(--green); padding-bottom: 10px; margin-bottom: 20px;
-}
-.doc-out h2 {
-  font-size: 0.88rem; font-weight: 700; color: #373C3C;
-  background: var(--green); padding: 6px 14px; border-radius: 4px; margin: 22px 0 12px;
-}
-.doc-out h2.ap-col { background: var(--blue); color: #fff; }
-.doc-out h2.gl-col { background: #4D90A8; color: #fff; }
-.doc-out h3 {
-  font-size: 0.78rem; font-weight: 700; color: #fff;
-  background: var(--amber); padding: 5px 12px; border-radius: 4px; margin: 14px 0 8px;
-}
-.doc-out h4 {
-  font-size: 0.72rem; font-weight: 700; color: #373C3C;
-  background: var(--green-lt); border-left: 3px solid var(--green);
-  padding: 4px 10px; margin: 10px 0 6px; border-radius: 0;
-}
-.doc-out p { margin-bottom: 8px; color: var(--ink2); }
-.doc-out ul { margin: 6px 0 10px; padding-left: 0; list-style: none; }
-.doc-out ul li {
-  padding: 3px 0 3px 16px; position: relative; color: var(--ink2); font-size: 0.7rem;
-}
-.doc-out ul li::before { content: '→'; position: absolute; left: 0; color: var(--green); font-size: 0.6rem; }
-.doc-out .prereq-sec {
-  background: var(--amber-lt); border: 1px solid #fce4bb; border-radius: 4px; padding: 8px 12px; margin: 6px 0;
-}
-.doc-out .prereq-sec-title {
-  font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--amber); margin-bottom: 4px;
-}
-.doc-out .assoc-sec {
-  background: var(--green-lt); border: 1px solid #c5de8a; border-radius: 4px; padding: 8px 12px; margin: 6px 0;
-}
-.doc-out .assoc-sec-title {
-  font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--green-dk); margin-bottom: 4px;
-}
-.doc-out .assoc-row { font-size: 0.7rem; color: #373C3C; margin: 2px 0; padding-left: 12px; position: relative; }
-.doc-out .assoc-row::before { content: '↗'; position: absolute; left: 0; font-size: 0.62rem; }
 
 /* ── SCROLLBARS ────────────────────────────────────────────────────────────── */
 .panel-body::-webkit-scrollbar,

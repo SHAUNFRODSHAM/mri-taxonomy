@@ -28,7 +28,7 @@ import {
 } from 'docx';
 
 import {
-  OB, FONT, hp, tw, px, PAGE, BODY_W, NUM,
+  SPEC, FONT, hp, tw, px, PAGE, BODY_W, NUM,
   numberingConfig, documentStyles,
   tableBorders, cellMargins, headerShading, headerRunProps, bodyRunProps,
   cellParaSpacing, footerTabs,
@@ -59,16 +59,20 @@ async function loadAsset(url) {
 
 const clean = v => String(v ?? '').replace(/\s+/g, ' ').trim();
 
+/* Runs deliberately carry as little formatting as possible: size, weight and
+   colour come from the paragraph styles in obDocStyle.js (which are generated
+   from SPEC), exactly as the Open Box template does it. Passing `size`/`color`
+   here would override the style and let the .docx drift from the preview. */
 function run(text, opts = {}) {
   return new TextRun({
     // `raw` preserves deliberate trailing spaces (e.g. a "Label: " lead-in),
     // which clean() would otherwise trim away and run the words together.
     text: opts.raw ? String(text ?? '') : clean(text),
     font: FONT,
-    size: opts.size ?? hp(9),
-    bold: opts.bold ?? false,
-    italics: opts.italic ?? false,
-    color: opts.color ?? OB.black,
+    ...(opts.size   !== undefined ? { size:  opts.size }   : {}),
+    ...(opts.bold   !== undefined ? { bold:  opts.bold }   : {}),
+    ...(opts.italic !== undefined ? { italics: opts.italic } : {}),
+    ...(opts.color  !== undefined ? { color: opts.color }  : {}),
   });
 }
 
@@ -96,24 +100,23 @@ const HEADING_LEVEL = [
   HeadingLevel.HEADING_3, HeadingLevel.HEADING_4, HeadingLevel.HEADING_5,
 ];
 
+/* Size, weight, caps and colour all come from the heading1-5 styles, which are
+   generated from SPEC.h1-h5 — nothing is set on the run. */
 function heading(text, level, opts = {}) {
   return new Paragraph({
     heading: HEADING_LEVEL[level],
-    children: [run(text, {
-      size:  level === 0 ? hp(12) : hp(10),
-      bold:  true,
-      color: level === 0 ? OB.slate : OB.black,
-    })],
+    children: [run(text)],
     numbering: { reference: NUM.headings, level },
     ...(opts.pageBreakBefore ? { pageBreakBefore: true } : {}),
   });
 }
 
-/** "Table N: …" caption. Sits ABOVE its table, per the template. */
+/** "Table N: …" caption. Sits ABOVE its table, per the template. Italics and
+ *  colour come from the OBCaption style (SPEC.caption). */
 function caption(text) {
   return new Paragraph({
     style: 'OBCaption',
-    children: [run(text, { italic: true, color: OB.caption })],
+    children: [run(text)],
     keepNext: true,
   });
 }
@@ -122,18 +125,18 @@ function caption(text) {
 function fieldLine(label, value) {
   return new Paragraph({
     children: [
-      run(label + ': ', { bold: true, color: OB.slate, raw: true }),
+      run(label + ': ', { bold: true, color: SPEC.label.color, raw: true }),
       run(value),
     ],
-    spacing: { after: tw(5) },
+    spacing: { after: tw(SPEC.label.after) },
   });
 }
 
 /** Small run-in sub-label above a list (deliberately not a numbered heading). */
 function subLabel(text) {
   return new Paragraph({
-    children: [run(text, { bold: true, color: OB.slate })],
-    spacing: { before: tw(7), after: tw(3) },
+    children: [run(text, { bold: true, color: SPEC.label.color })],
+    spacing: { before: tw(SPEC.label.before), after: tw(SPEC.label.after) },
     keepNext: true,
   });
 }
@@ -265,27 +268,30 @@ async function buildBrandedDocument({
     ...blank(3),
     new Paragraph({
       style: 'OBDocumentTitle',
-      children: [run(docTitle, { size: hp(26), color: OB.slate })],
+      // size/colour come from OBDocumentTitle (SPEC.title)
+      children: [run(docTitle)],
     }),
     new Paragraph({
       style: 'OBDate',
-      children: [run(`${versionName}  |  ${dateStr}`, { color: OB.slate })],
+      children: [run(`${versionName}  |  ${dateStr}`)],
     }),
     ...blank(3),
     new Paragraph({
       style: 'OBClientName',
-      children: [run(clientName, { size: hp(14), color: OB.slate })],
+      children: [run(clientName)],
     }),
     new Paragraph({
       style: 'OBProjectName',
-      children: [run(projectName, { size: hp(14), color: OB.slate })],
+      children: [run(projectName)],
     }),
     new Paragraph({ children: [new PageBreak()] }),
   ];
 
   const contents = [
     new Paragraph({
-      children: [run('Contents', { size: hp(12), bold: true, color: OB.slate })],
+      children: [run('Contents', {
+        size: hp(SPEC.h1.size), bold: true, color: SPEC.h1.color,
+      })],
       spacing: { after: tw(10) },
     }),
     new TableOfContents('Contents', { hyperlink: true, headingStyleRange: '1-4' }),
@@ -314,14 +320,18 @@ async function buildBrandedDocument({
   const footer = new Footer({
     children: [new Paragraph({
       tabStops: footerTabs,
-      children: [
-        run('Page ', { color: OB.slate }),
-        new TextRun({ children: [PageNumber.CURRENT], font: FONT, size: hp(9), color: OB.slate }),
-        run(' of ', { color: OB.slate }),
-        new TextRun({ children: [PageNumber.TOTAL_PAGES], font: FONT, size: hp(9), color: OB.slate }),
-        new TextRun({ text: '\t', font: FONT, size: hp(9) }),
-        run(`${clientName}  |  ${docTitle}  |  ${versionName}`, { color: OB.slate }),
-      ],
+      children: (() => {
+        // Footers have no paragraph style, so these runs take SPEC.footer directly
+        const f = { font: FONT, size: hp(SPEC.footer.size), color: SPEC.footer.color };
+        return [
+          new TextRun({ text: 'Page ', ...f }),
+          new TextRun({ children: [PageNumber.CURRENT], ...f }),
+          new TextRun({ text: ' of ', ...f }),
+          new TextRun({ children: [PageNumber.TOTAL_PAGES], ...f }),
+          new TextRun({ text: '\t', ...f }),
+          new TextRun({ text: `${clientName}  |  ${docTitle}  |  ${versionName}`, ...f }),
+        ];
+      })(),
     })],
   });
 
