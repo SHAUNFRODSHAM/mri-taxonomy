@@ -1,5 +1,5 @@
 import './styles/main.css';
-import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, currentData, triggerRender, registerRender, isModuleVisible } from './state.js';
+import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, snapshotAll, restoreSnapshot, currentData, triggerRender, registerRender, registerHistoryChange, isModuleVisible } from './state.js';
 import { render, effectiveScope } from './components/grid.js';
 import { showPanel, closePanel, setSystemLinkRenderer } from './components/panel.js';
 import { openEditModal, closeEditModal, saveEditModal } from './components/editModal.js';
@@ -10,7 +10,7 @@ import { renderBusiness, initBusinessView, setBusinessLinkRenderer, showBusiness
 import { openBusinessEditModal, saveBusinessEditModal, initBusinessEditModal, isBusinessEditOpen } from './components/businessEditModal.js';
 import { renderMapping, initMappingView } from './components/mappingView.js';
 import { makeMultiSelect } from './components/multiSelect.js';
-import { systemLinksFor, businessLinksFor, systemItemModule, initLinks, seedLinks } from './data/links.js';
+import { systemLinksFor, businessLinksFor, systemItemModule, initLinks, seedLinks, pruneDanglingLinks } from './data/links.js';
 import { findBusinessItem, BUSINESS_DATA, BUSINESS_ORIGINAL, BUSINESS_CONFIG, BUSINESS_MODULES } from './data/business/index.js';
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData, duplicateVersion } from './versions.js';
 
@@ -27,6 +27,8 @@ const gridCallbacks = {
 
 // Register render so components can call triggerRender()
 registerRender(() => render(gridCallbacks));
+// Keep the undo button in sync with history from a single place
+registerHistoryChange(() => { updateUndoBtn(); updateVersionBadge(); });
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 
@@ -386,8 +388,17 @@ function clearAllTags() {
 }
 
 function openResetModal() {
-  const cfg = MODULE_CONFIG[state.currentTab];
-  document.getElementById('reset-tab-label').textContent = `Reset "${cfg?.label || state.currentTab}" only`;
+  // The Reset button is a single global control shown in every view, so the
+  // "current tab" label has to follow the active view — in the Business view
+  // resetTab() acts on state.businessTab, not state.currentTab.
+  const inBusiness = state.viewMode === 'business';
+  const label = inBusiness
+    ? (BUSINESS_CONFIG[state.businessTab]?.label || state.businessTab)
+    : (MODULE_CONFIG[state.currentTab]?.label     || state.currentTab);
+  const what = inBusiness ? 'value stream' : 'module';
+
+  document.getElementById('reset-tab-label').textContent = `Reset "${label}" only`;
+  document.getElementById('reset-tab-desc').textContent  = `Restores only the currently active ${what}`;
   document.getElementById('reset-modal-overlay').classList.add('open');
 }
 
@@ -403,6 +414,7 @@ function resetTab() {
     snapshot();
     BUSINESS_DATA[bt] = JSON.parse(JSON.stringify(BUSINESS_ORIGINAL[bt]));
     if (state.activeVersionId === 'discovery') clearAllTags();  // keep it untagged
+    pruneDanglingLinks();  // the reset may have removed linked custom items
     closeResetModal();
     closePanel();
     renderBusiness();
@@ -419,6 +431,7 @@ function resetTab() {
   snapshot();
   ALL_DATA[tab] = JSON.parse(JSON.stringify(ORIGINAL_DATA[tab]));
   if (state.activeVersionId === 'discovery') clearAllTags();  // keep it untagged
+  pruneDanglingLinks();  // the reset may have removed linked custom items
   closeResetModal();
   closePanel();
   render(gridCallbacks);
@@ -426,22 +439,28 @@ function resetTab() {
   updateVersionBadge();
 }
 
+/* Restores the full factory state: every value stream, every built-in system
+   module and the business ⇄ system mapping. This mirrors what loading the
+   "Original" baseline does (see loadVersion), so the two routes back to factory
+   can no longer disagree and leave one view edited and the other pristine.
+   Recorded as a single undo step. */
 function resetAll() {
-  const builtIn = Object.keys(ORIGINAL_DATA);
-  builtIn.forEach(tab => {
-    state.history.push({ tab, data: JSON.parse(JSON.stringify(ALL_DATA[tab])) });
-  });
-  while (state.history.length > 20) state.history.shift();
-  state.isDirty = true;
+  snapshotAll();
 
-  builtIn.forEach(tab => {
+  Object.keys(ORIGINAL_DATA).forEach(tab => {
     ALL_DATA[tab] = JSON.parse(JSON.stringify(ORIGINAL_DATA[tab]));
   });
+  Object.keys(BUSINESS_ORIGINAL).forEach(m => {
+    BUSINESS_DATA[m] = JSON.parse(JSON.stringify(BUSINESS_ORIGINAL[m]));
+  });
+  state.links = seedLinks();
   if (state.activeVersionId === 'discovery') clearAllTags();  // keep it untagged
 
   closeResetModal();
   closePanel();
-  render(gridCallbacks);
+  if (state.viewMode === 'business')      renderBusiness();
+  else if (state.viewMode === 'mapping')  renderMapping();
+  else                                    render(gridCallbacks);
   updateUndoBtn();
   updateVersionBadge();
 }
@@ -451,13 +470,26 @@ function resetAll() {
 function undo() {
   if (!state.history.length) return;
   const prev = state.history.pop();
-  if (prev.view === 'business') {
-    BUSINESS_DATA[prev.tab] = prev.data;
+  restoreSnapshot(prev);
+
+  if (prev.view === 'links') {
+    // Link-only edit — the mapping is shared, so stay where the user is.
+    if (state.viewMode === 'business')      renderBusiness();
+    else if (state.viewMode === 'mapping')  renderMapping();
+    else                                    render(gridCallbacks);
+  } else if (prev.view === 'all') {
+    // Bulk restore touched both views; re-sync the tab bar in case custom
+    // modules came back, then re-render wherever the user is standing.
+    syncTabBar();
+    if (!ALL_DATA[state.currentTab]) state.currentTab = Object.keys(ALL_DATA)[0] || 'cm';
+    if (state.viewMode === 'business')      renderBusiness();
+    else if (state.viewMode === 'mapping')  renderMapping();
+    else                                    render(gridCallbacks);
+  } else if (prev.view === 'business') {
     if (state.viewMode !== 'business') switchView('business');
     if (state.businessTab !== prev.tab) state.businessTab = prev.tab;
     renderBusiness();
   } else {
-    ALL_DATA[prev.tab] = prev.data;
     if (state.viewMode !== 'system') switchView('system');
     if (prev.tab !== state.currentTab) switchTab(prev.tab);
     else render(gridCallbacks);
@@ -562,11 +594,9 @@ function loadVersion(id) {
   const builtIn = new Set(Object.keys(ORIGINAL_DATA));
 
   if (id === 'original' || id === 'discovery') {
-    // Snapshot current state so load is undoable
-    Object.keys(ALL_DATA).forEach(tab => {
-      state.history.push({ tab, data: JSON.parse(JSON.stringify(ALL_DATA[tab])) });
-    });
-    while (state.history.length > 20) state.history.shift();
+    // Snapshot everything as ONE undo step — a load replaces both views, the
+    // link set and the module config, so all of it has to come back together.
+    snapshotAll();
 
     // Restore built-in data
     Object.keys(ORIGINAL_DATA).forEach(tab => {
@@ -604,11 +634,8 @@ function loadVersion(id) {
     const v = getVersion(id);
     if (!v) { alert('Version not found.'); return; }
 
-    // Snapshot all tabs so load is undoable
-    Object.keys(ALL_DATA).forEach(tab => {
-      state.history.push({ tab, data: JSON.parse(JSON.stringify(ALL_DATA[tab])) });
-    });
-    while (state.history.length > 20) state.history.shift();
+    // Snapshot everything as ONE undo step (see above).
+    snapshotAll();
 
     // Remove all current custom tabs
     Object.keys(ALL_DATA).forEach(tab => {
