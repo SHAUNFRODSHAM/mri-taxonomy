@@ -7,7 +7,7 @@
    searchable combobox to add new links.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-import { state } from '../state.js';
+import { state, snapshotLinks } from '../state.js';
 import { ALL_DATA, MODULE_CONFIG } from '../data/index.js';
 import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES } from '../data/business/index.js';
 import {
@@ -297,6 +297,7 @@ function buildDomainCard(row, sysCandidates) {
           });
           covSel.addEventListener('change', e => {
             e.stopPropagation();
+            snapshotLinks();
             setLinkCoverage(proc.id, link.s, covSel.value);
             chip.className = `map-chip map-chip-${covSel.value}`;
             dirty();
@@ -314,6 +315,7 @@ function buildDomainCard(row, sysCandidates) {
           delBtn.title = 'Remove this link';
           delBtn.addEventListener('click', e => {
             e.stopPropagation();
+            snapshotLinks();
             removeLink(proc.id, link.s);
             refreshLinks();
             refreshHeader();
@@ -457,6 +459,7 @@ function openComboDropdown(anchor, businessId, onAdded) {
               selectedProc = { ...proc, colTitle: col.title };
               renderStep3();
             } else if (!alreadyLinked) {
+              snapshotLinks();
               addLink(businessId, proc.id, 'full');
               currentLinked.add(proc.id);
               drop.remove();
@@ -511,6 +514,7 @@ function openComboDropdown(anchor, businessId, onAdded) {
       procBtn.addEventListener('mousedown', e => {
         e.preventDefault(); e.stopPropagation();
         if (!procLinked) {
+          snapshotLinks();
           addLink(businessId, selectedProc.id, 'full');
           currentLinked.add(selectedProc.id);
           drop.remove();
@@ -549,6 +553,7 @@ function openComboDropdown(anchor, businessId, onAdded) {
         btn.addEventListener('mousedown', e => {
           e.preventDefault(); e.stopPropagation();
           if (!alreadyLinked) {
+            snapshotLinks();
             addLink(businessId, sub.id, 'full');
             currentLinked.add(sub.id);
             drop.remove();

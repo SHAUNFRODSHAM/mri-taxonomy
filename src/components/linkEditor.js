@@ -13,6 +13,7 @@
 import { ALL_DATA, MODULE_CONFIG } from '../data/index.js';
 import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES } from '../data/business/index.js';
 import { addLink, removeLink, systemLinksFor, businessLinksFor } from '../data/links.js';
+import { snapshotLinks } from '../state.js';
 
 const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const dirty = () => document.dispatchEvent(new CustomEvent('mri:versionDirty'));
@@ -53,6 +54,7 @@ export function renderLinkEditor(container, anchorId, side) {
   container.querySelectorAll('.lke-del').forEach(btn => {
     btn.addEventListener('click', () => {
       const otherId = btn.dataset.del;
+      snapshotLinks();
       if (pickSystem) removeLink(anchorId, otherId); else removeLink(otherId, anchorId);
       renderLinkEditor(container, anchorId, side);
       dirty();
@@ -61,6 +63,7 @@ export function renderLinkEditor(container, anchorId, side) {
 
   container.querySelector('.lke-add').addEventListener('click', () => {
     openLinkPicker(pickSystem, picked => {
+      snapshotLinks();
       if (pickSystem) addLink(anchorId, picked); else addLink(picked, anchorId);
       renderLinkEditor(container, anchorId, side);
       dirty();

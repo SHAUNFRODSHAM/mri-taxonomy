@@ -192,6 +192,35 @@ export function setLinkNote(b, s, note) {
   if (l) l.note = note;
 }
 
+/** Every system process/sub id currently present across all modules. */
+function allSystemIds() {
+  const ids = new Set();
+  Object.values(ALL_DATA).forEach(mod => mod.forEach(col => col.processes.forEach(p => {
+    ids.add(p.id); (p.subs || []).forEach(s => ids.add(s.id));
+  })));
+  return ids;
+}
+
+/** Every business (value-stream) process/sub id currently present. */
+function allBusinessIds() {
+  const ids = new Set();
+  Object.values(BUSINESS_DATA).forEach(mod => mod.forEach(col => col.processes.forEach(p => {
+    ids.add(p.id); (p.subs || []).forEach(s => ids.add(s.id));
+  })));
+  return ids;
+}
+
+/** Drop links whose endpoints no longer exist — e.g. after a module reset has
+ *  removed custom items that had been linked. Returns the number removed. */
+export function pruneDanglingLinks() {
+  const sys = allSystemIds();
+  const bus = allBusinessIds();
+  const kept = getLinks().filter(l => sys.has(l.s) && bus.has(l.b));
+  const removed = getLinks().length - kept.length;
+  if (removed) state.links = kept;
+  return removed;
+}
+
 // ── Resolvers ─────────────────────────────────────────────────────────────────
 
 /** Resolve a system item id to display metadata, searching every module. */
