@@ -1,8 +1,9 @@
 import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible } from '../state.js';
 import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS } from '../data/business/index.js';
 import { effectiveScope } from './grid.js';
-import { linkedSystemIds } from '../data/links.js';
-import { generateDocx } from './docxExport.js';
+import { linkedSystemIds, systemLinksFor, COVERAGE } from '../data/links.js';
+import { generateDocx, generateBusinessDocx } from './docxExport.js';
+import { matchesCoverage, matchesVerticals } from './businessView.js';
 
 // ── Escape helpers ─────────────────────────────────────────────────────────────
 const eB = s => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -294,45 +295,46 @@ export async function downloadWord() {
 
 
 // ── DOWNLOAD Word (Business view) ──────────────────────────────────────────────
-function downloadBusinessWord() {
+
+/* Uses the same branded generator as the System view, so both views produce
+   documents in the Open Box house style. Filtering is delegated to the grid's
+   own predicates so the document matches exactly what is on screen. */
+async function downloadBusinessWord() {
   const inclOverview   = document.getElementById('gopt-overview').checked;
   const inclActivities = document.getElementById('gopt-activities').checked;
-  const scopeAll = document.getElementById('gscope-all').checked;
-  const dateStr  = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-  const marketLabel = selectedMarketLabels().join(', ') || '—';
-  const body = buildBusinessBody(inclOverview, inclActivities);
+  const scopeAll       = document.getElementById('gscope-all').checked;
+  const dateStr        = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  const marketLabel    = selectedMarketLabels().join(', ') || '—';
+  const versionName    = state.activeVersionName || 'Original';
 
-  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="UTF-8">
-<style>
-  body { font-family:Calibri,sans-serif;font-size:11pt;color:#1a1a1a;margin:2.5cm;line-height:1.5; }
-  h1 { font-size:16pt;font-weight:bold;color:#fff;background:#373C3C;padding:8pt 14pt;
-       margin:28pt 0 6pt;border-bottom:3pt solid #BCD727;page-break-before:always; }
-  h1:first-of-type { page-break-before:avoid; }
-  h2 { font-size:13pt;font-weight:bold;color:#373C3C;margin:20pt 0 4pt;
-       border-bottom:2pt solid #BCD727;padding-bottom:4pt; }
-  h3 { font-size:11pt;font-weight:bold;color:#373C3C;margin:14pt 0 3pt;
-       border-left:4pt solid #BCD727;padding:4pt 8pt;background:#f8f9f0; }
-  h4 { font-size:10pt;font-weight:bold;color:#555;margin:10pt 0 2pt 20pt;
-       border-left:3pt solid #6E7878;padding:3pt 8pt;background:#f5f5f5; }
-  p { margin:3pt 0 6pt;font-size:10.5pt; }
-  ul { margin:4pt 0 10pt 0;padding-left:18pt; }
-  li { font-size:10pt;margin-bottom:3pt;line-height:1.5; }
-  @page { margin:2.5cm;size:A4 portrait; }
-</style></head>
-<body>
-<h1 style="page-break-before:avoid;">Business Process Taxonomy — Summary</h1>
-<p style="font-size:9pt;color:#888;">Generated: ${dateStr} &nbsp;&bull;&nbsp; Scope: ${e(businessScopeStr(scopeAll))} &nbsp;&bull;&nbsp; Market: ${e(marketLabel)}</p>
-${body}
-</body></html>`;
+  const wordBtn = document.getElementById('gen-word-btn');
+  const orig = wordBtn.textContent;
+  wordBtn.textContent = '⏳ Building…';
+  wordBtn.disabled = true;
 
-  const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-word;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = `Business_Process_Taxonomy_${new Date().toISOString().slice(0, 10)}.doc`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  try {
+    const blob = await generateBusinessDocx({
+      tabs: businessDocTabs(scopeAll),
+      businessData: BUSINESS_DATA,
+      businessConfig: BUSINESS_CONFIG,
+      inclOverview, inclActivities,
+      scopeStr: businessScopeStr(scopeAll),
+      versionName, dateStr, marketLabel,
+      itemFilter:    item => matchesCoverage(item) && matchesVerticals(item),
+      linksFor:      systemLinksFor,
+      coverageLabel: k => COVERAGE[k]?.label || k,
+      docTitle: 'Business Process Taxonomy',
+    });
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href = url;
+    a.download = `Business_Process_Taxonomy_${new Date().toISOString().slice(0, 10)}.docx`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } finally {
+    wordBtn.textContent = orig;
+    wordBtn.disabled = false;
+  }
 }
 
 // ── DOWNLOAD PDF ───────────────────────────────────────────────────────────────

@@ -5,10 +5,16 @@
    derived from the official Open Box Word template. This file is concerned only
    with turning taxonomy data into document structure.
 
+   Two entry points, one shared branded shell (cover / contents / frames /
+   footer), so both views produce documents in the same house style:
+
+     generateDocx          — MRI PMX System view
+     generateBusinessDocx  — Value Streams view
+
    Document structure:
      Cover page      branded full-bleed frame + title / date / client / project
      Contents        auto table of contents (populated on open in Word)
-     Scope Summary   H1 + captioned table
+     Summary         H1 + captioned table
      <Module>        H1  (page break before)
        <Column>      H2
          <Process>   H3  → overview, activities, prerequisites, screens table
@@ -67,7 +73,7 @@ function run(text, opts = {}) {
 }
 
 /** Body paragraph. */
-function body(text, opts = {}) {
+function bodyPara(text, opts = {}) {
   return new Paragraph({
     children: [run(text, opts)],
     spacing: { after: tw(opts.after ?? 6) },
@@ -208,7 +214,7 @@ function processBlock(item, level, nextTableNo, opts) {
   const out = [heading(item.title, level)];
 
   if (item.mri_title) out.push(fieldLine('MRI module', item.mri_title));
-  if (inclOverview && item.desc) out.push(body(item.desc));
+  if (inclOverview && item.desc) out.push(bodyPara(item.desc));
 
   if (inclActivities && item.activities?.length) {
     out.push(subLabel('Core activities'));
@@ -237,26 +243,21 @@ function processBlock(item, level, nextTableNo, opts) {
   return out;
 }
 
-// ── Main export ───────────────────────────────────────────────────────────────
+// ── Shared branded shell ──────────────────────────────────────────────────────
 
-export async function generateDocx({
-  tabs, allData, moduleConfig,
-  inclOverview, inclActivities, inclPrereqs, inclAssoc,
-  includes, linkedSet, scopeStr, versionName, dateStr,
-  effectiveScopeFn,
-  clientName  = 'Client Name',
-  projectName = 'MRI ERP Implementation',
-  docTitle    = 'Process Summary',
+/**
+ * Assemble the finished Document from view-specific body blocks, wrapping them
+ * in the Open Box shell: cover page, Contents, branded page frames and footer.
+ * Both view generators funnel through here so neither can drift from the style.
+ */
+async function buildBrandedDocument({
+  docTitle, versionName, dateStr, clientName, projectName, scopeStr,
+  bodyBlocks,
 }) {
   const [coverBuf, logoBuf] = await Promise.all([
     loadAsset(coverFrameUrl), loadAsset(pageLogoUrl),
   ]);
 
-  let tableSeq = 0;
-  const nextTableNo = () => ++tableSeq;
-  const opts = { inclOverview, inclActivities, inclPrereqs, inclAssoc };
-
-  // ── Cover page ─────────────────────────────────────────────────────────────
   const blank = n => Array.from({ length: n }, () => new Paragraph({ children: [] }));
 
   const cover = [
@@ -282,7 +283,6 @@ export async function generateDocx({
     new Paragraph({ children: [new PageBreak()] }),
   ];
 
-  // ── Contents ───────────────────────────────────────────────────────────────
   const contents = [
     new Paragraph({
       children: [run('Contents', { size: hp(12), bold: true, color: OB.slate })],
@@ -291,6 +291,200 @@ export async function generateDocx({
     new TableOfContents('Contents', { hyperlink: true, headingStyleRange: '1-4' }),
     new Paragraph({ children: [new PageBreak()] }),
   ];
+
+  /* The brand frames are full-bleed page backgrounds: anchored to the page
+     origin, behind the text, so body content flows over them. */
+  const frame = (buf, wIn, hIn) => new Header({
+    children: [new Paragraph({
+      children: buf
+        ? [new ImageRun({
+            data: buf,
+            type: 'png',
+            transformation: { width: px(wIn), height: px(hIn) },
+            floating: {
+              horizontalPosition: { offset: 0 },
+              verticalPosition:   { offset: 0 },
+              behindDocument: true,
+            },
+          })]
+        : [],
+    })],
+  });
+
+  const footer = new Footer({
+    children: [new Paragraph({
+      tabStops: footerTabs,
+      children: [
+        run('Page ', { color: OB.slate }),
+        new TextRun({ children: [PageNumber.CURRENT], font: FONT, size: hp(9), color: OB.slate }),
+        run(' of ', { color: OB.slate }),
+        new TextRun({ children: [PageNumber.TOTAL_PAGES], font: FONT, size: hp(9), color: OB.slate }),
+        new TextRun({ text: '\t', font: FONT, size: hp(9) }),
+        run(`${clientName}  |  ${docTitle}  |  ${versionName}`, { color: OB.slate }),
+      ],
+    })],
+  });
+
+  const doc = new Document({
+    creator: 'Open Box Software',
+    title: `${projectName} — ${docTitle}`,
+    description: `Scope: ${scopeStr} · Version: ${versionName}`,
+    styles: documentStyles,
+    numbering: { config: numberingConfig },
+    features: { updateFields: true },   // prompt Word to build the TOC on open
+    sections: [{
+      properties: {
+        page: {
+          size:   { width: PAGE.width, height: PAGE.height },
+          margin: {
+            top: PAGE.margin, bottom: PAGE.margin,
+            left: PAGE.margin, right: PAGE.margin,
+            header: PAGE.header, footer: PAGE.footer,
+          },
+        },
+        titlePage: true,   // distinct first-page header (the cover frame)
+      },
+      headers: {
+        first:   frame(coverBuf, 8.32, 11.74),
+        default: frame(logoBuf,  8.24, 11.64),
+      },
+      footers: { default: footer },
+      children: [...cover, ...contents, ...bodyBlocks],
+    }],
+  });
+
+  return Packer.toBlob(doc);
+}
+
+// ── Value Streams view ────────────────────────────────────────────────────────
+
+/**
+ * Branded export for the Value Streams (business) view.
+ *
+ * @param tabs        string[]   value-stream ids to include
+ * @param itemFilter  (item) => boolean  the view's live coverage/vertical filter,
+ *                    passed in so the document matches exactly what's on screen
+ * @param linksFor    (id) => Array<{moduleLabel, breadcrumb, title}>  system
+ *                    processes linked to a value-stream item
+ * @param coverageLabel (key) => string  human label for a coverage tag
+ */
+export async function generateBusinessDocx({
+  tabs, businessData, businessConfig,
+  inclOverview, inclActivities,
+  scopeStr, versionName, dateStr, marketLabel,
+  itemFilter    = () => true,
+  linksFor      = () => [],
+  coverageLabel = k => k,
+  clientName  = 'Client Name',
+  projectName = 'MRI ERP Implementation',
+  docTitle    = 'Business Process Taxonomy',
+}) {
+  let tableSeq = 0;
+  const nextTableNo = () => ++tableSeq;
+
+  // ── Coverage summary ───────────────────────────────────────────────────────
+  const counts = { full: 0, partial: 0, outside: 0, untagged: 0 };
+  let shown = 0;
+  tabs.forEach(tab => (businessData[tab] || []).forEach(col => col.processes.forEach(proc => {
+    [proc, ...(proc.subs || [])].forEach(it => {
+      const k = it.coverage || 'untagged';
+      if (k in counts) counts[k]++;
+      if (itemFilter(it)) shown++;
+    });
+  })));
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+
+  const totalRow = ['Total', total];
+  totalRow.isTotal = true;
+
+  const body = [
+    heading('Coverage Summary', 0),
+    bodyPara(`This document covers ${scopeStr}. Markets: ${marketLabel}. The counts `
+           + `below reflect the "${versionName}" version as at ${dateStr}; `
+           + `${shown} of ${total} processes match the active filters.`),
+    caption(`Table ${nextTableNo()}: Process count by system-coverage classification`),
+    obTable(
+      ['Coverage classification', 'Processes'],
+      [
+        [coverageLabel('full'),    counts.full],
+        [coverageLabel('partial'), counts.partial],
+        [coverageLabel('outside'), counts.outside],
+        ['Untagged',               counts.untagged],
+        totalRow,
+      ],
+      cols(0.7, 0.3),
+    ),
+  ];
+
+  // ── Value stream content ───────────────────────────────────────────────────
+  const streamBlock = (item, level) => {
+    const out = [heading(item.title, level)];
+
+    if (item.coverage) out.push(fieldLine('System coverage', coverageLabel(item.coverage)));
+    if (inclOverview && item.desc) out.push(bodyPara(item.desc));
+
+    if (inclActivities && item.activities?.length) {
+      out.push(subLabel('Core activities'));
+      item.activities.forEach(a => out.push(bullet(a)));
+    }
+
+    const links = linksFor(item.id);
+    if (links.length) {
+      out.push(
+        caption(`Table ${nextTableNo()}: Supporting MRI PMX processes — ${clean(item.title)}`),
+        obTable(
+          ['MRI PMX module', 'Supporting system process'],
+          links.map(l => [l.moduleLabel, l.breadcrumb ? `${l.breadcrumb} › ${l.title}` : l.title]),
+          cols(0.32, 0.68),
+        ),
+        spacer(8),
+      );
+    }
+
+    if (item.clientNote) out.push(fieldLine('Client note', item.clientNote));
+    return out;
+  };
+
+  tabs.forEach(tab => {
+    if (!businessData[tab]) return;
+    body.push(heading(businessConfig[tab]?.label || tab, 0, { pageBreakBefore: true }));
+
+    businessData[tab].forEach(col => {
+      const visible = col.processes.filter(p =>
+        itemFilter(p) || (p.subs || []).some(itemFilter));
+      if (!visible.length) return;
+
+      body.push(heading(col.title, 1));
+
+      visible.forEach(proc => {
+        if (itemFilter(proc)) body.push(...streamBlock(proc, 2));
+        (proc.subs || []).forEach(sub => {
+          if (itemFilter(sub)) body.push(...streamBlock(sub, 3));
+        });
+      });
+    });
+  });
+
+  return buildBrandedDocument({
+    docTitle, versionName, dateStr, clientName, projectName, scopeStr,
+    bodyBlocks: body,
+  });
+}
+
+// ── MRI PMX System view ───────────────────────────────────────────────────────
+
+export async function generateDocx({
+  tabs, allData, moduleConfig,
+  inclOverview, inclActivities, inclPrereqs, inclAssoc,
+  includes, linkedSet, scopeStr, versionName, dateStr,
+  effectiveScopeFn,
+  clientName  = 'Client Name',
+  projectName = 'MRI ERP Implementation',
+  docTitle    = 'Process Summary',
+}) {
+  let tableSeq = 0;
+  const nextTableNo = () => ++tableSeq;
+  const opts = { inclOverview, inclActivities, inclPrereqs, inclAssoc };
 
   // ── Scope summary ──────────────────────────────────────────────────────────
   const counts   = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0 };
@@ -308,7 +502,7 @@ export async function generateDocx({
 
   const summary = [
     heading('Scope Summary', 0),
-    body(`This document covers ${scopeStr}. The counts below reflect the `
+    bodyPara(`This document covers ${scopeStr}. The counts below reflect the `
        + `"${versionName}" version as at ${dateStr}.`),
     caption(`Table ${nextTableNo()}: Process count by scope classification`),
     obTable(
@@ -348,68 +542,8 @@ export async function generateDocx({
     });
   });
 
-  // ── Headers / footers ──────────────────────────────────────────────────────
-  /* The brand frames are full-bleed page backgrounds: anchored to the page
-     origin, behind the text, so body content flows over them. */
-  const frame = (buf, wIn, hIn) => new Header({
-    children: [new Paragraph({
-      children: buf
-        ? [new ImageRun({
-            data: buf,
-            type: 'png',
-            transformation: { width: px(wIn), height: px(hIn) },
-            floating: {
-              horizontalPosition: { offset: 0 },
-              verticalPosition:   { offset: 0 },
-              behindDocument: true,
-            },
-          })]
-        : [],
-    })],
+  return buildBrandedDocument({
+    docTitle, versionName, dateStr, clientName, projectName, scopeStr,
+    bodyBlocks: [...summary, ...content],
   });
-
-  const footer = new Footer({
-    children: [new Paragraph({
-      tabStops: footerTabs,
-      children: [
-        run('Page ', { color: OB.slate }),
-        new TextRun({ children: [PageNumber.CURRENT], font: FONT, size: hp(9), color: OB.slate }),
-        run(' of ', { color: OB.slate }),
-        new TextRun({ children: [PageNumber.TOTAL_PAGES], font: FONT, size: hp(9), color: OB.slate }),
-        new TextRun({ text: '\t', font: FONT, size: hp(9) }),
-        run(`${clientName}  |  ${docTitle}  |  ${versionName}`, { color: OB.slate }),
-      ],
-    })],
-  });
-
-  // ── Document ───────────────────────────────────────────────────────────────
-  const doc = new Document({
-    creator: 'Open Box Software',
-    title: `${projectName} — ${docTitle}`,
-    description: `Scope: ${scopeStr} · Version: ${versionName}`,
-    styles: documentStyles,
-    numbering: { config: numberingConfig },
-    features: { updateFields: true },   // prompt Word to build the TOC on open
-    sections: [{
-      properties: {
-        page: {
-          size:   { width: PAGE.width, height: PAGE.height },
-          margin: {
-            top: PAGE.margin, bottom: PAGE.margin,
-            left: PAGE.margin, right: PAGE.margin,
-            header: PAGE.header, footer: PAGE.footer,
-          },
-        },
-        titlePage: true,   // distinct first-page header (the cover frame)
-      },
-      headers: {
-        first:   frame(coverBuf, 8.32, 11.74),
-        default: frame(logoBuf,  8.24, 11.64),
-      },
-      footers: { default: footer },
-      children: [...cover, ...contents, ...summary, ...content],
-    }],
-  });
-
-  return Packer.toBlob(doc);
 }

@@ -18,8 +18,9 @@ import {
 } from '../data/business/index.js';
 
 const COVERAGE_KEYS = ['full', 'partial', 'outside'];
-/** Does an item match the selected coverage filter? Untagged handled explicitly. */
-function matchesCoverage(item) {
+/** Does an item match the selected coverage filter? Untagged handled explicitly.
+ *  Exported so the document export can filter identically to the on-screen grid. */
+export function matchesCoverage(item) {
   const sel = state.coverageFilters;
   if (!sel || !sel.length) return true;
   return sel.includes(item.coverage || 'untagged');
@@ -60,8 +61,9 @@ function ensureBusinessTab() {
   if (!BUSINESS_DATA[state.businessTab]) state.businessTab = BUSINESS_MODULES[0];
 }
 
-/** Does an item match the selected verticals? Vertical-agnostic items always show. */
-function matchesVerticals(item) {
+/** Does an item match the selected verticals? Vertical-agnostic items always show.
+ *  Exported alongside matchesCoverage so exports mirror the grid's filtering. */
+export function matchesVerticals(item) {
   if (!item.vertical) return true;                    // no sector data → always relevant
   const sel = state.verticals;
   if (!sel || !sel.length) return true;               // nothing selected → don't hide
