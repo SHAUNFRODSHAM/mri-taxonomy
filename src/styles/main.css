@@ -1844,6 +1844,24 @@ body {
   border-radius: 0 6px 6px 0; padding: 8px 11px; white-space: pre-wrap;
 }
 
+/* ── Market Notes (shared detail-panel section — System + Value Streams) ──
+   One labelled block per selected market. Reuses .biz-market-block so the
+   System and Business panels present market detail identically. */
+.market-note { margin-bottom: 9px; }
+.market-note:last-child { margin-bottom: 0; }
+.market-note-label {
+  font-size: 0.64rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--ink2); margin-bottom: 4px;
+}
+
+/* Market applicability checkboxes in the edit modals */
+.market-scope-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 2px 0 4px; }
+.market-scope-opt {
+  display: flex; align-items: center; gap: 6px; font-size: 0.78rem;
+  color: var(--ink); cursor: pointer;
+}
+.market-scope-opt input { margin: 0; accent-color: var(--green); }
+
 /* ── Coverage tag on value-stream cards (FULL / PARTIAL / OUTSIDE) ── */
 .cov-badge {
   display: inline-block; margin-left: 6px; vertical-align: middle;

@@ -1,14 +1,18 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    businessEditModal.js — edit a business-process item
 
-   Business leaves carry different fields from system items: market{US,UK,EU},
-   vertical{Retail,Industrial,Office,Residential}, and standards[]. This modal
+   Business leaves carry different fields from system items:
+   vertical{Retail,Industrial,Office,Residential} and standards[]. This modal
    reuses the shared edit-modal shell (#edit-modal-overlay / #em-body) but builds
    a business-specific form. Saving snapshots (business-aware) then re-renders.
+
+   The market fields (marketScope + market notes) come from marketNote.js, shared
+   with the system edit modal so both views capture them identically.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 import { state, snapshot } from '../state.js';
-import { findBusinessItem, MARKETS, VERTICALS } from '../data/business/index.js';
+import { findBusinessItem, VERTICALS } from '../data/business/index.js';
+import { marketFieldsHTML, readMarketFields } from './marketNote.js';
 import { renderLinkEditor } from './linkEditor.js';
 import { coverageTooltip } from '../data/links.js';
 
@@ -29,7 +33,6 @@ export function openBusinessEditModal(id) {
   document.getElementById('em-modal-title').textContent = 'Edit: ' + item.title;
   document.getElementById('em-modal-sub').textContent = found.breadcrumb;
 
-  const market   = item.market   || {};
   const vertical = item.vertical || {};
 
   document.getElementById('em-body').innerHTML = `
@@ -44,11 +47,7 @@ export function openBusinessEditModal(id) {
     <label>Client Note</label>
     <textarea id="bem-client-note" placeholder="Client-specific note — saved with this version">${txt(item.clientNote)}</textarea>
 
-    <div class="modal-sec-head">Market Variation</div>
-    <p class="field-hint" style="margin-top:-6px">How this process differs by geography. Leave blank if not applicable.</p>
-    ${MARKETS.map(m => `
-      <label>${esc(m.label)}</label>
-      <textarea class="bem-market" data-market="${m.key}">${txt(market[m.key])}</textarea>`).join('')}
+    ${marketFieldsHTML(item)}
 
     <div class="modal-sec-head">Vertical / Sector Detail</div>
     <p class="field-hint" style="margin-top:-6px">Sector-specific guidance. Leave blank if not applicable.</p>
@@ -96,12 +95,7 @@ export function saveBusinessEditModal() {
   item.clientNote = document.getElementById('bem-client-note').value.trim();
   item.coverage = document.getElementById('bem-coverage').value || null;
 
-  const market = {};
-  document.querySelectorAll('.bem-market').forEach(t => {
-    const v = t.value.trim();
-    if (v) market[t.dataset.market] = v;
-  });
-  item.market = Object.keys(market).length ? market : null;
+  readMarketFields(item);
 
   const vertical = {};
   document.querySelectorAll('.bem-vertical').forEach(t => {
