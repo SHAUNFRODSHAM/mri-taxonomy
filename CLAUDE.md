@@ -95,6 +95,24 @@ of column objects**. A column contains processes; processes optionally contain s
   subs: [ /* Sub[] — optional */ ],
 }
 
+// ── Optional market fields (any process or sub, both views) ──────────────────
+{
+  // APPLICABILITY. Omit entirely = applies to every market (the default for
+  // almost everything). Only set it where the process genuinely does not exist
+  // in a market. Subs INHERIT their parent's scope, so tagging a process takes
+  // its whole subtree with it — only tag a sub when it is narrower than its parent.
+  marketScope: ['UK', 'EU'],          // subset of 'UK' | 'US' | 'EU'
+
+  // NOTES. Terminology and regulatory differences for this process. Shown in the
+  // detail panel for the selected markets only. Leave a market out where there is
+  // no difference worth calling out.
+  market: {
+    US: 'Called CAM (Common Area Maintenance). Pools are typically operating, tax, insurance and CAM.',
+    UK: 'Called the service charge, governed by the RICS professional statement. Insurance rent is billed separately.',
+    EU: 'Service charge — charges communes (FR), Nebenkosten (DE). Recoverability is set by local statute.',
+  },
+}
+
 // Sub-process (nested under a process — same shape, no `type` field, no nested subs)
 {
   id: 'cm-lease-orig-suite',
@@ -131,6 +149,15 @@ The app is a **business process taxonomy**. MRI is the supporting tool, not the 
 | `mri_title` | What MRI calls this + the navigation path |
 | `mri_prereqs` | What must be configured in MRI *before* this process can work |
 | `mri_assoc` | Specific MRI screens + what each one does in the context of this process |
+| `marketScope` | Which markets the process exists in at all — omit unless it is genuinely market-bound |
+| `market` | How the process differs by market: local terminology, the governing standard or statute |
+
+### Never localise an MRI navigation path
+
+`mri_title` and `mri_assoc[].name` are the literal MRI menu labels.
+`CM > Recoveries > Service Charges` reads the same on a US install, so it stays as-is
+regardless of market. Market differences belong in the `market` notes *about* those
+screens — never in the paths themselves.
 
 **✓ Good activity:** `'Negotiate and agree lease terms with the tenant prior to commencement'`
 **✗ Bad activity:** `'Set management options for each property'` ← this is a click path

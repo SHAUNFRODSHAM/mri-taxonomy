@@ -1,5 +1,6 @@
 import { state } from '../state.js';
 import { clientNoteHTML } from './clientNote.js';
+import { marketNoteHTML } from './marketNote.js';
 
 // Phase-2 hook: main.js injects a function returning link-section HTML for a
 // system item id (cross-references to the business view). Null = no link UI.
@@ -32,6 +33,7 @@ export function showPanel(item, bc, isPro, scopeInfo) {
   const assoc   = item.mri_assoc   || [];
 
   const clientNote = clientNoteHTML(item);
+  const marketNote = marketNoteHTML(item);
   document.getElementById('panel-body').innerHTML = `
     <div class="panel-col">
       <div class="psec">
@@ -42,6 +44,7 @@ export function showPanel(item, bc, isPro, scopeInfo) {
         <div class="psec-label">Core Activities</div>
         <ul class="act-list">${(item.activities || []).map(a => `<li>${a}</li>`).join('')}</ul>
       </div>
+      ${marketNote}
       ${clientNote}
     </div>
     <div class="panel-col panel-col-right">

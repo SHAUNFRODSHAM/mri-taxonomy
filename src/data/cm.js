@@ -1266,6 +1266,7 @@ export const cm = [
           {
             id: 'cm-recov-service-emea',
             title: 'EMEA Service-Charge Packs',
+            marketScope: ['UK', 'EU'],
             desc: 'Country-specific service-charge regimes (UK, France, Germany, Italy) applied where local practice differs from the standard model.',
             activities: [
               'Enable the relevant country service-charge pack',
