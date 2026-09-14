@@ -778,4 +778,139 @@ export const gl = [
     ],
   },
 
+  /* ── 11. VAT & TAX COMPLIANCE ─────────────────────────────────────────────── */
+  {
+    id: 'gl-vat',
+    title: 'VAT & Tax Compliance',
+    processes: [
+      {
+        id: 'gl-vat-setup',
+        title: 'VAT / Tax Code Configuration',
+        type: 'process',
+        desc: 'Configuring the tax codes and rates that drive VAT calculation across the ledger. Each code defines whether a transaction is standard-rated, zero-rated, exempt, or outside scope, and at what rate. Getting this right at setup prevents miscoding and downstream return errors.',
+        activities: [
+          'Define tax codes for each VAT treatment (standard rate, reduced rate, zero rate, exempt, outside scope)',
+          'Set the applicable rate and effective date for each code',
+          'Agree with the client which codes are required for their transaction types (commercial rent, residential, mixed-use, option to tax)',
+          'Review and update codes when HMRC rates change (e.g. at Budget)',
+        ],
+        mri_title: 'Tax Codes (Setup and Maintenance > General Ledger > Tax Codes)',
+        mri_prereqs: [
+          'Chart of accounts established so tax control accounts can be assigned',
+          'VAT registration number and scheme (standard, cash, flat rate) confirmed with the client',
+          'Finance / tax advisor confirmation of applicable rates for each transaction type, including any option-to-tax elections',
+        ],
+        mri_assoc: [
+          { name: 'Setup and Maintenance > General Ledger > Tax Codes', desc: 'Create and maintain VAT/tax codes, rates and effective dates' },
+        ],
+        subs: [],
+      },
+
+      {
+        id: 'gl-vat-mapping',
+        title: 'GL Account to VAT Box Mapping',
+        type: 'process',
+        desc: 'Mapping GL accounts to the nine HMRC VAT return boxes so the system can automatically aggregate the correct figures for each box when the return is generated. This is the critical link between day-to-day posting and statutory reporting — an incorrect mapping means the return will be wrong without any visible error.',
+        activities: [
+          'Confirm the purpose of each of the nine VAT return boxes with the client\'s tax advisor',
+          'Map each GL control account (VAT output, VAT input, reverse charge output, reverse charge input, partial exemption) to the correct VAT box',
+          'Review partial-exemption treatment and ensure residual input tax is mapped correctly',
+          'Document the mapping for audit purposes and review annually or on chart-of-accounts change',
+        ],
+        mri_title: 'VAT Box Mapping (Setup and Maintenance > General Ledger > Tax Codes / VAT Returns)',
+        mri_prereqs: [
+          'Tax codes configured and assigned to transactions',
+          'Chart of accounts finalised with VAT control accounts in place',
+          'Client VAT registration details and partial-exemption method confirmed',
+        ],
+        mri_assoc: [
+          { name: 'Setup and Maintenance > General Ledger > Tax Codes', desc: 'Account-level tax code assignment driving VAT box population' },
+          { name: 'General Ledger > VAT Returns', desc: 'VAT return screen where box mapping is validated and the return is generated' },
+        ],
+        subs: [
+          {
+            id: 'gl-vat-mapping-boxes',
+            title: 'VAT Return Box Definitions',
+            desc: 'A reference for the nine standard HMRC VAT return boxes and what each one captures, to guide the mapping exercise.',
+            activities: [
+              'Box 1 — VAT due on sales and other outputs',
+              'Box 2 — VAT due on acquisitions from EC/EU member states',
+              'Box 3 — Total VAT due (Box 1 + Box 2)',
+              'Box 4 — VAT reclaimed on purchases and other inputs',
+              'Box 5 — Net VAT to pay or reclaim (difference between Box 3 and Box 4)',
+              'Box 6 — Total value of sales and all other outputs excluding VAT',
+              'Box 7 — Total value of purchases and all other inputs excluding VAT',
+              'Box 8 — Total value of EC/EU supplies of goods',
+              'Box 9 — Total value of EC/EU acquisitions of goods',
+            ],
+            mri_title: 'General Ledger > VAT Returns',
+            mri_assoc: [
+              { name: 'General Ledger > VAT Returns', desc: 'VAT return screen showing box totals populated from the account mapping' },
+            ],
+          },
+        ],
+      },
+
+      {
+        id: 'gl-vat-mtd',
+        title: 'Making Tax Digital (MTD) Compliance',
+        type: 'process',
+        desc: 'Meeting HMRC\'s Making Tax Digital for VAT requirements: keeping digital records, maintaining an unbroken digital link from source transaction to the VAT return, and submitting the return using MTD-compatible software. This is a legal requirement for all UK VAT-registered businesses, not an optional enhancement, so it must be addressed at every UK client\'s go-live rather than treated as a later phase.',
+        activities: [
+          'Confirm the client\'s MTD obligation start date and VAT registration status with their tax advisor',
+          'Establish that VAT records are held digitally within MRI from the point of transaction entry — no manual re-keying of VAT figures into a separate return',
+          'Maintain an unbroken digital link between the GL VAT data and the submitted return (API submission or an approved bridging tool with digital linking, never copy/paste or manual retyping)',
+          'Select and configure the MTD submission route: direct API submission if the MRI version supports it, or a recognised bridging product (e.g. spreadsheet-based bridging software) connecting to HMRC\'s MTD API',
+          'Register the client\'s VAT number for MTD with HMRC and authorise the chosen software to interact with their MTD account',
+          'Test the end-to-end submission in a non-live period before the first live filing',
+          'Retain digital records and submission confirmations for the statutory retention period',
+        ],
+        mri_title: 'MTD VAT Submission (General Ledger > VAT Returns > Submit to HMRC / MTD Bridging Export)',
+        mri_prereqs: [
+          'Tax codes and VAT box mapping fully configured and validated',
+          'GL account to VAT box mapping signed off',
+          'Client registered for MTD with HMRC and, if applicable, authorised the bridging software',
+          'Decision made and documented on submission route: native API vs bridging tool',
+        ],
+        mri_assoc: [
+          { name: 'General Ledger > VAT Returns', desc: 'Generates the digitally-linked return data ready for MTD submission' },
+          { name: 'General Ledger > VAT Returns > MTD Submission / Export', desc: 'Direct API submission to HMRC, or a structured export for an approved bridging tool, preserving the digital link' },
+        ],
+        subs: [
+          {
+            id: 'gl-vat-mtd-digitallinks',
+            title: 'Digital Link Requirements',
+            desc: 'What HMRC means by a "digital link" and why manual re-entry of VAT figures is non-compliant under MTD.',
+            activities: [
+              'Ensure data moves from GL to the return electronically (API, formula-linked spreadsheet, or automated export/import)',
+              'Avoid any step where a VAT figure is manually re-typed or copy/pasted between systems',
+              'Document the digital-link chain from source transaction through to HMRC submission for audit purposes',
+            ],
+            mri_title: 'General Ledger > VAT Returns',
+            mri_assoc: [
+              { name: 'General Ledger > VAT Returns', desc: 'Source of the digitally-linked VAT figures carried through to submission' },
+            ],
+          },
+          {
+            id: 'gl-vat-mtd-submission',
+            title: 'VAT Return Preparation & Submission',
+            desc: 'Running, reviewing and submitting the periodic VAT return once MTD compliance is established.',
+            activities: [
+              'Run the VAT return for the period and review each box total against expectations',
+              'Investigate and correct any miscoded transactions before finalising',
+              'Reconcile VAT control account balances to the return figures',
+              'Submit the return to HMRC via the MTD-compliant route and retain the submission receipt',
+              'Post the VAT payment or reclaim journal on completion',
+            ],
+            mri_title: 'General Ledger > VAT Returns',
+            mri_assoc: [
+              { name: 'General Ledger > VAT Returns', desc: 'Generate the VAT return by period, review box totals, and initiate MTD submission' },
+              { name: 'General Ledger > Journal Entry Management', desc: 'Post the VAT settlement journal (payment or reclaim) after submission' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+
 ];
