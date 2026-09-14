@@ -1,5 +1,5 @@
 import './styles/main.css';
-import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, snapshotAll, restoreSnapshot, currentData, triggerRender, registerRender, registerHistoryChange, isModuleVisible } from './state.js';
+import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, snapshotAll, restoreSnapshot, currentData, triggerRender, registerRender, registerHistoryChange, isModuleVisible, BUILTIN_VERSIONS } from './state.js';
 import { render, effectiveScope } from './components/grid.js';
 import { showPanel, closePanel, setSystemLinkRenderer } from './components/panel.js';
 import { openEditModal, closeEditModal, saveEditModal } from './components/editModal.js';
@@ -342,9 +342,6 @@ function toggleEdit() {
   else if (state.viewMode === 'mapping') renderMapping();
   else render(gridCallbacks);
 }
-
-/** Built-in read-only baselines that cannot be overwritten. */
-const BUILTIN_VERSIONS = new Set(['original', 'discovery']);
 
 /** Show Save Changes only when in edit mode on a saved (non-built-in) version. */
 function updateSaveChangesBtn() {

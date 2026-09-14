@@ -1,4 +1,4 @@
-import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible } from '../state.js';
+import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible, BUILTIN_VERSIONS } from '../state.js';
 import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS } from '../data/business/index.js';
 import { effectiveScope } from './grid.js';
 import { linkedSystemIds, systemLinksFor, COVERAGE } from '../data/links.js';
@@ -6,11 +6,20 @@ import { generateDocx, generateBusinessDocx } from './docxExport.js';
 import { houseStyleCSS } from './obDocStyle.js';
 import { matchesCoverage, matchesVerticals } from './businessView.js';
 
-/* Cover-page identity. The app has no document-level client/project field yet
-   (only per-item clientNote), so these are the shared defaults used by the
-   preview, the PDF and the .docx alike — change them in one place. */
-const CLIENT_NAME  = 'Client Name';
-const PROJECT_NAME = 'MRI ERP Implementation';
+/* Cover-page identity, shared by the preview, the PDF and the .docx — change it
+   in one place.
+
+   The client name IS the version title: a saved version is the client-specific
+   copy of the taxonomy, so the name the consultant typed on Save As is the
+   engagement it belongs to. The two built-in baselines are app labels rather
+   than client names, so those fall back to the placeholder. */
+const CLIENT_PLACEHOLDER = 'Client Name';
+const PROJECT_NAME       = 'MRI ERP Implementation';
+
+function coverClientName() {
+  if (BUILTIN_VERSIONS.has(state.activeVersionId)) return CLIENT_PLACEHOLDER;
+  return state.activeVersionName || CLIENT_PLACEHOLDER;
+}
 
 /* The preview pane is styled from the same SPEC as the .docx. Injected once,
    scoped to #doc-out, so it overrides the generic app styling in main.css. */
@@ -110,10 +119,13 @@ function obTableHTML(headers, rows) {
   return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
-/** The branded cover block, matching the .docx cover page. */
-function obCoverHTML({ docTitle, versionName, dateStr, clientName, projectName }) {
+/** The branded cover block, matching the .docx cover page.
+ *  Title / date / client / project, exactly as the Open Box template lays it
+ *  out. The version name is not repeated here — it now prints as the client
+ *  name, and the Scope/Coverage Summary names it in full. */
+function obCoverHTML({ docTitle, dateStr, clientName, projectName }) {
   return `<p class="ob-title">${e(docTitle)}</p>
-    <p class="ob-date">${e(versionName)} &nbsp;|&nbsp; ${e(dateStr)}</p>
+    <p class="ob-date">${e(dateStr)}</p>
     <p class="ob-client">${e(clientName)}</p>
     <p class="ob-project">${e(projectName)}</p>`;
 }
@@ -173,8 +185,8 @@ export function buildDoc() {
   const caption     = makeCaptioner();
 
   let html = obCoverHTML({
-    docTitle: 'Process Summary', versionName, dateStr,
-    clientName: CLIENT_NAME, projectName: PROJECT_NAME,
+    docTitle: 'Process Summary', dateStr,
+    clientName: coverClientName(), projectName: PROJECT_NAME,
   });
   html += buildScopeSummary(tabs, includes, caption, scopeStr, versionName, dateStr);
 
@@ -289,8 +301,8 @@ function buildBusinessPreview() {
   totalRow.isTotal = true;
 
   let html = obCoverHTML({
-    docTitle: 'Business Process Taxonomy', versionName, dateStr,
-    clientName: CLIENT_NAME, projectName: PROJECT_NAME,
+    docTitle: 'Business Process Taxonomy', dateStr,
+    clientName: coverClientName(), projectName: PROJECT_NAME,
   });
 
   html += `<h1>Coverage Summary</h1>
@@ -360,6 +372,7 @@ export async function downloadWord() {
       inclOverview, inclActivities, inclPrereqs, inclAssoc,
       includes, linkedSet, scopeStr, versionName, dateStr,
       effectiveScopeFn: effectiveScope,
+      clientName: coverClientName(), projectName: PROJECT_NAME,
     });
     const url = URL.createObjectURL(blob);
     const a   = document.createElement('a');
@@ -404,6 +417,7 @@ async function downloadBusinessWord() {
       linksFor:      systemLinksFor,
       coverageLabel: k => COVERAGE[k]?.label || k,
       docTitle: 'Business Process Taxonomy',
+      clientName: coverClientName(), projectName: PROJECT_NAME,
     });
     const url = URL.createObjectURL(blob);
     const a   = document.createElement('a');
