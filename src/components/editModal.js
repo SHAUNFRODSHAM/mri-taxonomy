@@ -16,12 +16,12 @@ export function openEditModal(id) {
     <label>Display Name</label>
     <input type="text" id="em-name" value="${esc(item.title)}" />
     <label>Overview Description</label>
-    <textarea id="em-desc">${item.desc || ''}</textarea>
+    <textarea id="em-desc">${esc(item.desc || '')}</textarea>
     <label>Core Activities</label>
-    <textarea id="em-activities">${(item.activities || []).join('\n')}</textarea>
+    <textarea id="em-activities">${esc((item.activities || []).join('\n'))}</textarea>
     <p class="field-hint">One activity per line.</p>
     <label>Client Note</label>
-    <textarea id="em-client-note" placeholder="Client-specific note — saved with this version">${(item.clientNote || '')}</textarea>
+    <textarea id="em-client-note" placeholder="Client-specific note — saved with this version">${esc(item.clientNote || '')}</textarea>
     <div class="modal-sec-head">MRI Sub-Process Title</div>
     <label>MRI Module Reference Title</label>
     <input type="text" id="em-mri-title" value="${esc(item.mri_title || '')}" placeholder="e.g. Unit Maintenance — MRI Property Manager" />
