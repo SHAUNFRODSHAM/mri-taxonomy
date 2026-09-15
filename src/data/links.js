@@ -109,6 +109,17 @@ const GROUP_LINKS = {
   // vs-pfo-g4 (ESG) and vs-h2r (HR) have no MRI PMX counterpart — gaps.
 };
 
+/**
+ * Card-level links: business L3 card id → MRI PMX system process ids.
+ * Additive to GROUP_LINKS, for the rare card whose system counterpart is
+ * more specific than the rest of its group shares (so the whole group
+ * doesn't get over-linked to a screen only one card actually uses).
+ */
+const CARD_LINKS = {
+  // Record to Report › Financial, Regulatory & Investor Reporting
+  'vs-r2r-g4-p6': ['gl-vat-setup', 'gl-vat-mapping', 'gl-vat-mtd'], // VAT / MTD compliance
+};
+
 /** Find a business column (L2 group) by id across all value streams. */
 function businessGroup(groupId) {
   for (const mod of BUSINESS_MODULES) {
@@ -118,13 +129,16 @@ function businessGroup(groupId) {
   return null;
 }
 
-/** Expand GROUP_LINKS to per-L3 business↔system pairs. */
+/** Expand GROUP_LINKS to per-L3 business↔system pairs, then layer on CARD_LINKS. */
 function buildSeedLinks() {
   const out = [];
   Object.entries(GROUP_LINKS).forEach(([groupId, sysIds]) => {
     const col = businessGroup(groupId);
     if (!col) return;
     col.processes.forEach(card => sysIds.forEach(s => out.push({ b: card.id, s })));
+  });
+  Object.entries(CARD_LINKS).forEach(([cardId, sysIds]) => {
+    sysIds.forEach(s => out.push({ b: cardId, s }));
   });
   return out;
 }
