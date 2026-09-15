@@ -1881,3 +1881,88 @@ body {
   font-family: var(--font); font-size: 0.74rem; font-weight: 700; cursor: pointer;
 }
 .lke-add:hover { background: #e6f0d0; }
+
+/* ── GUIDED DISCOVERY WIZARD (DevOps #3282) ──────────────────────────────────── */
+.wiz-overlay {
+  position: fixed; right: 20px; bottom: 20px; z-index: 400;
+  pointer-events: none;
+}
+.wiz-card {
+  width: 360px; background: var(--surface); border-radius: var(--radius-lg);
+  box-shadow: var(--elev3); border: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+  transform: translateY(16px) scale(0.98); opacity: 0; pointer-events: none;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.wiz-overlay.open .wiz-card {
+  transform: translateY(0) scale(1); opacity: 1; pointer-events: auto;
+}
+
+.wiz-hdr {
+  background: #373C3C; padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 3px solid var(--green);
+}
+.wiz-hdr-title { color: #fff; font-size: 0.8rem; font-weight: 700; font-family: var(--font); }
+.wiz-close {
+  background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.75);
+  width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 0.7rem;
+  transition: all var(--dur);
+}
+.wiz-close:hover { background: var(--red); color: #fff; }
+
+.wiz-steps {
+  display: flex; align-items: flex-start; padding: 14px 16px 4px; gap: 0;
+}
+.wiz-dot {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1;
+  min-width: 0;
+}
+.wiz-dot-num {
+  width: 20px; height: 20px; border-radius: 50%; background: var(--surface3);
+  color: var(--ink3); font-size: 0.62rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  border: 1px solid var(--border2);
+}
+.wiz-dot.active .wiz-dot-num { background: var(--green); color: #373C3C; border-color: var(--green); }
+.wiz-dot.done   .wiz-dot-num { background: var(--blue);  color: #fff;    border-color: var(--blue); }
+.wiz-dot-label {
+  font-size: 0.56rem; color: var(--ink3); text-align: center; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.wiz-dot.active .wiz-dot-label { color: var(--ink); font-weight: 700; }
+.wiz-dot-line { flex-shrink: 1; width: 100%; height: 1px; background: var(--border2); margin-top: 10px; }
+
+.wiz-body { padding: 12px 16px 4px; }
+.wiz-step-title {
+  font-size: 0.78rem; font-weight: 700; color: var(--ink); font-family: var(--font);
+  margin-bottom: 6px;
+}
+.wiz-step-desc {
+  font-size: 0.72rem; color: var(--ink2); line-height: 1.5; margin: 0 0 12px;
+}
+.wiz-actions { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+
+.wiz-ftr {
+  display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border);
+}
+.wiz-btn-sm { font-size: 0.68rem; padding: 7px 10px; flex: 1; justify-content: center; }
+.wiz-ftr #wiz-back:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Entry / resume banner — sits above the wizard card's fixed position */
+.wiz-banner {
+  position: fixed; right: 20px; bottom: 20px; z-index: 399;
+  max-width: 380px; background: var(--ink); color: #fff;
+  border-radius: var(--radius-lg); box-shadow: var(--elev3);
+  padding: 12px 14px; display: none;
+  align-items: center; gap: 10px; flex-wrap: wrap;
+  border-left: 4px solid var(--green);
+}
+.wiz-banner.open { display: flex; }
+.wiz-banner-text { font-size: 0.72rem; line-height: 1.4; flex: 1; min-width: 200px; }
+.wiz-banner-x {
+  background: transparent; border: none; color: rgba(255,255,255,0.6);
+  cursor: pointer; font-size: 0.8rem; flex-shrink: 0;
+}
+.wiz-banner-x:hover { color: #fff; }

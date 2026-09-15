@@ -13,6 +13,7 @@ import { makeMultiSelect } from './components/multiSelect.js';
 import { systemLinksFor, businessLinksFor, systemItemModule, initLinks, seedLinks, pruneDanglingLinks } from './data/links.js';
 import { findBusinessItem, BUSINESS_DATA, BUSINESS_ORIGINAL, BUSINESS_CONFIG, BUSINESS_MODULES } from './data/business/index.js';
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData, duplicateVersion } from './versions.js';
+import { initDiscoveryWizard, openWizard, closeWizard, maybeShowEntryBanner } from './components/discoveryWizard.js';
 
 // ── CALLBACKS passed to grid renderer ─────────────────────────────────────────
 
@@ -233,7 +234,7 @@ function syncTabBar() {
     const btn = document.createElement('button');
     btn.className   = 'tab-btn';
     btn.dataset.tab = tabId;
-    btn.innerHTML   = `<span class="tab-icon">${cfg.icon || '📋'}</span>${cfg.label}`;
+    btn.innerHTML   = `<span class="tab-icon">${esc(cfg.icon || '📋')}</span>${esc(cfg.label)}`;
     btn.addEventListener('click', () => {
       document.dispatchEvent(new CustomEvent('mri:switchTab', { detail: tabId }));
     });
@@ -296,8 +297,8 @@ function buildModuleVisMenu() {
     html += `<label class="mod-vis-row${visible ? '' : ' off'}">
       <input type="checkbox" data-mod="${tab}" ${visible ? 'checked' : ''} ${lastVisible ? 'disabled' : ''}
         ${lastVisible ? 'title="At least one module must stay visible"' : ''}>
-      <span class="mod-vis-icon">${cfg.icon || '📋'}</span>
-      <span class="mod-vis-name">${cfg.label || tab}</span>
+      <span class="mod-vis-icon">${esc(cfg.icon || '📋')}</span>
+      <span class="mod-vis-name">${esc(cfg.label || tab)}</span>
     </label>`;
   });
   html += '<div class="mod-vis-hint">Use Save Changes (or Save As) to commit this selection to the version.</div>';
@@ -579,6 +580,7 @@ function confirmSaveAs() {
 
   closeSaveAsModal();
   updateVersionBadge();
+  document.dispatchEvent(new CustomEvent('mri:versionSaved', { detail: { id, name } }));
 
   // Brief visual confirmation
   const badge = document.getElementById('ver-badge-name');
@@ -674,6 +676,7 @@ function loadVersion(id) {
   updateUndoBtn();
   updateVersionBadge();
   updateSaveChangesBtn();
+  maybeShowEntryBanner();
 }
 
 // ── DELETE VERSION ────────────────────────────────────────────────────────────
@@ -732,6 +735,7 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#mod-vis-wrap')) closeModuleVisMenu();
 });
 document.getElementById('gen-btn').addEventListener('click', openGenModal);
+document.getElementById('wiz-open-btn').addEventListener('click', openWizard);
 document.getElementById('reset-btn').addEventListener('click', openResetModal);
 document.getElementById('save-changes-btn').addEventListener('click', saveChangesToVersion);
 
@@ -892,6 +896,31 @@ document.addEventListener('keydown', e => {
   }
 });
 
+// ── GUIDED DISCOVERY WIZARD (DevOps #3282) ─────────────────────────────────────
+
+initDiscoveryWizard({
+  getVersionId:      () => state.activeVersionId,
+  isBaselineVersion: id => id === 'original' || id === 'discovery',
+  startNewVersion:   openSaveAsModal,
+  openValueStreams:  () => { switchView('business'); closeWizardChrome(); },
+  openSystemView:    () => { switchView('system'); closeWizardChrome(); },
+  openModuleSelector: () => {
+    switchView('system');
+    if (!state.editMode) toggleEdit();
+    // Deferred: the document-level "click outside closes the menu" listener
+    // (main.js) sees this same click bubble past #mod-vis-wrap and would
+    // close the menu on the same tick it opens — open it on the next one.
+    setTimeout(openModuleVisMenu, 0);
+    closeWizardChrome();
+  },
+  openMapping: () => { switchView('mapping'); closeWizardChrome(); },
+  openExport:  () => { openGenModal(); closeWizardChrome(); },
+});
+
+/** Collapse the wizard card itself when its action jumps the user into the
+ *  real UI, without losing wizard progress — reopen via the topbar button. */
+function closeWizardChrome() { closeWizard(); }
+
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 initLinks();
 // Default landing = Discovery Baseline (the new-client consulting start point):
@@ -905,3 +934,4 @@ updateVersionBadge();
 applyModuleVisibility();
 // Boot into the default view (Business Process first, per the methodology)
 switchView(state.viewMode);
+maybeShowEntryBanner();
