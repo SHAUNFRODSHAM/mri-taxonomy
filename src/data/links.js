@@ -118,6 +118,12 @@ const GROUP_LINKS = {
 const CARD_LINKS = {
   // Record to Report › Financial, Regulatory & Investor Reporting
   'vs-r2r-g4-p6': ['gl-vat-setup', 'gl-vat-mapping', 'gl-vat-mtd'], // VAT / MTD compliance
+
+  // Lease to Cash › Rent Billing & Recurring Charges (retail)
+  'vs-l2c-g3-p3': ['cm-retail-percentage', 'cm-retail-percentage-calc'], // Percentage rent (retail)
+  'vs-l2c-g3-p4': ['cm-retail-departments'],                            // Retail sales departments
+  'vs-l2c-g3-p5': ['cm-retail-sales'],                                  // Retail sales capture & estimation
+  'vs-l2c-g3-p6': ['cm-retail-categories', 'cm-retail-reporting'],      // Retail category hierarchy & reporting
 };
 
 /** Find a business column (L2 group) by id across all value streams. */
