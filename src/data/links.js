@@ -80,6 +80,113 @@ export function proposedTooltip(item) {
     : `${PROPOSED.label}\n\n${PROPOSED.desc}`;
 }
 
+/* ── Derived proposals (one hop across the links) ─────────────────────────────
+   Flagging a value-stream card as Proposed implies the MRI PMX processes that
+   would deliver it, and flagging a system process implies the value-stream
+   cards it would serve. Rather than writing `proposed` onto the other side, the
+   other side is DERIVED — for two reasons:
+
+   1. Storing it would cascade. Propagation is bidirectional, so a stored flag
+      would run business → system → every OTHER business card on that system
+      item → their system items, and so on. System items carry 5.9 business
+      links on average (max 16), so one click on the VAT card would transitively
+      propose 35 business cards and 27 system items. Derivation reads only the
+      DIRECT `proposed` flag, so it stops dead after one hop.
+   2. A derived marker self-corrects when links change; a copied flag goes
+      stale and has to be cleaned up by hand.
+
+   Direct proposals carry the rationale and appear in the Proposals document;
+   derived ones are shown hollow and nest under their origin. This mirrors how
+   effectiveScope already derives auto out-of-scope from the same link set. */
+
+let _derivedCache = null;
+
+/** Rebuild the derived-proposal index. Renderers call this once per render. */
+export function refreshDerivedProposals() {
+  const bizItems = new Map();
+  Object.entries(BUSINESS_DATA).forEach(([mod, cols]) => {
+    const modLabel = (BUSINESS_CONFIG[mod] || {}).label || mod;
+    cols.forEach(col => col.processes.forEach(p => {
+      bizItems.set(p.id, { item: p, breadcrumb: col.title, moduleLabel: modLabel });
+      (p.subs || []).forEach(s => bizItems.set(s.id,
+        { item: s, breadcrumb: `${col.title} › ${p.title}`, moduleLabel: modLabel }));
+    }));
+  });
+
+  const sysItems = new Map();
+  Object.entries(ALL_DATA).forEach(([mod, cols]) => {
+    const modLabel = (MODULE_CONFIG[mod] || {}).label || mod;
+    cols.forEach(col => col.processes.forEach(p => {
+      sysItems.set(p.id, { item: p, breadcrumb: col.title, moduleLabel: modLabel });
+      (p.subs || []).forEach(s => sysItems.set(s.id,
+        { item: s, breadcrumb: `${col.title} › ${p.title}`, moduleLabel: modLabel }));
+    }));
+  });
+
+  const system = new Map();    // system id  → origins on the business side
+  const business = new Map();  // business id → origins on the system side
+  const add = (map, key, val) => {
+    const arr = map.get(key);
+    if (arr) { if (!arr.some(o => o.id === val.id)) arr.push(val); }
+    else map.set(key, [val]);
+  };
+
+  // Derivation follows every link, proposed or agreed: a proposed link is
+  // itself part of the recommendation, so it should carry the marker across.
+  getLinks().forEach(l => {
+    const b = bizItems.get(l.b);
+    const s = sysItems.get(l.s);
+    if (!b || !s) return;
+    // Only the DIRECT flag is read — this is what keeps derivation to one hop.
+    if (b.item.proposed) add(system, l.s,
+      { id: l.b, title: b.item.title, breadcrumb: b.breadcrumb, moduleLabel: b.moduleLabel, note: b.item.proposed_note || '' });
+    if (s.item.proposed) add(business, l.b,
+      { id: l.s, title: s.item.title, breadcrumb: s.breadcrumb, moduleLabel: s.moduleLabel, note: s.item.proposed_note || '' });
+  });
+
+  _derivedCache = { system, business };
+  return _derivedCache;
+}
+
+function derivedProposals() {
+  return _derivedCache || refreshDerivedProposals();
+}
+
+/** Origins that make `id` a derived proposal, or null.
+ *  `side` is the side `id` lives on: 'system' or 'business'. */
+export function proposedVia(id, side) {
+  const d = derivedProposals();
+  const arr = (side === 'system' ? d.system : d.business).get(id);
+  return arr && arr.length ? arr : null;
+}
+
+/** True when an item is proposed either directly or by derivation. */
+export function isProposedOrDerived(item, side) {
+  return isProposed(item) || !!proposedVia(item.id, side);
+}
+
+/** Tooltip for a derived (hollow) proposal marker, naming the origin(s). */
+export function derivedTooltip(origins, side) {
+  const other = side === 'system' ? 'value-stream process' : 'MRI PMX process';
+  const lines = origins.map(o => `• ${o.moduleLabel} › ${o.title}`).join('\n');
+  return `Linked to a proposed ${other}${origins.length > 1 ? 'es' : ''} — implied by:\n${lines}\n\n`
+       + 'Open Box proposed the linked item; this one is shown as part of that proposal. '
+       + 'Flag it directly if you want to make a separate case for it.';
+}
+
+/** The linked counterparts of a directly-proposed item, for document nesting. */
+export function proposalCounterparts(id, side) {
+  // side = the side `id` lives on; we want what it links TO on the other side.
+  const d = derivedProposals();
+  const out = [];
+  const bizItems = side === 'business';
+  getLinks().forEach(l => {
+    if (bizItems && l.b === id) out.push({ otherId: l.s, proposedLink: !!l.proposed });
+    if (!bizItems && l.s === id) out.push({ otherId: l.b, proposedLink: !!l.proposed });
+  });
+  return out;
+}
+
 /** Every proposed item across both views, for the Value-Add Proposals report.
  *  Returns [{ side, moduleKey, moduleLabel, breadcrumb, item, currentTag }]. */
 export function collectProposals() {
@@ -115,6 +222,18 @@ export function collectProposals() {
         }
       });
     }));
+  });
+
+  // Attach the linked counterparts on the other side so the document can nest
+  // them under each proposal ("this is what it touches in PMX") instead of
+  // giving derived items their own duplicate entries.
+  out.forEach(p => {
+    p.counterparts = proposalCounterparts(p.item.id, p.side)
+      .map(c => {
+        const r = p.side === 'business' ? resolveSystem(c.otherId) : resolveBusiness(c.otherId);
+        return r ? { title: r.title, moduleLabel: r.moduleLabel, breadcrumb: r.breadcrumb, proposedLink: c.proposedLink } : null;
+      })
+      .filter(Boolean);
   });
 
   return out;

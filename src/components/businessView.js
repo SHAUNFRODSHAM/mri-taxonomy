@@ -15,6 +15,7 @@ import { clientNoteHTML } from './clientNote.js';
 import {
   COVERAGE, COVERAGE_ORDER, businessHasLink, coverageTooltip,
   PROPOSED, isProposed, proposedTooltip, businessHasProposedLink,
+  refreshDerivedProposals, proposedVia, derivedTooltip,
 } from '../data/links.js';
 import {
   BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, findBusinessItem,
@@ -28,7 +29,8 @@ const COVERAGE_KEYS = ['full', 'partial', 'outside'];
 export function matchesCoverage(item) {
   // Proposed Scope is an orthogonal axis, so it narrows the coverage selection
   // rather than being one of its values.
-  if (state.proposedOnly && !isProposed(item)) return false;
+  // Shows the whole proposal footprint — direct and link-derived.
+  if (state.proposedOnly && !isProposed(item) && !proposedVia(item.id, 'business')) return false;
   const sel = state.coverageFilters;
   if (!sel || !sel.length) return true;
   return sel.includes(item.coverage || 'untagged');
@@ -220,6 +222,7 @@ function renderBusinessGrid() {
   grid.className = 'grid' + (state.editMode ? ' edit-active' : '');
   grid.innerHTML = '';
 
+  refreshDerivedProposals();   // one-hop proposal derivation, per render
   const edit = state.editMode;
 
   data.forEach(col => {
@@ -379,7 +382,9 @@ function toggleBizExpand(id) {
 function makeBizCard(item, baseClass, isProcess, colId, procId, subToggle) {
   const el = document.createElement('div');
   el.className = baseClass;
-  if (isProposed(item)) el.classList.add('is-proposed');
+  const derivedFrom = isProposed(item) ? null : proposedVia(item.id, 'business');
+  if (isProposed(item))  el.classList.add('is-proposed');
+  else if (derivedFrom)  el.classList.add('is-proposed-derived');
   el.dataset.id = item.id;
 
   const title = document.createElement('span');
@@ -452,6 +457,13 @@ function makeBizCard(item, baseClass, isProcess, colId, procId, subToggle) {
         pb.addEventListener('click', e => { e.stopPropagation(); toggleProposed(item); });
       }
       el.appendChild(pb);
+    } else if (derivedFrom) {
+      // Implied by a proposed MRI PMX process linked to this card.
+      const pb = document.createElement('span');
+      pb.className = 'prop-badge prop-badge-derived';
+      pb.textContent = `○ ${PROPOSED.short.toUpperCase()} (linked)`;
+      pb.title = derivedTooltip(derivedFrom, 'business');
+      el.appendChild(pb);
     } else if (state.editMode) {
       const pb = document.createElement('span');
       pb.className = 'prop-badge prop-badge-add prop-editable';
@@ -512,7 +524,9 @@ export function showBusinessPanel(id) {
     `<span class="badge ${isProcess ? 'badge-process' : 'badge-sub'}">${isProcess ? 'Process' : 'Sub-Process'}</span>
      <span class="badge badge-business">Business</span>${covBadge}`
      + (isProposed(item)
-         ? `<span class="badge badge-proposed" title="${PROPOSED.desc}">${PROPOSED.mark} ${PROPOSED.short}</span>` : '')
+         ? `<span class="badge badge-proposed" title="${PROPOSED.desc}">${PROPOSED.mark} ${PROPOSED.short}</span>`
+         : (proposedVia(item.id, 'business')
+             ? `<span class="badge badge-proposed-derived" title="${esc(derivedTooltip(proposedVia(item.id, 'business'), 'business'))}">○ ${PROPOSED.short} (linked)</span>` : ''))
      + (item.needsEnrichment ? '<span class="badge badge-enrich">Needs enrichment</span>' : '')
      + (coverageNeedsLink(item) ? '<span class="badge badge-enrich" title="Tagged Full/Partial but not linked to a system process">⚠ link needed</span>' : '');
 
@@ -535,6 +549,21 @@ export function showBusinessPanel(id) {
         ? COVERAGE[item.coverage].label
         : 'untagged'}. This is an Open Box recommendation, not agreed scope.</p>
     </div>`;
+  } else {
+    // Derived: implied by a proposed MRI PMX process on the other side of a link.
+    const via = proposedVia(item.id, 'business');
+    if (via) {
+      html += `
+    <div class="psec psec-proposed psec-proposed-derived">
+      <div class="psec-label">○ Proposed Scope (linked)</div>
+      <p class="psec-text">This process is not itself proposed, but it is linked to
+        ${via.length > 1 ? 'MRI PMX processes that are' : 'an MRI PMX process that is'}:</p>
+      <ul class="act-list">${via.map(o =>
+        `<li>${esc(o.moduleLabel)} › ${esc(o.title)}${o.note ? ` — ${esc(o.note)}` : ''}</li>`).join('')}</ul>
+      <p class="psec-note">Shown as part of that proposal. Flag this process directly if it
+        warrants a separate case.</p>
+    </div>`;
+    }
   }
 
   if (item.activities && item.activities.length) {

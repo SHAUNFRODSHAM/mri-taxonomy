@@ -2077,3 +2077,31 @@ body {
   cursor: pointer; font-size: 0.8rem; flex-shrink: 0;
 }
 .wiz-banner-x:hover { color: #fff; }
+
+/* ── Derived (link-implied) proposals ─────────────────────────────────────────
+   Hollow counterpart to the solid ✦ PROPOSED badge. An item is shown this way
+   when it is LINKED to a directly-proposed item on the other side. Derivation
+   is one hop only — a derived marker never implies further items — so flagging
+   one card cannot cascade across the link graph.                            */
+
+.is-proposed-derived {
+  border-left: 3px dotted var(--prop) !important;
+}
+.prop-badge.prop-badge-derived {
+  color: var(--prop); background: transparent;
+  border: 1px dotted var(--prop); font-weight: 600;
+  cursor: help;
+}
+.scope-count-chip.scope-count-prop-derived {
+  color: var(--prop); background: transparent;
+  border: 1px dotted var(--prop);
+}
+.badge.badge-proposed-derived {
+  color: var(--prop); background: #fff;
+  border: 1px dotted var(--prop);
+}
+.psec.psec-proposed-derived {
+  border-left-style: dotted;
+  background: #f7fbf8;
+}
+.psec.psec-proposed-derived .psec-label { color: var(--prop); font-weight: 600; }

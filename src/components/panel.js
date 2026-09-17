@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { clientNoteHTML } from './clientNote.js';
-import { PROPOSED, isProposed } from '../data/links.js';
+import { PROPOSED, isProposed, proposedVia, derivedTooltip } from '../data/links.js';
 
 const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -26,9 +26,12 @@ export function showPanel(item, bc, isPro, scopeInfo) {
          title="${eff.auto ? 'Auto — not yet linked to a value stream; review & link, or tag manually.' : ''}">${scopeLabel[eff.scope] || eff.scope}${eff.auto ? ' · auto' : ''}</span>`
     : `<span class="badge badge-scope-untagged">Untagged</span>`;
 
+  const derivedVia = isProposed(item) ? null : proposedVia(item.id, 'system');
   const propBadge = isProposed(item)
     ? `<span class="badge badge-proposed" title="${PROPOSED.desc}">${PROPOSED.mark} ${PROPOSED.short}</span>`
-    : '';
+    : (derivedVia
+        ? `<span class="badge badge-proposed-derived" title="${esc(derivedTooltip(derivedVia, 'system'))}">○ ${PROPOSED.short} (linked)</span>`
+        : '');
 
   document.getElementById('panel-badges').innerHTML = `
     <span class="badge ${isPro ? 'badge-process' : 'badge-sub'}">${isPro ? 'Process' : 'Sub-Process'}</span>
@@ -45,7 +48,17 @@ export function showPanel(item, bc, isPro, scopeInfo) {
           : '<em>No rationale captured yet. Add the value add identified in discovery via Edit Mode.</em>'}</p>
         <p class="psec-note">Current state: ${scopeLabel[eff.scope] || 'Untagged'}. This is an Open Box
           recommendation, not agreed scope.</p>
-      </div>` : '';
+      </div>`
+    : (derivedVia ? `
+      <div class="psec psec-proposed psec-proposed-derived">
+        <div class="psec-label">○ Proposed Scope (linked)</div>
+        <p class="psec-text">This process is not itself proposed, but it is linked to
+          ${derivedVia.length > 1 ? 'value-stream processes that are' : 'a value-stream process that is'}:</p>
+        <ul class="act-list">${derivedVia.map(o =>
+          `<li>${esc(o.moduleLabel)} › ${esc(o.title)}${o.note ? ` — ${esc(o.note)}` : ''}</li>`).join('')}</ul>
+        <p class="psec-note">Shown as part of that proposal. Flag this process directly if it
+          warrants a separate case.</p>
+      </div>` : '');
 
   const prereqs = item.mri_prereqs || [];
   const assoc   = item.mri_assoc   || [];

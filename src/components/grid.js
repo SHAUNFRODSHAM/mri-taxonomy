@@ -1,5 +1,8 @@
 import { state, currentData, MODULE_CONFIG, triggerRender } from '../state.js';
-import { linkedSystemIds, PROPOSED, isProposed, proposedTooltip } from '../data/links.js';
+import {
+  linkedSystemIds, PROPOSED, isProposed, proposedTooltip,
+  refreshDerivedProposals, proposedVia, derivedTooltip,
+} from '../data/links.js';
 
 /** Toggle a process's expanded (sub-processes revealed) state. */
 function toggleExpand(id) {
@@ -43,7 +46,9 @@ export function effectiveScope(item, parentProcess, linkedSet) {
  *  The two are separate axes: Proposed Scope is orthogonal to core/custom/OOS,
  *  so it narrows the selection rather than replacing it. */
 function matchesScope(item, parentProcess, linkedSet, filters) {
-  if (state.proposedOnly && !isProposed(item)) return false;
+  // The filter shows the whole proposal footprint — direct and derived — so you
+  // can see everything a recommendation touches, not just where it was flagged.
+  if (state.proposedOnly && !isProposed(item) && !proposedVia(item.id, 'system')) return false;
   return filters.includes(effectiveScope(item, parentProcess, linkedSet).scope || 'untagged');
 }
 
@@ -75,6 +80,7 @@ export function render(callbacks) {
   const filters = Array.isArray(state.scopeFilters) ? state.scopeFilters : ALL_SCOPE_KEYS;
   const showingAll = ALL_SCOPE_KEYS.every(k => filters.includes(k)) && !state.proposedOnly;
   const linkedSet = linkedSystemIds();   // system ids linked to a value stream
+  refreshDerivedProposals();             // one-hop proposal derivation, per render
   let renderedCols = 0;
 
   currentData().forEach(col => {
@@ -253,7 +259,9 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
   el.className = baseClass;
   if (scope === 'out-of-scope') el.classList.add('scope-oos');
   if (auto) el.classList.add('scope-oos-auto');
-  if (isProposed(item)) el.classList.add('is-proposed');
+  const derivedFrom = isProposed(item) ? null : proposedVia(item.id, 'system');
+  if (isProposed(item))    el.classList.add('is-proposed');
+  else if (derivedFrom)    el.classList.add('is-proposed-derived');
   el.dataset.id = item.id;
 
   // Title
@@ -310,6 +318,14 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
       pb.addEventListener('click', e => { e.stopPropagation(); onProposeToggle(item); });
     }
     el.appendChild(pb);
+  } else if (derivedFrom) {
+    // Implied by a proposed value-stream process on the other side of a link.
+    // Hollow, and not click-to-clear: there is nothing stored here to clear.
+    const pb = document.createElement('span');
+    pb.className = 'prop-badge prop-badge-derived';
+    pb.textContent = `○ ${PROPOSED.short.toUpperCase()} (linked)`;
+    pb.title = derivedTooltip(derivedFrom, 'system');
+    el.appendChild(pb);
   } else if (state.editMode) {
     const pb = document.createElement('span');
     pb.className = 'prop-badge prop-badge-add prop-editable';
@@ -338,17 +354,21 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
 
 function updateFilterBar() {
   // Compute counts from effective scope (incl. auto Out-of-Scope)
-  const counts = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0, auto: 0, proposed: 0 };
+  const counts = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0, auto: 0, proposed: 0, derived: 0 };
   const linkedSet = linkedSystemIds();
   const expandableIds = [];
+  const tallyProp = it => {
+    if (isProposed(it)) counts.proposed++;
+    else if (proposedVia(it.id, 'system')) counts.derived++;
+  };
   (currentData() || []).forEach(col => {
     col.processes.forEach(proc => {
       if ((proc.subs || []).length) expandableIds.push(proc.id);
       tallyEff(effectiveScope(proc, null, linkedSet), counts);
-      if (isProposed(proc)) counts.proposed++;
+      tallyProp(proc);
       (proc.subs || []).forEach(sub => {
         tallyEff(effectiveScope(sub, proc, linkedSet), counts);
-        if (isProposed(sub)) counts.proposed++;
+        tallyProp(sub);
       });
     });
   });
@@ -374,6 +394,7 @@ function updateFilterBar() {
     counts['out-of-scope'] ? `<span class="scope-count-chip scope-count-oos">${oosLabel}</span>` : '',
     counts.untagged     ? `<span class="scope-count-chip scope-count-untag">Untagged ${counts.untagged}</span>` : '',
     counts.proposed     ? `<span class="scope-count-chip scope-count-prop" title="${PROPOSED.label}">${PROPOSED.mark} PROPOSED ${counts.proposed}</span>` : '',
+    counts.derived      ? `<span class="scope-count-chip scope-count-prop-derived" title="Implied by a proposed value-stream process linked to these items.">○ LINKED ${counts.derived}</span>` : '',
   ].join('');
 }
 

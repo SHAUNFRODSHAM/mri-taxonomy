@@ -255,6 +255,17 @@ export function buildProposalsSection() {
           <p>${p.item.proposed_note
             ? e(p.item.proposed_note)
             : '<em>Rationale to be captured.</em>'}</p>`;
+        // Linked counterparts nest here rather than getting their own entries,
+        // so one recommendation reads as one item instead of being counted
+        // once on each side of every link.
+        if (p.counterparts && p.counterparts.length) {
+          const heading = side === 'business'
+            ? 'MRI PMX processes this would touch'
+            : 'Value-stream processes this would serve';
+          out += `<p><strong>${heading}:</strong></p><ul>${p.counterparts.map(c =>
+            `<li>${e(c.moduleLabel)} › ${e(c.title)}${c.proposedLink ? ' <em>(proposed link)</em>' : ''}</li>`
+          ).join('')}</ul>`;
+        }
       });
     });
   });

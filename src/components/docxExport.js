@@ -609,6 +609,14 @@ export function proposalsBlocks() {
         out.push(fieldLine('Open Box proposes', 'bringing this into scope'));
         out.push(bodyPara(p.item.proposed_note || 'Rationale to be captured.',
           p.item.proposed_note ? {} : { italic: true }));
+        // Counterparts nest under their origin — one recommendation, one entry.
+        if (p.counterparts && p.counterparts.length) {
+          out.push(subLabel(side === 'business'
+            ? 'MRI PMX processes this would touch'
+            : 'Value-stream processes this would serve'));
+          p.counterparts.forEach(c => out.push(
+            bullet(`${c.moduleLabel} › ${c.title}${c.proposedLink ? ' (proposed link)' : ''}`)));
+        }
       });
     });
   });
