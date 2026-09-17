@@ -14,6 +14,7 @@ import { systemLinksFor, businessLinksFor, systemItemModule, initLinks, seedLink
 import { findBusinessItem, BUSINESS_DATA, BUSINESS_ORIGINAL, BUSINESS_CONFIG, BUSINESS_MODULES } from './data/business/index.js';
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData, duplicateVersion } from './versions.js';
 import { initDiscoveryWizard, openWizard, closeWizard, maybeShowEntryBanner } from './components/discoveryWizard.js';
+import { openComparePicker, openCompareResults } from './components/compareView.js';
 
 // ── CALLBACKS passed to grid renderer ─────────────────────────────────────────
 
@@ -746,6 +747,7 @@ document.getElementById('ver-badge').addEventListener('click', openVersionPanel)
 // Version panel
 document.getElementById('ver-panel-close').addEventListener('click', closeVersionPanel);
 document.getElementById('ver-save-as-btn').addEventListener('click', openSaveAsModal);
+document.getElementById('ver-compare-btn').addEventListener('click', openComparePicker);
 
 // Save As modal
 document.getElementById('save-as-close').addEventListener('click', closeSaveAsModal);
@@ -915,6 +917,7 @@ initDiscoveryWizard({
   },
   openMapping: () => { switchView('mapping'); closeWizardChrome(); },
   openExport:  () => { openGenModal(); closeWizardChrome(); },
+  compareToBaseline: () => { closeWizardChrome(); openCompareResults('discovery', 'live'); },
 });
 
 /** Collapse the wizard card itself when its action jumps the user into the
