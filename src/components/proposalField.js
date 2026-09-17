@@ -13,6 +13,12 @@
 
 import { PROPOSED, isProposed } from '../data/links.js';
 
+/* Both fields below are free-text authored in this modal and re-rendered into
+   innerHTML, so they must be escaped on the way out — see
+   docs/secure-development.md (A.8.28, secure coding). */
+const esc = s => String(s || '')
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 /** Markup for the Proposed Scope section. `currentLabel` describes the item's
  *  existing tag so the consultant can see what they are proposing a change to. */
 export function proposalFieldHTML(item, currentLabel) {
@@ -25,10 +31,10 @@ export function proposalFieldHTML(item, currentLabel) {
       <input type="checkbox" id="em-proposed" ${on ? 'checked' : ''} />
       <span>Open Box proposes this as additional scope</span>
     </label>
-    <p class="field-hint">Current state: <strong>${currentLabel || 'untagged'}</strong> — this is
+    <p class="field-hint">Current state: <strong>${esc(currentLabel || 'untagged')}</strong> — this is
       recorded separately, so the proposal does not overwrite it.</p>
     <label>Value-add rationale</label>
-    <textarea id="em-proposed-note" placeholder="What value would this add? e.g. &quot;Recovery reconciliation is manual in Excel today; PMX CAM recovery would remove ~3 days per quarter and give a full audit trail.&quot;">${note}</textarea>
+    <textarea id="em-proposed-note" placeholder="What value would this add? e.g. &quot;Recovery reconciliation is manual in Excel today; PMX CAM recovery would remove ~3 days per quarter and give a full audit trail.&quot;">${esc(note)}</textarea>
     <p class="field-hint" id="em-proposed-warn" style="display:none;color:var(--amber)">
       A proposal without a rationale carries no argument — add the value add identified in discovery.</p>`;
 }

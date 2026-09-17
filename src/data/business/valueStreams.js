@@ -394,6 +394,7 @@ export const VALUE_STREAMS = [
           p('Investor reporting (NAV, capital accounts)', 'Produce investor NAV and capital-account reporting.', 'Calculate NAV', 'Maintain capital accounts', 'Distribute investor reports'),
           p('Management reporting', 'Produce internal management reporting.', 'Prepare management packs', 'Add commentary', 'Distribute to stakeholders'),
           p('ESG reporting', 'Report ESG performance to stakeholders.', 'Collect ESG data', 'Produce ESG reports', 'Support frameworks/ratings'),
+          p('VAT / Making Tax Digital compliance', 'Meet statutory VAT reporting obligations, including HMRC\'s Making Tax Digital requirements for UK entities.', 'Maintain digital VAT records with an unbroken digital link to the return', 'Prepare, review and submit the periodic VAT return via MTD-compliant software', 'Retain submission records for the statutory retention period'),
         ],
       },
     ],

@@ -169,10 +169,10 @@ const GROUP_LINKS = {
   'vs-p2r-g3': ['jc-payments-draws', 'jc-reporting-reports', 'gl-framework-coa', 'faa-acquisition-create'],
 
   // Record to Report → General Ledger (+ sub-ledger closes / reporting)
-  'vs-r2r-g1': ['gl-journals-operational', 'gl-journals-subledger', 'gl-vat-setup'],
+  'vs-r2r-g1': ['gl-journals-operational', 'gl-journals-subledger'],
   'vs-r2r-g2': ['gl-journals-operational', 'gl-reporting-management'],
   'vs-r2r-g3': ['gl-close-period', 'gl-close-year', 'rm-close-period', 'car-close-period', 'ia-consolidation-eliminations', 'ia-reporting-consol-statements', 'ia-scheduling-main'],
-  'vs-r2r-g4': ['gl-reporting-management', 'gl-reporting-schedule', 'rm-close-reporting', 'car-reporting-compliance', 'ia-reporting-consol-statements', 'ia-investor-reporting-statements', 'ia-investor-reporting-metrics', 'gl-vat-mapping', 'gl-vat-mtd'],
+  'vs-r2r-g4': ['gl-reporting-management', 'gl-reporting-schedule', 'rm-close-reporting', 'car-reporting-compliance', 'ia-reporting-consol-statements', 'ia-investor-reporting-statements', 'ia-investor-reporting-metrics'],
 
   // Treasury & Debt → GL bank/cash + AP bank rec + IA capital (capital raising)
   'vs-tdm-g1': ['ap_recon_bank', 'cm-cash-receipts', 'gl-bank-setup', 'gl-bank-recon'],
@@ -186,6 +186,17 @@ const GROUP_LINKS = {
   // vs-pfo-g4 (ESG) and vs-h2r (HR) have no MRI PMX counterpart — gaps.
 };
 
+/**
+ * Card-level links: business L3 card id → MRI PMX system process ids.
+ * Additive to GROUP_LINKS, for the rare card whose system counterpart is
+ * more specific than the rest of its group shares (so the whole group
+ * doesn't get over-linked to a screen only one card actually uses).
+ */
+const CARD_LINKS = {
+  // Record to Report › Financial, Regulatory & Investor Reporting
+  'vs-r2r-g4-p6': ['gl-vat-setup', 'gl-vat-mapping', 'gl-vat-mtd'], // VAT / MTD compliance
+};
+
 /** Find a business column (L2 group) by id across all value streams. */
 function businessGroup(groupId) {
   for (const mod of BUSINESS_MODULES) {
@@ -195,13 +206,16 @@ function businessGroup(groupId) {
   return null;
 }
 
-/** Expand GROUP_LINKS to per-L3 business↔system pairs. */
+/** Expand GROUP_LINKS to per-L3 business↔system pairs, then layer on CARD_LINKS. */
 function buildSeedLinks() {
   const out = [];
   Object.entries(GROUP_LINKS).forEach(([groupId, sysIds]) => {
     const col = businessGroup(groupId);
     if (!col) return;
     col.processes.forEach(card => sysIds.forEach(s => out.push({ b: card.id, s })));
+  });
+  Object.entries(CARD_LINKS).forEach(([cardId, sysIds]) => {
+    sysIds.forEach(s => out.push({ b: cardId, s }));
   });
   return out;
 }

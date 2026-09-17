@@ -20,6 +20,8 @@ import {
   BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, findBusinessItem,
 } from '../data/business/index.js';
 
+const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 const COVERAGE_KEYS = ['full', 'partial', 'outside'];
 /** Does an item match the selected coverage filter? Untagged handled explicitly.
  *  Exported so the document export can filter identically to the on-screen grid. */
@@ -227,7 +229,7 @@ function renderBusinessGrid() {
     const colHeader = document.createElement('div');
     colHeader.className = 'col-header biz-col-header';
     if (col.note) colHeader.title = col.note;   // L2 hover tooltip
-    colHeader.innerHTML = `<span class="col-header-title">${col.title}</span>`;
+    colHeader.innerHTML = `<span class="col-header-title">${esc(col.title)}</span>`;
     if (edit) {
       // Bulk-tag coverage dropdown (mirrors the system view's "Tag all")
       const scopeWrap = document.createElement('div');
@@ -517,7 +519,7 @@ export function showBusinessPanel(id) {
   let html = `
     <div class="psec">
       <div class="psec-label">Overview</div>
-      <p class="psec-text">${item.desc || ''}</p>
+      <p class="psec-text">${esc(item.desc || '')}</p>
     </div>`;
 
   // Open Box proposal — stated up front, and explicitly labelled as ours so it
@@ -527,7 +529,7 @@ export function showBusinessPanel(id) {
     <div class="psec psec-proposed">
       <div class="psec-label">${PROPOSED.mark} Proposed Scope — Open Box recommendation</div>
       <p class="psec-text">${item.proposed_note
-        ? item.proposed_note
+        ? esc(item.proposed_note)
         : '<em>No rationale captured yet. Add the value add identified in discovery via Edit Mode.</em>'}</p>
       <p class="psec-note">Current state: ${item.coverage
         ? COVERAGE[item.coverage].label
@@ -539,7 +541,7 @@ export function showBusinessPanel(id) {
     html += `
     <div class="psec">
       <div class="psec-label">Core Activities</div>
-      <ul class="act-list">${item.activities.map(a => `<li>${a}</li>`).join('')}</ul>
+      <ul class="act-list">${item.activities.map(a => `<li>${esc(a)}</li>`).join('')}</ul>
     </div>`;
   }
 
@@ -552,8 +554,8 @@ export function showBusinessPanel(id) {
       const label = (MARKETS.find(m => m.key === k) || {}).label || k;
       html += `
     <div class="psec">
-      <div class="psec-label">Market Variation — ${label}</div>
-      <div class="biz-market-block">${item.market[k]}</div>
+      <div class="psec-label">Market Variation — ${esc(label)}</div>
+      <div class="biz-market-block">${esc(item.market[k])}</div>
     </div>`;
     });
   }
@@ -562,7 +564,7 @@ export function showBusinessPanel(id) {
   if (item.vertical) {
     const sel = (state.verticals && state.verticals.length) ? state.verticals : SECTORS;
     const rows = sel.filter(v => item.vertical[v]).map(v =>
-      `<div class="biz-vert-row"><span class="biz-vert-tag vert-${v.toLowerCase()}">${v}</span><span>${item.vertical[v]}</span></div>`).join('');
+      `<div class="biz-vert-row"><span class="biz-vert-tag vert-${v.toLowerCase()}">${esc(v)}</span><span>${esc(item.vertical[v])}</span></div>`).join('');
     if (rows) {
       html += `
     <div class="psec">
@@ -576,7 +578,7 @@ export function showBusinessPanel(id) {
     html += `
     <div class="psec">
       <div class="psec-label">Standards &amp; Frameworks</div>
-      <div class="biz-std-grid">${item.standards.map(s => `<span class="biz-std-chip">${s}</span>`).join('')}</div>
+      <div class="biz-std-grid">${item.standards.map(s => `<span class="biz-std-chip">${esc(s)}</span>`).join('')}</div>
     </div>`;
   }
 

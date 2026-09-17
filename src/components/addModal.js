@@ -1,5 +1,7 @@
 import { state, ALL_DATA, MODULE_CONFIG, snapshot, triggerRender } from '../state.js';
 
+const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 // ── ADD ITEM MODAL ─────────────────────────────────────────────────────────────
 
 export function openAddModal(type, colId, procId) {
@@ -87,7 +89,7 @@ export function confirmAddTab() {
   const btn    = document.createElement('button');
   btn.className       = 'tab-btn';
   btn.dataset.tab     = uid;
-  btn.innerHTML       = `<span class="tab-icon">${icon}</span>${name}`;
+  btn.innerHTML       = `<span class="tab-icon">${esc(icon)}</span>${esc(name)}`;
   btn.addEventListener('click', () => {
     // switchTab lives in main.js; use a custom event to avoid circular import
     document.dispatchEvent(new CustomEvent('mri:switchTab', { detail: uid }));

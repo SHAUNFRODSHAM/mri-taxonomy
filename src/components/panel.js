@@ -2,6 +2,8 @@ import { state } from '../state.js';
 import { clientNoteHTML } from './clientNote.js';
 import { PROPOSED, isProposed } from '../data/links.js';
 
+const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 // Phase-2 hook: main.js injects a function returning link-section HTML for a
 // system item id (cross-references to the business view). Null = no link UI.
 let linkRenderer = null;
@@ -39,7 +41,7 @@ export function showPanel(item, bc, isPro, scopeInfo) {
       <div class="psec psec-proposed">
         <div class="psec-label">${PROPOSED.mark} Proposed Scope — Open Box recommendation</div>
         <p class="psec-text">${item.proposed_note
-          ? item.proposed_note
+          ? esc(item.proposed_note)
           : '<em>No rationale captured yet. Add the value add identified in discovery via Edit Mode.</em>'}</p>
         <p class="psec-note">Current state: ${scopeLabel[eff.scope] || 'Untagged'}. This is an Open Box
           recommendation, not agreed scope.</p>
@@ -53,11 +55,11 @@ export function showPanel(item, bc, isPro, scopeInfo) {
     <div class="panel-col">
       <div class="psec">
         <div class="psec-label">Overview</div>
-        <p class="psec-text">${item.desc || ''}</p>
+        <p class="psec-text">${esc(item.desc || '')}</p>
       </div>
       <div class="psec">
         <div class="psec-label">Core Activities</div>
-        <ul class="act-list">${(item.activities || []).map(a => `<li>${a}</li>`).join('')}</ul>
+        <ul class="act-list">${(item.activities || []).map(a => `<li>${esc(a)}</li>`).join('')}</ul>
       </div>
       ${clientNote}
       ${proposalSec}
@@ -67,13 +69,13 @@ export function showPanel(item, bc, isPro, scopeInfo) {
         <div class="psec-label">MRI Module Reference</div>
         <div class="mri-title-block">
           <div class="mri-title-label">Navigation path</div>
-          <div class="mri-title-name">${item.mri_title || '<em style="opacity:0.5;font-size:0.78rem;font-weight:400">Not configured</em>'}</div>
+          <div class="mri-title-name">${item.mri_title ? esc(item.mri_title) : '<em style="opacity:0.5;font-size:0.78rem;font-weight:400">Not configured</em>'}</div>
         </div>
       </div>
       <div class="psec">
         <div class="psec-label">Setup Prerequisites</div>
         ${prereqs.length
-          ? `<ul class="prereq-list">${prereqs.map(p => `<li>${p}</li>`).join('')}</ul>`
+          ? `<ul class="prereq-list">${prereqs.map(p => `<li>${esc(p)}</li>`).join('')}</ul>`
           : '<p class="psec-text" style="opacity:0.45;font-style:italic;font-size:0.74rem">None configured.</p>'}
       </div>
       <div class="psec">
@@ -83,8 +85,8 @@ export function showPanel(item, bc, isPro, scopeInfo) {
               <div class="assoc-item">
                 <span class="assoc-arrow">↗</span>
                 <div>
-                  <div class="assoc-name">${a.name}</div>
-                  <div class="assoc-desc">${a.desc}</div>
+                  <div class="assoc-name">${esc(a.name)}</div>
+                  <div class="assoc-desc">${esc(a.desc)}</div>
                 </div>
               </div>`).join('')}</div>`
           : '<p class="psec-text" style="opacity:0.45;font-style:italic;font-size:0.74rem">None configured.</p>'}
