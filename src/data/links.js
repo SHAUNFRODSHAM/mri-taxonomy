@@ -92,10 +92,10 @@ const GROUP_LINKS = {
   'vs-p2r-g3': ['jc-payments-draws', 'jc-reporting-reports', 'gl-framework-coa', 'faa-acquisition-create'],
 
   // Record to Report → General Ledger (+ sub-ledger closes / reporting)
-  'vs-r2r-g1': ['gl-journals-operational', 'gl-journals-subledger'],
+  'vs-r2r-g1': ['gl-journals-operational', 'gl-journals-subledger', 'gl-vat-setup'],
   'vs-r2r-g2': ['gl-journals-operational', 'gl-reporting-management'],
   'vs-r2r-g3': ['gl-close-period', 'gl-close-year', 'rm-close-period', 'car-close-period', 'ia-consolidation-eliminations', 'ia-reporting-consol-statements', 'ia-scheduling-main'],
-  'vs-r2r-g4': ['gl-reporting-management', 'gl-reporting-schedule', 'rm-close-reporting', 'car-reporting-compliance', 'ia-reporting-consol-statements', 'ia-investor-reporting-statements', 'ia-investor-reporting-metrics'],
+  'vs-r2r-g4': ['gl-reporting-management', 'gl-reporting-schedule', 'rm-close-reporting', 'car-reporting-compliance', 'ia-reporting-consol-statements', 'ia-investor-reporting-statements', 'ia-investor-reporting-metrics', 'gl-vat-mapping', 'gl-vat-mtd'],
 
   // Treasury & Debt → GL bank/cash + AP bank rec + IA capital (capital raising)
   'vs-tdm-g1': ['ap_recon_bank', 'cm-cash-receipts', 'gl-bank-setup', 'gl-bank-recon'],
