@@ -1881,3 +1881,114 @@ body {
   font-family: var(--font); font-size: 0.74rem; font-weight: 700; cursor: pointer;
 }
 .lke-add:hover { background: #e6f0d0; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Proposed Scope — Open Box value-add proposals
+   ───────────────────────────────────────────────────────────────────────────
+   Proposals must never be mistaken for agreed client scope, so they are
+   distinguished by SHAPE as well as colour: a dashed edge plus the ✦ glyph.
+   The existing palette already spends green (core / full), gold (partial) and
+   grey (custom / out-of-scope / untagged) on the current-state tags, so hue
+   alone would be ambiguous — and the dashed treatment stays legible for
+   colour-blind readers.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --prop:    #00833C;   /* Open Box proposal — deep green, distinct from the lime */
+  --prop-lt: #eaf6ee;
+}
+
+/* Card treatment — a dashed left edge so the proposal reads at a glance
+   without hiding the item's own scope/coverage badge. */
+.is-proposed {
+  border-left: 3px dashed var(--prop) !important;
+  background-image: linear-gradient(90deg, var(--prop-lt) 0%, transparent 42%);
+}
+
+/* The ✦ PROPOSED chip. Sits ALONGSIDE the scope/coverage badge — the pair is
+   the whole point ("Outside today ✦ PROPOSED"). */
+.prop-badge {
+  flex-shrink: 0; display: inline-block; margin-left: 6px; vertical-align: middle;
+  font-size: 0.56rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.03em; padding: 2px 7px; border-radius: 10px;
+  color: #fff; background: var(--prop); white-space: nowrap;
+}
+.prop-badge.prop-badge-add {
+  color: var(--prop); background: transparent; border: 1px dashed var(--prop);
+}
+.prop-badge.prop-editable { cursor: pointer; }
+.prop-badge.prop-editable:hover { filter: brightness(1.12); }
+
+/* "Proposed Scope only" filter toggle — mounted in both view filter bars. */
+.prop-filter-btn {
+  display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px;
+  border: 1px dashed var(--prop); border-radius: 14px; background: transparent;
+  color: var(--prop); font-family: var(--font); font-size: 0.7rem; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+}
+.prop-filter-btn:hover  { background: var(--prop-lt); }
+.prop-filter-btn.active { background: var(--prop); color: #fff; border-style: solid; }
+
+/* Count chip in the System view filter bar */
+.scope-count-chip.scope-count-prop {
+  color: #fff; background: var(--prop);
+}
+
+/* Detail-panel badge + proposal block */
+.badge.badge-proposed { color: #fff; background: var(--prop); }
+.psec.psec-proposed {
+  border-left: 3px dashed var(--prop);
+  background: var(--prop-lt);
+  padding: 10px 12px; border-radius: 0 6px 6px 0;
+}
+.psec.psec-proposed .psec-label { color: var(--prop); }
+.psec .psec-note {
+  margin: 6px 0 0; font-size: 0.7rem; color: var(--ink3); font-style: italic;
+}
+
+/* Bulk "Propose all" entry in the Tag-all dropdowns */
+.col-scope-menu .scope-menu-propose {
+  color: var(--prop); font-weight: 700;
+  border-top: 1px solid var(--border2);
+}
+.col-scope-menu .scope-menu-propose:hover { background: var(--prop-lt); }
+
+/* ── Mapping view ────────────────────────────────────────────────────────── */
+
+/* A proposed LINK — a mapping Open Box recommends that the client does not
+   operate today. Dashed so it never reads as an existing connection. */
+.map-chip.map-chip-proposed {
+  border: 1px dashed var(--prop);
+  background: var(--prop-lt);
+}
+.map-chip-prop {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid var(--border2); background: var(--surface);
+  color: var(--ink3); cursor: pointer; font-size: 11px; line-height: 1;
+  font-weight: 700; padding: 0;
+}
+.map-chip-prop:hover     { border-color: var(--prop); color: var(--prop); }
+.map-chip-prop.active    { background: var(--prop); border-color: var(--prop); color: #fff; }
+
+.cell-flow-chip.cell-flow-chip-proposed {
+  border: 1px dashed var(--prop) !important;
+  background: var(--prop-lt);
+}
+.cell-flow-prop-tag {
+  font-size: 8.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.03em; color: #fff; background: var(--prop);
+  border-radius: 8px; padding: 1px 6px; white-space: nowrap;
+}
+.cell-flow-pip.cell-flow-pip-proposed {
+  background: var(--prop-lt); border: 1px dashed var(--prop);
+}
+
+/* Export modal — the opt-in Proposed Scope checkbox */
+.gen-check-wrap.gen-check-prop label { color: var(--prop); font-weight: 700; }
+
+/* Proposal rationale field in the edit modals */
+.prop-check-row {
+  display: flex !important; align-items: center; gap: 8px;
+  margin: 8px 0 2px; font-weight: 600; cursor: pointer;
+}
+.prop-check-row input { width: auto; margin: 0; }

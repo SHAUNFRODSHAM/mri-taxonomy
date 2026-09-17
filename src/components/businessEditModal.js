@@ -10,7 +10,8 @@
 import { state, snapshot } from '../state.js';
 import { findBusinessItem, MARKETS, VERTICALS } from '../data/business/index.js';
 import { renderLinkEditor } from './linkEditor.js';
-import { coverageTooltip } from '../data/links.js';
+import { coverageTooltip, COVERAGE } from '../data/links.js';
+import { proposalFieldHTML, initProposalField, applyProposalField } from './proposalField.js';
 
 let onSaved = () => {};
 export function initBusinessEditModal({ afterSave }) { onSaved = afterSave || (() => {}); }
@@ -71,9 +72,11 @@ export function openBusinessEditModal(id) {
     </select>
     <p class="field-hint">How much of this value-stream process lives in MRI PMX. Full or Partial should be linked to at least one MRI PMX system process below.</p>
     <div class="modal-sec-head">Linked MRI PMX System Processes</div>
-    <div id="bem-link-editor"></div>`;
+    <div id="bem-link-editor"></div>
+    ${proposalFieldHTML(item, item.coverage ? COVERAGE[item.coverage].label : 'untagged')}`;
 
   renderLinkEditor(document.getElementById('bem-link-editor'), id, 'business');
+  initProposalField();
 
   document.getElementById('edit-modal-overlay').classList.add('open');
   setTimeout(() => document.getElementById('bem-name')?.focus(), 80);
@@ -95,6 +98,7 @@ export function saveBusinessEditModal() {
     .split('\n').map(s => s.trim()).filter(Boolean);
   item.clientNote = document.getElementById('bem-client-note').value.trim();
   item.coverage = document.getElementById('bem-coverage').value || null;
+  applyProposalField(item);
 
   const market = {};
   document.querySelectorAll('.bem-market').forEach(t => {

@@ -1,7 +1,7 @@
 import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible } from '../state.js';
 import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS } from '../data/business/index.js';
 import { effectiveScope } from './grid.js';
-import { linkedSystemIds, systemLinksFor, COVERAGE } from '../data/links.js';
+import { linkedSystemIds, systemLinksFor, COVERAGE, PROPOSED, isProposed, collectProposals } from '../data/links.js';
 import { generateDocx, generateBusinessDocx } from './docxExport.js';
 import { houseStyleCSS } from './obDocStyle.js';
 import { matchesCoverage, matchesVerticals } from './businessView.js';
@@ -62,6 +62,9 @@ function getScopeIncludes() {
     custom:        document.getElementById('gscope-inc-custom')?.checked ?? true,
     'out-of-scope':document.getElementById('gscope-inc-oos')?.checked    ?? true,
     untagged:      document.getElementById('gscope-inc-untag')?.checked  ?? true,
+    // Defaults to FALSE, unlike every other include: a proposal is Open Box's
+    // recommendation, so it is opt-in rather than opt-out for any document.
+    proposed:      document.getElementById('gscope-inc-proposed')?.checked ?? false,
   };
 }
 
@@ -200,8 +203,63 @@ export function buildDoc() {
     });
   });
 
+  if (includes.proposed) html += buildProposalsSection();
+
   document.getElementById('doc-out').innerHTML = html;
   _previewReady = true;
+}
+
+/* ── Value-Add Proposals ──────────────────────────────────────────────────────
+   A dedicated closing section listing every Open Box proposal with its
+   rationale and the current state it would change. Rendered only when
+   "✦ Proposed Scope" is ticked, and headed with an explicit disclaimer so the
+   reader cannot mistake a recommendation for agreed scope. */
+export function buildProposalsSection() {
+  const proposals = collectProposals();
+  if (!proposals.length) {
+    return `<h1>${PROPOSED.mark} Value-Add Proposals</h1>
+      <p><em>No proposals have been recorded. Flag items as Proposed Scope in either view to populate this section.</em></p>`;
+  }
+
+  const covLabel   = k => (COVERAGE[k] ? COVERAGE[k].label : null);
+  const scopeLabel = { core: 'Core', custom: 'Custom', 'out-of-scope': 'Out of scope' };
+
+  let out = `<h1>${PROPOSED.mark} Value-Add Proposals</h1>
+    <p><strong>These are Open Box recommendations, not agreed scope.</strong> Each item below was
+    identified during discovery analysis as an opportunity to add value. They are presented for
+    client consideration and do not form part of the agreed implementation scope unless
+    separately confirmed.</p>`;
+
+  [['business', 'Value Stream proposals'], ['system', 'MRI PMX System proposals']].forEach(([side, heading]) => {
+    const group = proposals.filter(p => p.side === side);
+    if (!group.length) return;
+    out += `<h2>${e(heading)}</h2>`;
+
+    // Group by module so the section mirrors the app's own navigation.
+    const byMod = new Map();
+    group.forEach(p => {
+      if (!byMod.has(p.moduleLabel)) byMod.set(p.moduleLabel, []);
+      byMod.get(p.moduleLabel).push(p);
+    });
+
+    byMod.forEach((items, modLabel) => {
+      out += `<h3>${e(modLabel)}</h3>`;
+      items.forEach(p => {
+        const current = side === 'business'
+          ? (covLabel(p.currentTag) || 'Untagged')
+          : (scopeLabel[p.currentTag] || 'Untagged');
+        out += `<h4>${e(p.item.title)}</h4>
+          <p><strong>Where:</strong> ${e(p.breadcrumb)}<br>
+          <strong>Current state:</strong> ${e(current)}<br>
+          <strong>Open Box proposes:</strong> bringing this into scope</p>
+          <p>${p.item.proposed_note
+            ? e(p.item.proposed_note)
+            : '<em>Rationale to be captured.</em>'}</p>`;
+      });
+    });
+  });
+
+  return out;
 }
 
 /* Mirrors processBlock() in docxExport.js — same fields, same order, same
@@ -324,6 +382,8 @@ function buildBusinessPreview() {
     });
   });
 
+  if (getScopeIncludes().proposed) html += buildProposalsSection();
+
   document.getElementById('doc-out').innerHTML = html;
   _previewReady = true;
 }
@@ -403,6 +463,7 @@ async function downloadBusinessWord() {
       itemFilter:    item => matchesCoverage(item) && matchesVerticals(item),
       linksFor:      systemLinksFor,
       coverageLabel: k => COVERAGE[k]?.label || k,
+      inclProposed:  getScopeIncludes().proposed,
       docTitle: 'Business Process Taxonomy',
     });
     const url = URL.createObjectURL(blob);

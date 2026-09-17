@@ -43,6 +43,83 @@ export function coverageTooltip(key) {
 }
 export const COVERAGE_ORDER = ['full', 'partial', 'outside'];
 
+/* ── Proposed Scope — Open Box value-add proposals ────────────────────────────
+   Deliberately ORTHOGONAL to coverage (business) and scope (system) rather than
+   a fourth value in either enum. An item keeps its current-state tag AND may
+   additionally carry `proposed: true` + `proposed_note`.
+
+   That separation is the whole point. A process tagged "Outside" (the client
+   runs it in spreadsheets today) which Open Box believes PMX could absorb is a
+   proposal worth making precisely BECAUSE of the delta — "manual today, we
+   propose bringing it into the system". Folding `proposed` into the coverage
+   enum would overwrite the current state and erase the argument.
+
+   Proposals are Open Box's opinion, not agreed client scope, so they render in
+   Open Box green with a dashed edge and are EXCLUDED from generated documents
+   unless "Proposed Scope" is explicitly ticked in the export options. */
+export const PROPOSED = {
+  label: 'Proposed scope — Open Box recommendation',
+  short: 'Proposed',
+  mark:  '✦',
+  color: '#00833C',
+  desc:  'Open Box has identified potential value add here through discovery analysis. '
+       + 'This is a recommendation, not agreed client scope, and is excluded from generated '
+       + 'documents unless Proposed Scope is explicitly included.',
+};
+
+/** True when an item carries an Open Box proposal. */
+export function isProposed(item) {
+  return !!(item && item.proposed);
+}
+
+/** Tooltip for a proposal marker — appends the captured rationale when present. */
+export function proposedTooltip(item) {
+  const note = item && item.proposed_note;
+  return note
+    ? `${PROPOSED.label}\n\n${note}`
+    : `${PROPOSED.label}\n\n${PROPOSED.desc}`;
+}
+
+/** Every proposed item across both views, for the Value-Add Proposals report.
+ *  Returns [{ side, moduleKey, moduleLabel, breadcrumb, item, currentTag }]. */
+export function collectProposals() {
+  const out = [];
+
+  Object.entries(BUSINESS_DATA).forEach(([modKey, cols]) => {
+    const modLabel = (BUSINESS_CONFIG[modKey] || {}).label || modKey;
+    cols.forEach(col => col.processes.forEach(proc => {
+      if (isProposed(proc)) {
+        out.push({ side: 'business', moduleKey: modKey, moduleLabel: modLabel,
+                   breadcrumb: col.title, item: proc, currentTag: proc.coverage || null });
+      }
+      (proc.subs || []).forEach(sub => {
+        if (isProposed(sub)) {
+          out.push({ side: 'business', moduleKey: modKey, moduleLabel: modLabel,
+                     breadcrumb: `${col.title} › ${proc.title}`, item: sub, currentTag: sub.coverage || null });
+        }
+      });
+    }));
+  });
+
+  Object.entries(ALL_DATA).forEach(([modKey, cols]) => {
+    const modLabel = (MODULE_CONFIG[modKey] || {}).label || modKey;
+    cols.forEach(col => col.processes.forEach(proc => {
+      if (isProposed(proc)) {
+        out.push({ side: 'system', moduleKey: modKey, moduleLabel: modLabel,
+                   breadcrumb: col.title, item: proc, currentTag: proc.scope || null });
+      }
+      (proc.subs || []).forEach(sub => {
+        if (isProposed(sub)) {
+          out.push({ side: 'system', moduleKey: modKey, moduleLabel: modLabel,
+                     breadcrumb: `${col.title} › ${proc.title}`, item: sub, currentTag: sub.scope || null });
+        }
+      });
+    }));
+  });
+
+  return out;
+}
+
 /**
  * Group-level mapping: value-stream L2 group id → MRI PMX system process ids.
  * Expanded to per-L3 links at load (every L3 card under a group links to the
@@ -155,21 +232,45 @@ function findLinkIndex(b, s) {
   return getLinks().findIndex(l => l.b === b && l.s === s);
 }
 
-/** Set of system-process ids that currently have ≥1 business (value-stream) link. */
+/* Proposed links are Open Box recommendations, not the client's current reality,
+   so they are excluded from both helpers below. Counting them would let adding a
+   proposal silently pull a system item out of "auto out of scope" and silence the
+   "⚠ link needed" warning — i.e. a suggestion would masquerade as agreed scope. */
+
+/** Set of system-process ids that currently have ≥1 AGREED business link. */
 export function linkedSystemIds() {
-  return new Set(getLinks().map(l => l.s));
+  return new Set(getLinks().filter(l => !l.proposed).map(l => l.s));
 }
 
-/** True if a business (value-stream) item has ≥1 link to a system process. */
+/** True if a business (value-stream) item has ≥1 agreed link to a system process. */
 export function businessHasLink(businessId) {
-  return getLinks().some(l => l.b === businessId);
+  return getLinks().some(l => l.b === businessId && !l.proposed);
 }
 
-/** Add a link (no-op if it already exists). Returns true if added. */
-export function addLink(b, s, coverage = 'full', note = '') {
+/** True if a business item has ≥1 PROPOSED link (used to render the gap answer). */
+export function businessHasProposedLink(businessId) {
+  return getLinks().some(l => l.b === businessId && l.proposed);
+}
+
+/** Add a link (no-op if it already exists). Returns true if added.
+ *  `proposed` marks the link itself as an Open Box recommendation — a mapping
+ *  that does NOT exist in the client's world today but which we are proposing.
+ *  This is how a taxonomy gap becomes "here is what we would do about it". */
+export function addLink(b, s, coverage = 'full', note = '', proposed = false) {
   if (findLinkIndex(b, s) !== -1) return false;
-  getLinks().push({ b, s, coverage, note });
+  const link = { b, s, coverage, note };
+  if (proposed) link.proposed = true;
+  getLinks().push(link);
   return true;
+}
+
+/** Toggle a link's proposed flag. Returns the new value, or null if not found. */
+export function toggleLinkProposed(b, s) {
+  const l = getLinks().find(x => x.b === b && x.s === s);
+  if (!l) return null;
+  if (l.proposed) delete l.proposed;
+  else l.proposed = true;
+  return !!l.proposed;
 }
 
 /** Remove a link. Returns true if one was removed. */
@@ -293,7 +394,7 @@ export function allResolvedLinks() {
     const b = resolveBusiness(l.b);
     const s = resolveSystem(l.s);
     if (!b || !s) return null;
-    return { b: { ...b, domain: businessDomainOf(l.b) }, s, coverage: b.coverage };
+    return { b: { ...b, domain: businessDomainOf(l.b) }, s, coverage: b.coverage, proposed: !!l.proposed };
   }).filter(Boolean);
 }
 

@@ -6,7 +6,7 @@ import { openEditModal, closeEditModal, saveEditModal } from './components/editM
 import { openAddModal, closeAddModal, confirmAdd, openAddTabModal, closeAddTabModal, confirmAddTab } from './components/addModal.js';
 import { openGenModal, closeGenModal, buildDoc, downloadWord, downloadPDF } from './components/genModal.js';
 import { renderVersionPanel } from './components/versionMenu.js';
-import { renderBusiness, initBusinessView, setBusinessLinkRenderer, showBusinessPanel } from './components/businessView.js';
+import { renderBusiness, initBusinessView, setBusinessLinkRenderer, showBusinessPanel, makeProposedToggle } from './components/businessView.js';
 import { openBusinessEditModal, saveBusinessEditModal, initBusinessEditModal, isBusinessEditOpen } from './components/businessEditModal.js';
 import { renderMapping, initMappingView } from './components/mappingView.js';
 import { makeMultiSelect } from './components/multiSelect.js';
@@ -23,6 +23,8 @@ const gridCallbacks = {
   onAddModal:    openAddModal,
   onScopeChange: cycleScope,
   onBulkTag:     bulkTagColumn,
+  onProposeToggle: toggleProposedSystem,
+  onBulkPropose:   bulkProposeColumn,
 };
 
 // Register render so components can call triggerRender()
@@ -379,12 +381,19 @@ function saveChangesToVersion() {
 /** Blank every scope (system) and coverage (business) tag — the Discovery
  *  Baseline state. Used on discovery load, boot, and reset-while-in-discovery. */
 function clearAllTags() {
+  // Proposals are discovery output, not baseline content, so the Discovery
+  // Baseline clears them alongside the scope/coverage tags.
+  const clearProp = it => { delete it.proposed; delete it.proposed_note; };
   Object.values(ALL_DATA).forEach(mod => mod.forEach(col => col.processes.forEach(p => {
-    p.scope = null; (p.subs || []).forEach(s => { s.scope = null; });
+    p.scope = null; clearProp(p);
+    (p.subs || []).forEach(s => { s.scope = null; clearProp(s); });
   })));
   Object.values(BUSINESS_DATA).forEach(mod => mod.forEach(col => col.processes.forEach(p => {
-    p.coverage = null; (p.subs || []).forEach(s => { s.coverage = null; });
+    p.coverage = null; clearProp(p);
+    (p.subs || []).forEach(s => { s.coverage = null; clearProp(s); });
   })));
+  // Proposed links are Open Box recommendations captured during discovery too.
+  state.links = (state.links || []).filter(l => !l.proposed);
 }
 
 function openResetModal() {
@@ -707,6 +716,31 @@ function cycleScope(item) {
   updateVersionBadge();
 }
 
+/** Toggle Proposed Scope on a system item. Leaves item.scope untouched — the
+ *  proposal is an extra statement about the item, not a replacement for its
+ *  agreed scope, so the current-state → proposed delta survives. */
+function toggleProposedSystem(item) {
+  snapshot();
+  if (item.proposed) { delete item.proposed; delete item.proposed_note; }
+  else item.proposed = true;
+  render(gridCallbacks);
+  updateVersionBadge();
+}
+
+/** Mark/clear Proposed Scope across a whole system column. */
+function bulkProposeColumn(colId, proposed) {
+  snapshot();
+  const col = ALL_DATA[state.currentTab]?.find(c => c.id === colId);
+  if (!col) return;
+  const apply = it => {
+    if (proposed) it.proposed = true;
+    else { delete it.proposed; delete it.proposed_note; }
+  };
+  col.processes.forEach(proc => { apply(proc); (proc.subs || []).forEach(apply); });
+  render(gridCallbacks);
+  updateVersionBadge();
+}
+
 /** Set all processes and sub-processes in a column to a given scope. */
 function bulkTagColumn(colId, scope) {
   snapshot();
@@ -805,6 +839,8 @@ function renderScopeFilter() {
     swatch: v => SCOPE_FILTER_COLOURS[v] || 'var(--border2)',
     onChange: () => render(gridCallbacks),
   }));
+  // Same Proposed Scope toggle the Business view uses — one control, one meaning.
+  mount.appendChild(makeProposedToggle(() => { renderScopeFilter(); render(gridCallbacks); }));
 }
 
 /** Expand or collapse every process (with subs) in the current system module. */

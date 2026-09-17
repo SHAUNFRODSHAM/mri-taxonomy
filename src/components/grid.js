@@ -1,5 +1,5 @@
 import { state, currentData, MODULE_CONFIG, triggerRender } from '../state.js';
-import { linkedSystemIds } from '../data/links.js';
+import { linkedSystemIds, PROPOSED, isProposed, proposedTooltip } from '../data/links.js';
 
 /** Toggle a process's expanded (sub-processes revealed) state. */
 function toggleExpand(id) {
@@ -39,14 +39,24 @@ export function effectiveScope(item, parentProcess, linkedSet) {
   return { scope: 'out-of-scope', auto: true };
 }
 
+/** Does an item pass the scope filter AND the "Proposed only" toggle?
+ *  The two are separate axes: Proposed Scope is orthogonal to core/custom/OOS,
+ *  so it narrows the selection rather than replacing it. */
+function matchesScope(item, parentProcess, linkedSet, filters) {
+  if (state.proposedOnly && !isProposed(item)) return false;
+  return filters.includes(effectiveScope(item, parentProcess, linkedSet).scope || 'untagged');
+}
+
 /**
  * render(callbacks)
  * Rebuilds the taxonomy grid from current state.
  *
- * callbacks: { onItemClick, onEditClick, onRemoveItem, onAddModal, onScopeChange, onBulkTag }
+ * callbacks: { onItemClick, onEditClick, onRemoveItem, onAddModal, onScopeChange,
+ *              onBulkTag, onProposeToggle, onBulkPropose }
  */
 export function render(callbacks) {
-  const { onItemClick, onEditClick, onRemoveItem, onAddModal, onScopeChange, onBulkTag } = callbacks;
+  const { onItemClick, onEditClick, onRemoveItem, onAddModal, onScopeChange, onBulkTag,
+          onProposeToggle, onBulkPropose } = callbacks;
 
   const grid = document.getElementById('grid');
   const cfg  = MODULE_CONFIG[state.currentTab] || {};
@@ -63,7 +73,7 @@ export function render(callbacks) {
 
   const ALL_SCOPE_KEYS = ['core', 'custom', 'out-of-scope', 'untagged'];
   const filters = Array.isArray(state.scopeFilters) ? state.scopeFilters : ALL_SCOPE_KEYS;
-  const showingAll = ALL_SCOPE_KEYS.every(k => filters.includes(k));
+  const showingAll = ALL_SCOPE_KEYS.every(k => filters.includes(k)) && !state.proposedOnly;
   const linkedSet = linkedSystemIds();   // system ids linked to a value stream
   let renderedCols = 0;
 
@@ -98,14 +108,21 @@ export function render(callbacks) {
       { scope: 'custom',       label: '● Tag all: CUSTOM' },
       { scope: 'out-of-scope', label: '● Tag all: OUT OF SCOPE' },
       { scope: null,           label: '✕ Clear all tags', cls: 'scope-menu-clear' },
-    ].forEach(({ scope, label, cls }) => {
+      // Proposed Scope is a separate axis — these leave the scope tags alone.
+      { propose: true,  label: `${PROPOSED.mark} Propose all`, cls: 'scope-menu-propose',
+        tip: 'Mark every process in this column as Proposed Scope (Open Box recommendation). Leaves the existing scope tags intact.' },
+      { propose: false, label: `${PROPOSED.mark} Clear proposals`, cls: 'scope-menu-clear',
+        tip: 'Remove the Proposed Scope marker from every process in this column.' },
+    ].forEach(({ scope, label, cls, propose, tip }) => {
       const btn = document.createElement('button');
       btn.textContent = label;
       if (cls) btn.className = cls;
+      if (tip) btn.title = tip;
       btn.addEventListener('click', e => {
         e.stopPropagation();
         scopeMenu.classList.remove('open');
-        onBulkTag(col.id, scope);
+        if (propose === undefined) onBulkTag(col.id, scope);
+        else onBulkPropose(col.id, propose);
       });
       scopeMenu.appendChild(btn);
     });
@@ -143,8 +160,8 @@ export function render(callbacks) {
       const hasSubs = subs.length > 0;
 
       // A process shows if it, or any of its sub-processes, matches the filter.
-      const procMatches = filters.includes(effectiveScope(proc, null, linkedSet).scope || 'untagged');
-      const subMatches  = subs.some(s => filters.includes(effectiveScope(s, proc, linkedSet).scope || 'untagged'));
+      const procMatches = matchesScope(proc, null, linkedSet, filters);
+      const subMatches  = subs.some(s => matchesScope(s, proc, linkedSet, filters));
       if (!showingAll && !procMatches && !subMatches && !state.editMode) return; // hide non-matching process
 
       // Collapse is respected during filtering (no force-expand).
@@ -155,17 +172,16 @@ export function render(callbacks) {
 
       colBody.appendChild(makeItemEl(proc, 'process-box', onItemClick, onEditClick,
         () => onRemoveItem('proc', col.id, proc.id),
-        onScopeChange, null, linkedSet, subToggle));
+        onScopeChange, null, linkedSet, subToggle, onProposeToggle));
       visibleCount++;
 
       if (expanded) {
         subs.forEach(sub => {
-          const subKey = effectiveScope(sub, proc, linkedSet).scope || 'untagged';
-          if (!showingAll && !filters.includes(subKey) && !state.editMode) return; // skip non-matching sub
+          if (!showingAll && !matchesScope(sub, proc, linkedSet, filters) && !state.editMode) return; // skip non-matching sub
           const cls = sub.type === 'process' ? 'process-box' : 'sub-box';
           colBody.appendChild(makeItemEl(sub, cls + ' is-nested', onItemClick, onEditClick,
             () => onRemoveItem('sub', col.id, proc.id, sub.id),
-            onScopeChange, proc, linkedSet, null));
+            onScopeChange, proc, linkedSet, null, onProposeToggle));
           visibleCount++;
         });
       }
@@ -227,7 +243,7 @@ export function render(callbacks) {
 
 // ── makeItemEl ────────────────────────────────────────────────────────────────
 
-function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScopeChange, parentProcess, linkedSet, subToggle) {
+function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScopeChange, parentProcess, linkedSet, subToggle, onProposeToggle) {
   const eff   = effectiveScope(item, parentProcess, linkedSet);
   const scope = eff.scope;   // effective scope (manual tag, or auto Out-of-Scope)
   const auto  = eff.auto;    // true when defaulted because nothing is linked
@@ -237,6 +253,7 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
   el.className = baseClass;
   if (scope === 'out-of-scope') el.classList.add('scope-oos');
   if (auto) el.classList.add('scope-oos-auto');
+  if (isProposed(item)) el.classList.add('is-proposed');
   el.dataset.id = item.id;
 
   // Title
@@ -280,6 +297,28 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
     el.appendChild(badge);
   }
 
+  // Proposed Scope marker — sits ALONGSIDE the scope badge, never replacing it,
+  // so the current-state → proposed delta stays readable on the card.
+  if (isProposed(item)) {
+    const pb = document.createElement('span');
+    pb.className = 'prop-badge';
+    pb.textContent = `${PROPOSED.mark} ${PROPOSED.short.toUpperCase()}`;
+    pb.title = proposedTooltip(item)
+      + (state.editMode ? '\n\nClick to remove the proposal.' : '');
+    if (state.editMode) {
+      pb.classList.add('prop-editable');
+      pb.addEventListener('click', e => { e.stopPropagation(); onProposeToggle(item); });
+    }
+    el.appendChild(pb);
+  } else if (state.editMode) {
+    const pb = document.createElement('span');
+    pb.className = 'prop-badge prop-badge-add prop-editable';
+    pb.textContent = `${PROPOSED.mark} Propose`;
+    pb.title = 'Flag as Proposed Scope — Open Box has identified potential value add here. Keeps the existing scope tag.';
+    pb.addEventListener('click', e => { e.stopPropagation(); onProposeToggle(item); });
+    el.appendChild(pb);
+  }
+
   // Delete button (shown via CSS in edit mode)
   const delBtn = document.createElement('span');
   delBtn.className = 'del-btn';
@@ -299,14 +338,18 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
 
 function updateFilterBar() {
   // Compute counts from effective scope (incl. auto Out-of-Scope)
-  const counts = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0, auto: 0 };
+  const counts = { core: 0, custom: 0, 'out-of-scope': 0, untagged: 0, auto: 0, proposed: 0 };
   const linkedSet = linkedSystemIds();
   const expandableIds = [];
   (currentData() || []).forEach(col => {
     col.processes.forEach(proc => {
       if ((proc.subs || []).length) expandableIds.push(proc.id);
       tallyEff(effectiveScope(proc, null, linkedSet), counts);
-      (proc.subs || []).forEach(sub => tallyEff(effectiveScope(sub, proc, linkedSet), counts));
+      if (isProposed(proc)) counts.proposed++;
+      (proc.subs || []).forEach(sub => {
+        tallyEff(effectiveScope(sub, proc, linkedSet), counts);
+        if (isProposed(sub)) counts.proposed++;
+      });
     });
   });
 
@@ -330,6 +373,7 @@ function updateFilterBar() {
     counts.custom       ? `<span class="scope-count-chip scope-count-custom">CUSTOM ${counts.custom}</span>` : '',
     counts['out-of-scope'] ? `<span class="scope-count-chip scope-count-oos">${oosLabel}</span>` : '',
     counts.untagged     ? `<span class="scope-count-chip scope-count-untag">Untagged ${counts.untagged}</span>` : '',
+    counts.proposed     ? `<span class="scope-count-chip scope-count-prop" title="${PROPOSED.label}">${PROPOSED.mark} PROPOSED ${counts.proposed}</span>` : '',
   ].join('');
 }
 

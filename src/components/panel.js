@@ -1,5 +1,6 @@
 import { state } from '../state.js';
 import { clientNoteHTML } from './clientNote.js';
+import { PROPOSED, isProposed } from '../data/links.js';
 
 // Phase-2 hook: main.js injects a function returning link-section HTML for a
 // system item id (cross-references to the business view). Null = no link UI.
@@ -23,10 +24,26 @@ export function showPanel(item, bc, isPro, scopeInfo) {
          title="${eff.auto ? 'Auto — not yet linked to a value stream; review & link, or tag manually.' : ''}">${scopeLabel[eff.scope] || eff.scope}${eff.auto ? ' · auto' : ''}</span>`
     : `<span class="badge badge-scope-untagged">Untagged</span>`;
 
+  const propBadge = isProposed(item)
+    ? `<span class="badge badge-proposed" title="${PROPOSED.desc}">${PROPOSED.mark} ${PROPOSED.short}</span>`
+    : '';
+
   document.getElementById('panel-badges').innerHTML = `
     <span class="badge ${isPro ? 'badge-process' : 'badge-sub'}">${isPro ? 'Process' : 'Sub-Process'}</span>
     <span class="badge badge-mri">MRI</span>
-    ${scopeBadge}`;
+    ${scopeBadge}${propBadge}`;
+
+  // Open Box proposal block — labelled as ours, with the current state spelled
+  // out so it can never read as agreed client scope.
+  const proposalSec = isProposed(item) ? `
+      <div class="psec psec-proposed">
+        <div class="psec-label">${PROPOSED.mark} Proposed Scope — Open Box recommendation</div>
+        <p class="psec-text">${item.proposed_note
+          ? item.proposed_note
+          : '<em>No rationale captured yet. Add the value add identified in discovery via Edit Mode.</em>'}</p>
+        <p class="psec-note">Current state: ${scopeLabel[eff.scope] || 'Untagged'}. This is an Open Box
+          recommendation, not agreed scope.</p>
+      </div>` : '';
 
   const prereqs = item.mri_prereqs || [];
   const assoc   = item.mri_assoc   || [];
@@ -43,6 +60,7 @@ export function showPanel(item, bc, isPro, scopeInfo) {
         <ul class="act-list">${(item.activities || []).map(a => `<li>${a}</li>`).join('')}</ul>
       </div>
       ${clientNote}
+      ${proposalSec}
     </div>
     <div class="panel-col panel-col-right">
       <div class="psec">

@@ -1,5 +1,10 @@
 import { state, findItem, findBreadcrumb, snapshot, triggerRender } from '../state.js';
 import { renderLinkEditor } from './linkEditor.js';
+import { proposalFieldHTML, initProposalField, applyProposalField } from './proposalField.js';
+
+const SCOPE_STATE_LABELS = {
+  'core': 'Core', 'custom': 'Custom', 'out-of-scope': 'Out of scope',
+};
 
 export function openEditModal(id) {
   const item = findItem(id);
@@ -51,9 +56,11 @@ export function openEditModal(id) {
     <button class="btn-dyn-add" data-action="add-assoc">+ Add Associated Process</button>
     <div class="modal-sec-head">Linked Business Processes</div>
     <p class="field-hint" style="margin-top:-6px">Value-stream processes this MRI PMX process supports.</p>
-    <div id="em-link-editor"></div>`;
+    <div id="em-link-editor"></div>
+    ${proposalFieldHTML(item, SCOPE_STATE_LABELS[item.scope] || 'untagged')}`;
 
   renderLinkEditor(document.getElementById('em-link-editor'), id, 'system');
+  initProposalField();
 
   // Single delegated listener for the modal body
   const body = document.getElementById('em-body');
@@ -130,6 +137,7 @@ export function saveEditModal() {
       name: (row.querySelector('.assoc-name-input')?.value || '').trim(),
       desc: (row.querySelector('.assoc-desc-input')?.value || '').trim(),
     })).filter(a => a.name);
+  applyProposalField(item);
 
   closeEditModal();
   triggerRender();

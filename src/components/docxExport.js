@@ -34,6 +34,8 @@ import {
   cellParaSpacing, footerTabs,
 } from './obDocStyle.js';
 
+import { COVERAGE, collectProposals } from '../data/links.js';
+
 import coverFrameUrl from '../assets/ob-cover-frame.png';
 import pageLogoUrl   from '../assets/ob-page-logo.png';
 
@@ -385,6 +387,7 @@ export async function generateBusinessDocx({
   itemFilter    = () => true,
   linksFor      = () => [],
   coverageLabel = k => k,
+  inclProposed  = false,   // Open Box proposals are opt-in for every document
   clientName  = 'Client Name',
   projectName = 'MRI ERP Implementation',
   docTitle    = 'Business Process Taxonomy',
@@ -475,6 +478,8 @@ export async function generateBusinessDocx({
     });
   });
 
+  if (inclProposed) body.push(...proposalsBlocks());
+
   return buildBrandedDocument({
     docTitle, versionName, dateStr, clientName, projectName, scopeStr,
     bodyBlocks: body,
@@ -552,8 +557,61 @@ export async function generateDocx({
     });
   });
 
+  const proposals = includes.proposed ? proposalsBlocks() : [];
+
   return buildBrandedDocument({
     docTitle, versionName, dateStr, clientName, projectName, scopeStr,
-    bodyBlocks: [...summary, ...content],
+    bodyBlocks: [...summary, ...content, ...proposals],
   });
+}
+
+/* ── Value-Add Proposals section ──────────────────────────────────────────────
+   Mirrors buildProposalsSection() in genModal.js so the .docx and the on-screen
+   preview read identically. Emitted only when includes.proposed is set, and
+   opens with the disclaimer that these are recommendations, not agreed scope. */
+export function proposalsBlocks() {
+  const proposals = collectProposals();
+  const out = [heading('Value-Add Proposals', 0, { pageBreakBefore: true })];
+
+  if (!proposals.length) {
+    out.push(bodyPara('No proposals have been recorded. Flag items as Proposed Scope in either view to populate this section.', { italic: true }));
+    return out;
+  }
+
+  out.push(bodyPara('These are Open Box recommendations, not agreed scope. Each item below was '
+    + 'identified during discovery analysis as an opportunity to add value. They are presented '
+    + 'for client consideration and do not form part of the agreed implementation scope unless '
+    + 'separately confirmed.'));
+
+  const covLabel   = k => (COVERAGE[k] ? COVERAGE[k].label : null);
+  const scopeLabel = { core: 'Core', custom: 'Custom', 'out-of-scope': 'Out of scope' };
+
+  [['business', 'Value Stream proposals'], ['system', 'MRI PMX System proposals']].forEach(([side, title]) => {
+    const group = proposals.filter(p => p.side === side);
+    if (!group.length) return;
+    out.push(heading(title, 1));
+
+    const byMod = new Map();
+    group.forEach(p => {
+      if (!byMod.has(p.moduleLabel)) byMod.set(p.moduleLabel, []);
+      byMod.get(p.moduleLabel).push(p);
+    });
+
+    byMod.forEach((items, modLabel) => {
+      out.push(heading(modLabel, 2));
+      items.forEach(p => {
+        const current = side === 'business'
+          ? (covLabel(p.currentTag) || 'Untagged')
+          : (scopeLabel[p.currentTag] || 'Untagged');
+        out.push(heading(p.item.title, 3));
+        out.push(fieldLine('Where', p.breadcrumb));
+        out.push(fieldLine('Current state', current));
+        out.push(fieldLine('Open Box proposes', 'bringing this into scope'));
+        out.push(bodyPara(p.item.proposed_note || 'Rationale to be captured.',
+          p.item.proposed_note ? {} : { italic: true }));
+      });
+    });
+  });
+
+  return out;
 }
