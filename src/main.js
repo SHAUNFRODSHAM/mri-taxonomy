@@ -1,5 +1,5 @@
 import './styles/main.css';
-import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, snapshotAll, restoreSnapshot, currentData, triggerRender, registerRender, registerHistoryChange, isModuleVisible } from './state.js';
+import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, snapshotAll, restoreSnapshot, currentData, triggerRender, registerRender, registerHistoryChange, isModuleVisible, BUILTIN_VERSIONS } from './state.js';
 import { render, effectiveScope } from './components/grid.js';
 import { showPanel, closePanel, setSystemLinkRenderer } from './components/panel.js';
 import { openEditModal, closeEditModal, saveEditModal } from './components/editModal.js';
@@ -14,6 +14,7 @@ import { systemLinksFor, businessLinksFor, systemItemModule, initLinks, seedLink
 import { findBusinessItem, BUSINESS_DATA, BUSINESS_ORIGINAL, BUSINESS_CONFIG, BUSINESS_MODULES } from './data/business/index.js';
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData, duplicateVersion } from './versions.js';
 import { initDiscoveryWizard, openWizard, closeWizard, maybeShowEntryBanner } from './components/discoveryWizard.js';
+import { openComparePicker, openCompareResults } from './components/compareView.js';
 
 // ── CALLBACKS passed to grid renderer ─────────────────────────────────────────
 
@@ -345,9 +346,6 @@ function toggleEdit() {
   else if (state.viewMode === 'mapping') renderMapping();
   else render(gridCallbacks);
 }
-
-/** Built-in read-only baselines that cannot be overwritten. */
-const BUILTIN_VERSIONS = new Set(['original', 'discovery']);
 
 /** Show Save Changes only when in edit mode on a saved (non-built-in) version. */
 function updateSaveChangesBtn() {
@@ -780,6 +778,7 @@ document.getElementById('ver-badge').addEventListener('click', openVersionPanel)
 // Version panel
 document.getElementById('ver-panel-close').addEventListener('click', closeVersionPanel);
 document.getElementById('ver-save-as-btn').addEventListener('click', openSaveAsModal);
+document.getElementById('ver-compare-btn').addEventListener('click', openComparePicker);
 
 // Save As modal
 document.getElementById('save-as-close').addEventListener('click', closeSaveAsModal);
@@ -951,6 +950,7 @@ initDiscoveryWizard({
   },
   openMapping: () => { switchView('mapping'); closeWizardChrome(); },
   openExport:  () => { openGenModal(); closeWizardChrome(); },
+  compareToBaseline: () => { closeWizardChrome(); openCompareResults('discovery', 'live'); },
 });
 
 /** Collapse the wizard card itself when its action jumps the user into the

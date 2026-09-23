@@ -273,9 +273,12 @@ async function buildBrandedDocument({
       // size/colour come from OBDocumentTitle (SPEC.title)
       children: [run(docTitle)],
     }),
+    /* Date only. The version name prints below as the client name (a saved
+       version IS the client), and the Scope/Coverage Summary states it in
+       full — repeating it here would say the same thing three times. */
     new Paragraph({
       style: 'OBDate',
-      children: [run(`${versionName}  |  ${dateStr}`)],
+      children: [run(dateStr)],
     }),
     ...blank(3),
     new Paragraph({
@@ -331,7 +334,7 @@ async function buildBrandedDocument({
           new TextRun({ text: ' of ', ...f }),
           new TextRun({ children: [PageNumber.TOTAL_PAGES], ...f }),
           new TextRun({ text: '\t', ...f }),
-          new TextRun({ text: `${clientName}  |  ${docTitle}  |  ${versionName}`, ...f }),
+          new TextRun({ text: `${clientName}  |  ${docTitle}`, ...f }),
         ];
       })(),
     })],

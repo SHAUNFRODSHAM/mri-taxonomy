@@ -55,6 +55,13 @@ export function isModuleVisible(tab) {
   return state.moduleVisibility[tab] !== false;
 }
 
+/** Built-in read-only baselines that cannot be overwritten. Their names
+ *  ("Original", "Discovery Baseline") are app labels rather than client names,
+ *  so the document cover falls back to a placeholder while one is active.
+ *  Lives here so main.js and genModal.js share one definition — genModal cannot
+ *  import from main.js, which imports genModal. */
+export const BUILTIN_VERSIONS = new Set(['original', 'discovery']);
+
 export const MAX_HIST = 20;
 
 // Renderer registration — main.js sets this so components can trigger re-renders

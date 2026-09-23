@@ -49,9 +49,11 @@ const STEPS = [
   {
     key: 'export',
     title: 'Export',
-    body: 'Generate the client-ready document from everything scoped, tagged and mapped so far.',
+    body: 'Before exporting, it\'s worth checking what you\'ve actually changed from the baseline. Then generate the client-ready document.',
     actionLabel: 'Open Generate Doc',
     action: 'openExport',
+    secondaryLabel: 'Compare vs Baseline',
+    secondaryAction: 'compareToBaseline',
   },
 ];
 
@@ -92,6 +94,7 @@ function getProgressFor(versionId) {
  * @param {Function} opts.openSystemView    — switch to the MRI PMX System view
  * @param {Function} opts.openMapping       — switch to the Mapping view
  * @param {Function} opts.openExport        — open the Generate Doc modal
+ * @param {Function} opts.compareToBaseline — open the version-compare view (Discovery Baseline vs the current session)
  * @param {Function} opts.startNewVersion   — open the Save-As-New-Version modal
  * @param {Function} opts.getVersionId      — () => current state.activeVersionId
  * @param {Function} opts.isBaselineVersion — (id) => true if id is 'original' or 'discovery'
@@ -200,6 +203,7 @@ function runAction(name) {
     openSystemView:     callbacks.openSystemView,
     openMapping:        callbacks.openMapping,
     openExport:         callbacks.openExport,
+    compareToBaseline:  callbacks.compareToBaseline,
   }[name];
   if (fn) fn();
 }

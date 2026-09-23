@@ -1282,148 +1282,240 @@ export const cm = [
   },
 
   /* ── 9. RETAIL MANAGEMENT ────────────────────────────────────────────────── */
+  // Retail/percentage-rent is not a standalone module: base percentage-rent
+  // capability and the Retail tab are native to Commercial Management, while
+  // the deeper apparatus — sales-department-level capture, tiered breakpoints,
+  // sales estimation, the 3-tier retail category hierarchy, retail-by-master-
+  // occupant and the dedicated reporting suite — is delivered by Advanced
+  // Retail, a SEPARATELY LICENSED extension. Availability must never be
+  // assumed from CM licensing alone (one implementation licensed Advanced
+  // Retail for a single region while CM was licensed more broadly).
   {
     id: 'cm-retail',
     title: 'Retail Management',
     processes: [
       {
         id: 'cm-retail-percentage',
-        title: 'Percentage & Turnover Rent',
+        title: 'Retail Tab & Lease Configuration',
         type: 'process',
-        desc: 'Rent that flexes with a retail tenant\'s trading performance — percentage and turnover rent calculated against reported sales, over agreed breakpoints. This is how landlords share in the upside of a successful retail location.',
+        desc: 'Retail configuration is held per lease, on a dedicated Retail tab within Manage Leases. The tab carries a persistent summary (year-to-date sales, most recent figure, sales year dates, reporting frequency and grace period) alongside Sales history, Sales summary, Sales analysis and Sales year views, and the Settings panel that actually drives percentage-rent calculation.',
         activities: [
-          'Configure percentage and turnover rent with natural, artificial or cumulative breakpoints',
-          'Set the lease options — breakpoints, percentages and any offsets/credits',
-          'Run PCALC to calculate and post percentage-rent charges to the tenant ledger',
+          'Configure the Settings — Reporting information: reporting frequency, default sales department, report-type priority, the report type required to close the sales year, estimating method and sales grace period',
+          'Configure the Settings — Billing grid: one or more rows mapping a sales department to an income category, billing method and billing frequency',
+          'Configure the Settings — Breakpoints grid: percentage/threshold tiers keyed by sales department and start date',
         ],
-        mri_title: 'PCALC — Percentage Rent (CM > Retail > PCALC)',
+        mri_title: 'Retail Tab (CM > Manage Leases > Retail)',
         mri_prereqs: [
-          'Retail module licensed and enabled',
-          'Sales data captured for the period being calculated',
+          'Lease created, with income categories and sales departments available to reference',
         ],
         mri_assoc: [
-          { name: 'CM > Retail > PCALC', desc: 'Percentage-rent calculation and posting' },
+          { name: 'CM > Manage Leases > Retail > Settings', desc: 'Reporting information, billing grid and breakpoints that drive percentage-rent calculation' },
+          { name: 'CM > Manage Leases > Retail > Sales history / Sales summary / Sales analysis / Sales year', desc: 'Period-by-period, aggregated and graphical views of captured sales' },
         ],
         subs: [
           {
-            id: 'cm-retail-percentage-breakpoints',
-            title: 'Breakpoints & Lease Options',
-            desc: 'The percentage-rent terms on the lease — breakpoints, percentages and offsets.',
+            id: 'cm-retail-percentage-reporting',
+            title: 'Settings — Reporting Information',
+            desc: 'The lease-level fields controlling how sales are reported and how the sales year is managed, including whether percentage rent replaces or tops up minimum rent, and whether breakpoints are natural (derived from base rent) or lease-defined.',
             activities: [
-              'Configure natural/artificial/cumulative breakpoints',
-              'Set percentages, offsets and credits per the lease',
+              'Set reporting frequency, sales year start/end and sales grace period',
+              'Set report-type priority, the report type required to close the year, and the estimating method',
             ],
-            mri_title: 'CM > Retail > Lease Options',
+            mri_title: 'CM > Manage Leases > Retail > Settings',
             mri_assoc: [
-              { name: 'CM > Retail', desc: 'Percentage-rent lease options' },
+              { name: 'CM > Manage Leases > Retail > Settings', desc: 'Reporting information fields' },
             ],
           },
           {
-            id: 'cm-retail-percentage-pcalc',
-            title: 'PCALC Run',
-            desc: 'Calculating and posting percentage rent from reported sales.',
+            id: 'cm-retail-percentage-billing',
+            title: 'Settings — Billing',
+            desc: 'The grid that maps percentage rent to an income category, sales department, billing method and frequency. Multiple rows are supported, so different sales departments within one lease can bill to different income categories or on different frequencies.',
             activities: [
-              'Run PCALC for the period',
-              'Review and post the calculated percentage-rent charges',
+              'Add a billing row per sales department, with income category and billing method',
+              'Set billing frequency per row (e.g. monthly)',
             ],
-            mri_title: 'CM > Retail > PCALC',
+            mri_title: 'CM > Manage Leases > Retail > Settings',
             mri_assoc: [
-              { name: 'CM > Retail > PCALC', desc: 'Percentage-rent calculation (update mode posts charges)' },
+              { name: 'CM > Manage Leases > Retail > Settings', desc: 'Billing grid' },
+            ],
+          },
+          {
+            id: 'cm-retail-percentage-breakpoints',
+            title: 'Settings — Breakpoints',
+            desc: 'The tiered percentage/threshold structure the percentage-rent calculation reads — at least five percentage/breakpoint pairs are exposed per sales department and start date. Natural breakpoints derive the threshold from base rent and the percentage; lease-defined breakpoints are entered explicitly. Breakpoints are date-effective, so the structure can change through the lease term (e.g. a pure-turnover year one converting to a fixed base from year two). Tiered breakpoints are an Advanced Retail capability.',
+            activities: [
+              'Enter percentage/breakpoint tiers per sales department and start date',
+              'Choose natural or lease-defined breakpoints',
+              'Set the cumulative option and Prorate Monthly to control accumulation and timing',
+            ],
+            mri_title: 'CM > Manage Leases > Retail > Settings',
+            mri_prereqs: [
+              'Advanced Retail licensed, for tiered/multi-department breakpoint structures',
+            ],
+            mri_assoc: [
+              { name: 'CM > Manage Leases > Retail > Settings', desc: 'Breakpoints grid' },
             ],
           },
         ],
+      },
+      {
+        id: 'cm-retail-departments',
+        title: 'Sales Departments',
+        type: 'process',
+        desc: 'Segmenting a tenant\'s turnover by trade category within a single lease — the mechanism behind different percentage rates by product line within one tenant, excluded sales categories (e.g. a pharmacy\'s dispensary stream), split turnover entry where one lease covers two brands or two physically separate stores, and food-court seating treatment (communal seating excluded, dedicated seating included). Each sales department carries its own breakpoint set and bills on its own terms. An Advanced Retail capability.',
+        activities: [
+          'Define a sales department for each turnover category, exclusion, or co-located brand that needs its own billing terms',
+          'Configure a distinct breakpoint set per sales department',
+        ],
+        mri_title: 'Sales Departments (CM > Manage Leases > Retail > Settings)',
+        mri_prereqs: [
+          'Advanced Retail licensed and enabled',
+        ],
+        mri_assoc: [
+          { name: 'CM > Manage Leases > Retail > Settings', desc: 'Sales department definition and per-department billing/breakpoints' },
+        ],
+        subs: [],
       },
       {
         id: 'cm-retail-sales',
-        title: 'Sales Reporting & Estimation',
+        title: 'Sales Capture',
         type: 'process',
-        desc: 'Capturing the tenant sales figures that percentage rent depends on, and the reporting that turns them into insight and projections. Reliable sales data is the foundation of both accurate turnover rent and landlord asset-management decisions.',
+        desc: 'Getting tenant turnover into the system — by direct batch entry, tenant self-service, or a system-generated estimate where nothing has been received. Every entry carries a reported date and a report type (Reported, Estimated, Verbal, Forecast, or Certified), giving the audit trail for deadline compliance and for the certified-vs-reported true-up.',
         activities: [
-          'Capture monthly sales, annual turnover certificates and trading-hours compliance',
-          'Estimate sales where actuals are outstanding, to project percentage rent',
-          'Collect Tenant Connect sales entry and run Gross Sales / Net Sales / Comparative Sales reports',
+          'Capture sales directly, including bulk entry across multiple tenants, via Retail Sales Batch Entry',
+          'Where licensed, receive tenant-submitted turnover via the MRI Tenant Connect Sales Entry portal',
+          'Generate an estimated sales figure where a tenant has not reported, using an estimating method',
         ],
-        mri_title: 'Sales Entry (CM > Retail > Sales Entry)',
+        mri_title: 'Sales Entry (CM > Manage Leases > Retail > Sales history)',
         mri_prereqs: [
           'Retail lease options and reporting categories configured',
+          'A bulk file-based import is not a standard PMX capability — confirm scope separately if required',
         ],
         mri_assoc: [
-          { name: 'CM > Retail > Sales Entry', desc: 'Sales figure capture and retail sales reporting' },
+          { name: 'CM > Manage Leases > Retail > Sales history', desc: 'Reported, estimated and certified sales figures, each carrying a report type and reported date' },
         ],
         subs: [
           {
-            id: 'cm-retail-sales-capture',
-            title: 'Sales Capture',
-            desc: 'Recording tenant sales figures, whether keyed or submitted via Tenant Connect.',
+            id: 'cm-retail-sales-batch',
+            title: 'Retail Sales Batch Entry',
+            desc: 'Direct, in-system capture of tenant sales figures, including bulk entry across multiple tenants — removing the external Excel compile-and-import step.',
             activities: [
-              'Capture monthly sales and turnover certificates',
-              'Import Tenant Connect sales submissions',
+              'Enter sales figures per tenant',
+              'Bulk-enter figures across multiple tenants in one batch',
             ],
-            mri_title: 'CM > Retail > Sales Entry',
+            mri_title: 'CM > Manage Leases > Retail > Sales history',
             mri_assoc: [
-              { name: 'CM > Retail > Sales Entry', desc: 'Sales figure capture' },
+              { name: 'CM > Manage Leases > Retail > Sales history', desc: 'Retail Sales Batch Entry' },
             ],
           },
           {
-            id: 'cm-retail-sales-reporting',
-            title: 'Sales Reporting & Estimation',
-            desc: 'Analytical reporting on sales and estimation where actuals are outstanding.',
+            id: 'cm-retail-sales-tenantconnect',
+            title: 'Tenant Connect Sales Entry',
+            desc: 'Tenant self-service submission of turnover: tenants review their own reported and certified sales history and submit directly, batching into Retail Sales Batch Entry with email confirmation. Tenant Connect is part of the broader MRI Software suite and is not explicitly part of PMX — it must be scoped and licensed as a separate component.',
             activities: [
-              'Run Gross/Net/Comparative sales reports',
-              'Estimate sales to project percentage rent',
+              'Tenant reviews reported/certified sales history and submits turnover via the portal',
+              'Submission batches into Retail Sales Batch Entry with email confirmation',
             ],
-            mri_title: 'CM > Retail > Sales Reports',
+            mri_title: 'MRI Tenant Connect — Sales Entry (separate MRI Software component)',
+            mri_prereqs: [
+              'MRI Tenant Connect licensed and scoped independently of PMX',
+            ],
             mri_assoc: [
-              { name: 'CM > Retail', desc: 'Retail sales reporting and estimation' },
+              { name: 'MRI Tenant Connect > Sales Entry', desc: 'Tenant self-service turnover submission, feeding Retail Sales Batch Entry' },
+            ],
+          },
+          {
+            id: 'cm-retail-sales-estimate',
+            title: 'Sales Estimates',
+            desc: 'A system-generated sales figure that maintains billing and reporting continuity when a tenant has not reported for the period.',
+            activities: [
+              'Select an estimating method to generate a projected sales figure',
+              'Confirm at least one full prior year of sales history exists — required before estimates can be calculated',
+            ],
+            mri_title: 'CM > Manage Leases > Retail > Settings',
+            mri_assoc: [
+              { name: 'CM > Manage Leases > Retail > Settings', desc: 'Estimating method configuration' },
             ],
           },
         ],
       },
       {
-        id: 'cm-retail-setup',
-        title: 'Retail Setup & Categories',
+        id: 'cm-retail-percentage-calc',
+        title: 'Percentage Rent Calculation & Posting',
         type: 'process',
-        desc: 'The reference setup that underpins retail sales capture and percentage-rent calculation — reporting categories, building defaults, and the grouping of sales by master occupant. Configured once, it keeps retail data consistent across the estate.',
+        desc: 'The engine that converts captured sales into a billable charge: it reads captured sales per sales department, applies the applicable breakpoint tiers, and determines whether a turnover charge is due for the period. It supports base-plus-turnover top-up, pure-turnover, and percentage-rent-in-lieu-of-minimum-rent structures.',
         activities: [
-          'Configure retail reporting categories and building defaults',
-          'Set up retail by master occupant to combine sales histories across shared leases',
-          'Maintain retail lookup lists (NAICS, SIC, retail chains, national tenants, store/tenant categories)',
+          'Run the calculation in edit mode first — nothing is posted, producing a preliminary report for review',
+          'Set the update flag to post the charge to the lease\'s billing / recurring charges against the configured income category',
+          'Generate a percentage rent letter where required — in practice usually customised for client distribution',
         ],
-        mri_title: 'Advanced Retail (CM > Retail > Advanced Retail)',
+        mri_title: 'Percentage Rent (CM > Manage Leases > Retail)',
         mri_prereqs: [
-          'Lookup lists and income categories available',
+          'Retail tab configured — Settings, billing grid and breakpoints in place',
+          'Sales data captured for the period being calculated',
         ],
         mri_assoc: [
-          { name: 'CM > Retail', desc: 'Retail reference setup, categories and master-occupant grouping' },
+          { name: 'CM > Manage Leases > Retail', desc: 'Percentage-rent calculation, run in edit mode then posted via the update flag' },
         ],
         subs: [
           {
-            id: 'cm-retail-setup-categories',
-            title: 'Reporting Categories & Defaults',
-            desc: 'The categories and building defaults that structure retail sales capture.',
+            id: 'cm-retail-percentage-calc-posting',
+            title: 'Posting Chain — Rent Up & GL',
+            desc: 'Once posted, the percentage-rent charge is picked up by the next Rent Up (Rental Update List) run, posted to the tenant ledger, and journalised into GL via Create Journal Entries.',
             activities: [
-              'Configure reporting categories and building defaults',
-              'Set retail-by-master-occupant grouping',
+              'Confirm the posted charge appears in the recurring charges for the next Rent Up run',
+              'Run Rent Up (edit mode, then update) to post the charge to the tenant ledger',
+              'Run Create Journal Entries to sweep the unjournalised item into GL using the income category / source code / cash type mapping',
             ],
-            mri_title: 'CM > Retail > Advanced Retail',
+            mri_title: 'CM > Monthly Activities > Rent Up',
             mri_assoc: [
-              { name: 'CM > Retail', desc: 'Retail reporting categories and defaults' },
-            ],
-          },
-          {
-            id: 'cm-retail-setup-lookups',
-            title: 'Retail Lookup Lists',
-            desc: 'The retail-specific reference lists used to classify tenants and stores.',
-            activities: [
-              'Maintain NAICS/SIC, retail chains and national tenants',
-              'Maintain store and tenant categories',
-            ],
-            mri_title: 'CM > Setup & Maintenance > Commercial Management > Lookup Lists',
-            mri_assoc: [
-              { name: 'CM > Setup & Maintenance > Commercial Management > Lookup Lists', desc: 'Retail lookup-list maintenance' },
+              { name: 'CM > Monthly Activities > Rent Up', desc: 'Monthly billing run that posts recurring charges, including percentage rent, to tenant ledgers' },
+              { name: 'CM > Monthly Activities > Create Journal Entries', desc: 'Journalises posted CM activity into GL' },
             ],
           },
         ],
+      },
+      {
+        id: 'cm-retail-categories',
+        title: 'Retail Category Hierarchy',
+        type: 'process',
+        desc: 'A three-tier classification — Store Category → Tenant Category → Tenant Type — supporting industry-standard category alignment (e.g. Clear Index categories), sort sequences for report grouping, and industry sales averages for benchmarking. An Advanced Retail capability.',
+        activities: [
+          'Maintain the Store Category → Tenant Category → Tenant Type hierarchy',
+          'Set sort sequences for report grouping and align to industry-standard categories for benchmarking',
+        ],
+        mri_title: 'Retail Category Hierarchy (CM > Setup & Maintenance > Commercial Management > Lookup Lists)',
+        mri_prereqs: [
+          'Advanced Retail licensed and enabled',
+        ],
+        mri_assoc: [
+          { name: 'CM > Setup & Maintenance > Commercial Management > Lookup Lists', desc: '3-tier retail category hierarchy and industry benchmark alignment' },
+        ],
+        subs: [],
+      },
+      {
+        id: 'cm-retail-reporting',
+        title: 'Retail Reporting',
+        type: 'process',
+        desc: 'The standard retail reporting suite, drawing on up to 24 months of sales history. Native retail metrics are turnover, trading density and growth; effort ratio (occupancy cost) and GLA-based ratios are achievable via configurable report columns but are not native metrics. Colour-coded management-pack formatting is a presentation-layer activity applied downstream of these reports, not a native report-engine capability. An Advanced Retail capability.',
+        activities: [
+          'Run Sales Performance (MRI_SALEPERF) to rank tenants by performance — sortable by store, tenant, region, lease or user-defined category, producing top/bottom-N schedules',
+          'Run Gross Sales (MRI_GSALES) for prior-year vs current-year, rolling 12-month and year-on-year comparison',
+          'Run Lease Profile (MRI_PROFILE) for tenancy-schedule reporting direct from system data, including risk-flagged schedules where flags are added as report columns',
+          'Run Category Reference (MRI_CATREFRT) to group and list leases by the 3-tier retail category hierarchy',
+        ],
+        mri_title: 'Retail Reports (CM > Reports > Retail)',
+        mri_prereqs: [
+          'Advanced Retail licensed and enabled',
+          'Retail category hierarchy and sales departments configured',
+        ],
+        mri_assoc: [
+          { name: 'CM > Reports > Retail > Sales Performance (MRI_SALEPERF)', desc: 'Tenant performance ranking and top/bottom-N schedules' },
+          { name: 'CM > Reports > Retail > Gross Sales (MRI_GSALES)', desc: 'Prior-year vs current-year and rolling 12-month/YoY comparison' },
+          { name: 'CM > Reports > Retail > Lease Profile (MRI_PROFILE)', desc: 'Tenancy-schedule reporting, including risk-flagged schedules' },
+          { name: 'CM > Reports > Retail > Category Reference (MRI_CATREFRT)', desc: 'Leases grouped by the 3-tier retail category hierarchy' },
+        ],
+        subs: [],
       },
     ],
   },
