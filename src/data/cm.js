@@ -1517,6 +1517,120 @@ export const cm = [
         ],
         subs: [],
       },
+      {
+        id: 'cm-retail-compliance',
+        title: 'Certified Sales & Turnover Audit Compliance',
+        type: 'process',
+        desc: 'The annual true-up against audited turnover, and the reporting discipline that supports it. Certified sales are tracked as a distinct sales report type, and every sales entry carries a reported date — together these provide the audit trail for deadline compliance and for the certified-versus-reported reconciliation. The audited certificate is typically due within 90 days of the tenant\'s own financial year-end, so obligations fall due on a rolling basis per tenant rather than on one portfolio date.',
+        activities: [
+          'Record certified sales against the lease using the certified sales report type, distinct from reported, estimated, verbal and forecast figures',
+          'Use the reported date captured on every entry to evidence compliance with the lease submission deadline',
+          'Compare the certified annual figure against the monthly reported figures and raise the resulting debit or credit true-up',
+          'Set the report type required to close the sales year so a year cannot close on an estimate',
+          'Charge a late-submission penalty through a dedicated income category when the lease triggers one',
+        ],
+        mri_title: 'Sales Report Types & Year Close (CM > Retail > Settings; CM > Retail > Sales History)',
+        mri_prereqs: [
+          'Advanced Retail licensed and enabled',
+          'Sales report types configured, including a certified type',
+          'Report type required to close year set on the lease Retail Settings',
+          'An income category available for penalty charging where the lease provides for one',
+        ],
+        mri_assoc: [
+          { name: 'CM > Retail > Settings > Reporting Information', desc: 'Report type priority, report type required to close year, and require-adjustment-to-close-year controls' },
+          { name: 'CM > Retail > Sales History', desc: 'Period-by-period sales entry carrying report type and reported date as the audit trail' },
+          { name: 'CM > Setup & Maintenance > Commercial Management > Income Categories', desc: 'Income category used to bill a late-submission penalty when triggered' },
+        ],
+        subs: [
+          {
+            id: 'cm-retail-compliance-reminders',
+            title: 'Overdue Certificate Reminders & Alarms',
+            desc: 'Proactive chasing of an overdue turnover certificate or a missed monthly submission. Reminders, alarms and escalation workflow are not native retail features in MRI PMX — the reported date and certified report type make the overdue position visible and reportable, but nothing pushes an alert. Closing this needs workflow configuration or customisation.',
+            activities: [
+              'Identify leases whose monthly submission or audited certificate has passed its due date',
+              'Escalate non-submission through breach letter, remedy period and penalty as the lease provides',
+            ],
+            mri_title: 'Not native — workflow configuration or customisation required',
+            mri_prereqs: [
+              'Reported dates captured consistently so the overdue position is derivable',
+            ],
+            mri_assoc: [
+              { name: 'CM > Retail > Sales History', desc: 'Source of reported date and report type from which an overdue position can be reported' },
+            ],
+            // Explicit Gap in the capability reference — recorded as an Open Box
+            // proposal rather than written up as though PMX delivers it.
+            proposed: true,
+            proposed_note: 'MRI PMX has no native reminder or alarm for an overdue turnover certificate, yet non-submission is a lease breach carrying a remedy period and a monetary penalty. Chasing is manual today. Open Box proposes configuring workflow to derive the overdue position from the reported date and drive the breach escalation automatically — protecting penalty income and removing a recurring manual watch.',
+          },
+        ],
+      },
+      {
+        id: 'cm-retail-special',
+        title: 'Special Retail Lease Treatments',
+        type: 'process',
+        desc: 'The lease-level parameters that decide what actually counts as turnover, and the differing treatments particular retail formats need. The turnover base is a per-lease parameter — in some leases turnover is measured against basic rent, in others against a gross-rental definition that may include basic rent plus operating costs, rates and, for restaurants, outside seating. This must be captured per lease because it drives the calculation base for every turnover lease.',
+        activities: [
+          'Capture the turnover base per lease — basic rent, or a wider gross-rental definition',
+          'Flag cotenancy provisions on the lease where a tenant\'s obligations depend on other tenants trading',
+          'Exclude communal food-court seating from turnover and trading density while including genuinely dedicated seating',
+          'Treat a genuine kiosk lease as carrying a turnover component, distinct from very short-term promotional space let at a fixed premium',
+          'Exclude parking from turnover unless it is defined as gross-rental space, and bill aerial and antenna base stations purely per square metre',
+          'Isolate excluded revenue streams in their own sales department so the exclusion rule is explicit and auditable',
+        ],
+        mri_title: 'Retail Settings & Sales Departments (CM > Retail > Settings)',
+        mri_prereqs: [
+          'Advanced Retail licensed and enabled',
+          'Sales departments defined for any category requiring separate treatment or exclusion',
+        ],
+        mri_assoc: [
+          { name: 'CM > Retail > Settings', desc: 'Cotenancy flag and the reporting and billing parameters that frame the turnover calculation' },
+          { name: 'CM > Retail > Settings > Breakpoints', desc: 'Per-sales-department breakpoint sets that let each format bill on its own terms' },
+          { name: 'CM > Setup & Maintenance > Commercial Management > Retail Options', desc: 'Retail grouping and accumulation settings, including retail by master occupant' },
+        ],
+        subs: [
+          {
+            id: 'cm-retail-special-shortterm',
+            title: 'Short-Term & Promotional Space Turnover',
+            desc: 'Turnover tracking on very short-term and promotional lettings. Short-term agreements sit in Corporate Accounts Receivable rather than Commercial Management, and there is no current method to track turnover values there — so any turnover component on this space falls outside the retail apparatus.',
+            activities: [
+              'Let very short-term promotional space on a fixed premium with no turnover component',
+              'Identify where a short-term letting nonetheless warrants turnover capture',
+            ],
+            mri_title: 'Not supported — short-term agreements sit in Corporate AR',
+            mri_prereqs: [
+              'Short-term and promotional lettings administered through Corporate Accounts Receivable',
+            ],
+            mri_assoc: [
+              { name: 'Corporate AR > Charges', desc: 'Where short-term and promotional lettings are billed, without retail turnover capability' },
+            ],
+            // Explicit Gap in the capability reference.
+            proposed: true,
+            proposed_note: 'Short-term and promotional lettings are administered in Corporate AR, which has no turnover tracking, so any turnover earned on this space is invisible to the retail reporting suite and to trading-density analysis. As centres lean more on pop-up and promotional formats this becomes a real revenue blind spot. Open Box proposes scoping a customisation to capture turnover against short-term agreements and feed it into the same reporting.',
+          },
+        ],
+      },
+      {
+        id: 'cm-retail-configuration',
+        title: 'Retail Page Configuration',
+        type: 'process',
+        desc: 'Tailoring the retail and lease screens to the way the business actually works, without code. The Configuration Console shows and hides panels; Page Builder modifies layout, fields and functionality. Configured panels can be started from a base page and tailored, with the stated design intent that future product updates do not break the changes.',
+        activities: [
+          'Show or hide retail panels so consultants and administrators see only what their role needs',
+          'Modify layout, fields and functionality on the lease and retail pages without code',
+          'Start a configured panel from a base page so product updates do not break the tailoring',
+          'Reach legacy lease administration functions — renew, transfer to another suite, vacate with selective data copy — through the Classic lease details view on the Actions menu',
+        ],
+        mri_title: 'Configuration Console & Page Builder',
+        mri_prereqs: [
+          'Configuration Console and Page Builder access granted to the configuring role',
+        ],
+        mri_assoc: [
+          { name: 'Configuration Console', desc: 'Show and hide panels on the lease and retail pages' },
+          { name: 'Page Builder', desc: 'Modify layout, fields and functionality without code, including the configured retail settings panels' },
+          { name: 'CM > Manage Leases > Actions > Classic lease details', desc: 'Legacy Lease Administration functions not surfaced on the modern lease screen' },
+        ],
+        subs: [],
+      },
     ],
   },
 

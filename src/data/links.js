@@ -251,10 +251,15 @@ const GROUP_LINKS = {
   'vs-l2c-g1': ['cm-lease-setup', 'cm-lease-special', 'rm-leasing-prospects', 'rm-leasing-application', 'rm-leasing-execution'],
   'vs-l2c-g2': ['cm-lease-admin', 'cm-lease-setup'],
   'vs-l2c-g3': ['cm-billing-recurring', 'cm-cpi-escalations', 'rm-billing-charges'],
-  'vs-l2c-g4': ['cm-recov-service', 'cm-recov-setup', 'cm-recov-recon'],
-  'vs-l2c-g5': ['cm-cash-receipts', 'cm-cash-recon', 'cm-billing-adjustments', 'rm-billing-receipts', 'rm-billing-delinquency'],
-  'vs-l2c-g6': ['cm-billing-advanced', 'cm-income-mapping', 'gl-journals-operational'],
-  'vs-l2c-g7': ['cm-lease-admin', 'rm-residents-renewal', 'rm-residents-moveout'],
+  // NOTE: value-stream group ids are POSITIONAL (`${vs.id}-g${index+1}`), so
+  // inserting a group renumbers every group after it. "Retail Turnover &
+  // Trading Performance" was inserted at position 4, which shifted the four
+  // groups below up by one — their link keys were remapped to match.
+  'vs-l2c-g4': [],   // Retail Turnover & Trading Performance — see CARD_LINKS
+  'vs-l2c-g5': ['cm-recov-service', 'cm-recov-setup', 'cm-recov-recon'],
+  'vs-l2c-g6': ['cm-cash-receipts', 'cm-cash-recon', 'cm-billing-adjustments', 'rm-billing-receipts', 'rm-billing-delinquency'],
+  'vs-l2c-g7': ['cm-billing-advanced', 'cm-income-mapping', 'gl-journals-operational'],
+  'vs-l2c-g8': ['cm-lease-admin', 'rm-residents-renewal', 'rm-residents-moveout'],
 
   // Quote to Cash → Corporate Accounts Receivable
   'vs-q2c-g1': ['car-acct-setup', 'car-acct-tracking'],
@@ -320,6 +325,22 @@ const CARD_LINKS = {
   'vs-l2c-g3-p4': ['cm-retail-departments'],                            // Retail sales departments
   'vs-l2c-g3-p5': ['cm-retail-sales'],                                  // Retail sales capture & estimation
   'vs-l2c-g3-p6': ['cm-retail-categories', 'cm-retail-reporting'],      // Retail category hierarchy & reporting
+
+  // Lease to Cash › Retail Turnover & Trading Performance (AR-010 to AR-090).
+  // Card-level rather than group-level: these are distinct business processes
+  // whose system counterparts differ card by card, and several have no direct
+  // MRI PMX counterpart at all (governance, tenant mix, deal negotiation) —
+  // group-level links would over-link the whole set to retail screens.
+  'vs-l2c-g4-p2': ['cm-retail-categories', 'cm-setup-lookups'],         // Tenant mix, zoning & category management
+  'vs-l2c-g4-p3': ['cm-retail-percentage', 'cm-retail-percentage-breakpoints'], // Lease structuring & turnover determination
+  'vs-l2c-g4-p4': ['cm-retail-percentage-reporting', 'cm-retail-departments'],  // Turnover base & exclusions
+  'vs-l2c-g4-p5': ['cm-retail-sales', 'cm-retail-sales-batch'],         // Turnover certificate & audit compliance
+  'vs-l2c-g4-p6': ['cm-lease-setup'],                                   // Franchise, guarantor & co-tenancy
+  'vs-l2c-g4-p7': ['cm-retail-departments', 'cm-lease-special'],        // Special tenant category leasing
+  'vs-l2c-g4-p8': ['cm-retail-reporting', 'cm-retail-categories'],      // Trading performance reporting
+  'vs-l2c-g4-p9': ['cm-lease-admin', 'cm-retail-percentage-calc'],      // Retail renewal & turnover repricing
+  // vs-l2c-g4-p1 (Retail leasing governance) has no MRI PMX counterpart —
+  // it is an organisational control, left as a deliberate gap.
 };
 
 /** Find a business column (L2 group) by id across all value streams. */
