@@ -1923,34 +1923,36 @@ body {
   --prop-lt:     #f7f2f6;   /* faint purple tint for panel blocks on white */
 }
 
-/* Card treatment — a dashed left edge so the proposal reads at a glance
-   without hiding the item's own scope/coverage badge. */
+/* Card treatment — a purple left edge and nothing else. An earlier version also
+   washed a pale tint across the card, which muddied the background without
+   adding information the edge and the badge do not already carry. */
 .is-proposed {
-  border-left: 3px dashed var(--prop-accent) !important;
-  background-image: linear-gradient(90deg, var(--prop-lt) 0%, transparent 42%);
+  border-left: 3px solid var(--prop-accent) !important;
 }
 
-/* The ✦ PROPOSED chip. Sits ALONGSIDE the scope/coverage badge — the pair is
-   the whole point ("Outside today ✦ PROPOSED"). */
+/* The ✦ PROPOSED chip — solid Open Box purple, no outline.
+   Note white on #B07AA1 is 3.42:1: it clears the 3:1 for UI elements but sits
+   under the 4.5:1 for small text. The purple is mid-tone (luminance 0.257), so
+   no text colour does better — brand ink is worse at 3.28:1. Size and weight
+   are nudged up to compensate, and the ✦ glyph plus the tooltip carry the
+   meaning independently of the label. */
 .prop-badge {
   flex-shrink: 0; display: inline-block; margin-left: 6px; vertical-align: middle;
-  font-size: 0.56rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.03em; padding: 2px 7px; border-radius: 10px;
-  color: #fff; background: var(--prop); white-space: nowrap;
-  border: 1px solid var(--prop-accent);   /* brand purple reads on the ink at 3.28:1 */
+  font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.04em; padding: 3px 9px; border-radius: 10px;
+  color: #fff; background: var(--prop-accent); white-space: nowrap;
+  border: none;
 }
-/* Cards in BOTH views share the same dark #6E7878 background with white text,
-   so outline chips must use the light violet — the solid fill colour scores
-   only 1.6:1 there and disappears. */
-/* Against #6E7878 only near-white text reaches AA (4.5:1) — even a pale violet
-   tops out around 3.3:1. So the text is white and the VIOLET WASH carries the
-   identity: white on a 55% violet fill measures 6.4:1 against that blend. */
+/* The "not yet proposed" affordance. Deliberately NOT purple-filled — a solid
+   purple fill means the item IS proposed, so this stays an outline on the ink
+   wash. White on that blend is 8.65:1. */
 .prop-badge.prop-badge-add {
   color: #fff; background: rgba(55,60,60,0.72);
   border: 1px dashed var(--prop-accent);
+  font-weight: 700; font-size: 0.56rem; padding: 2px 7px;
 }
 .prop-badge.prop-badge-add:hover {
-  background: var(--prop); border-color: #fff;
+  background: var(--prop-accent); border-style: solid;
 }
 .prop-badge.prop-editable { cursor: pointer; }
 .prop-badge.prop-editable:hover { filter: brightness(1.12); }
@@ -1963,15 +1965,15 @@ body {
   cursor: pointer; white-space: nowrap;
 }
 .prop-filter-btn:hover  { background: var(--prop-lt); }
-.prop-filter-btn.active { background: var(--prop); color: #fff; border-style: solid; }
+.prop-filter-btn.active { background: var(--prop-accent); color: #fff; border-style: solid; }
 
 /* Count chip in the System view filter bar */
 .scope-count-chip.scope-count-prop {
-  color: #fff; background: var(--prop);
+  color: #fff; background: var(--prop-accent);
 }
 
 /* Detail-panel badge + proposal block */
-.badge.badge-proposed { color: #fff; background: var(--prop); }
+.badge.badge-proposed { color: #fff; background: var(--prop-accent); }
 .psec.psec-proposed {
   border-left: 3px dashed var(--prop-accent);
   background: var(--prop-lt);
@@ -2004,7 +2006,7 @@ body {
   font-weight: 700; padding: 0;
 }
 .map-chip-prop:hover     { border-color: var(--prop-accent); color: var(--prop); }
-.map-chip-prop.active    { background: var(--prop); border-color: var(--prop-accent); color: #fff; }
+.map-chip-prop.active    { background: var(--prop-accent); border-color: var(--prop-accent); color: #fff; }
 
 .cell-flow-chip.cell-flow-chip-proposed {
   border: 1px dashed var(--prop-accent) !important;
@@ -2012,7 +2014,7 @@ body {
 }
 .cell-flow-prop-tag {
   font-size: 8.5px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.03em; color: #fff; background: var(--prop);
+  letter-spacing: 0.03em; color: #fff; background: var(--prop-accent);
   border-radius: 8px; padding: 1px 6px; white-space: nowrap;
 }
 .cell-flow-pip.cell-flow-pip-proposed {
@@ -2123,12 +2125,13 @@ body {
 .is-proposed-derived {
   border-left: 3px dotted var(--prop-accent) !important;
 }
-/* Same reasoning as the add chip: white text on a violet wash. Kept lighter
-   than the add chip and dotted rather than dashed, so direct / offered /
-   implied stay distinguishable by fill and border as well as by wording. */
+/* A softened purple fill — the same family as the solid direct badge so the
+   relationship is obvious, but lighter and dotted so "implied by a link" never
+   reads as "someone proposed this". */
 .prop-badge.prop-badge-derived {
-  color: #fff; background: rgba(55,60,60,0.6);
-  border: 1px dotted var(--prop-accent); font-weight: 700;
+  color: #fff; background: rgba(176,122,161,0.6);
+  border: 1px dotted #fff; font-weight: 700;
+  font-size: 0.56rem; padding: 2px 7px;
   cursor: help;
 }
 .scope-count-chip.scope-count-prop-derived {
