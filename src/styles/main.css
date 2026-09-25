@@ -1851,8 +1851,18 @@ body {
   color: #fff; background: var(--cov, #8a8a8a); border-radius: 9px; padding: 1px 7px;
 }
 .cov-badge.cov-editable { cursor: pointer; }
+/* "+ Coverage" placeholder. Sits on the dark #6E7878 card, where the old
+   #999 on transparent scored ~1.35:1. It is an edit-mode affordance, so it
+   needs to be findable — lifted to near-white on a subtle wash. */
+/* Note the wash must DARKEN, not lighten. A white wash raises the background
+   luminance and works against the white text — a 14% white fill dropped this
+   from 4.5:1 to 3.5:1. Darkening instead takes it to ~6.3:1. */
 .cov-badge.cov-badge-untagged {
-  color: var(--ink3); background: transparent; border: 1px dashed var(--border2);
+  color: #fff; background: rgba(0,0,0,0.18);
+  border: 1px dashed rgba(255,255,255,0.7);
+}
+.cov-badge.cov-badge-untagged:hover {
+  background: rgba(0,0,0,0.32); border-color: #fff;
 }
 .cov-warn {
   display: inline-block; margin-left: 6px; vertical-align: middle;
@@ -1894,8 +1904,19 @@ body {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --prop:    #00833C;   /* Open Box proposal — deep green, distinct from the lime */
-  --prop-lt: #eaf6ee;
+  /* Violet, because every other family is already spoken for: green is core and
+     full coverage, gold is custom and partial, grey is out-of-scope and outside
+     (and is also the business card background), and a mild blue marks untagged
+     counts. The first attempt used a deep green, which scored 1.06:1 against the
+     #6E7878 card — invisible — and sat next to the green FULL badge, so the two
+     read as the same thing.
+       --prop     on white text ...... 7.1:1   (AA and AAA for bold text)
+       --prop-on-dark  on the card ... 2.5:1   outline chips, dark card
+     Shape still carries the meaning: solid = direct, dotted = link-implied. */
+  --prop:         #6D28D9;   /* solid badge fill */
+  --prop-lt:      #f3eefc;   /* tint for panel blocks on white */
+  --prop-on-dark: #C4B5FD;   /* text/border for chips sitting on a dark card */
+  --prop-ink:     #4C1D95;   /* violet text on a light background */
 }
 
 /* Card treatment — a dashed left edge so the proposal reads at a glance
@@ -1913,8 +1934,18 @@ body {
   letter-spacing: 0.03em; padding: 2px 7px; border-radius: 10px;
   color: #fff; background: var(--prop); white-space: nowrap;
 }
+/* Cards in BOTH views share the same dark #6E7878 background with white text,
+   so outline chips must use the light violet — the solid fill colour scores
+   only 1.6:1 there and disappears. */
+/* Against #6E7878 only near-white text reaches AA (4.5:1) — even a pale violet
+   tops out around 3.3:1. So the text is white and the VIOLET WASH carries the
+   identity: white on a 55% violet fill measures 6.4:1 against that blend. */
 .prop-badge.prop-badge-add {
-  color: var(--prop); background: transparent; border: 1px dashed var(--prop);
+  color: #fff; background: rgba(109,40,217,0.55);
+  border: 1px dashed var(--prop-on-dark);
+}
+.prop-badge.prop-badge-add:hover {
+  background: var(--prop); border-color: #fff;
 }
 .prop-badge.prop-editable { cursor: pointer; }
 .prop-badge.prop-editable:hover { filter: brightness(1.12); }
@@ -2087,9 +2118,12 @@ body {
 .is-proposed-derived {
   border-left: 3px dotted var(--prop) !important;
 }
+/* Same reasoning as the add chip: white text on a violet wash. Kept lighter
+   than the add chip and dotted rather than dashed, so direct / offered /
+   implied stay distinguishable by fill and border as well as by wording. */
 .prop-badge.prop-badge-derived {
-  color: var(--prop); background: transparent;
-  border: 1px dotted var(--prop); font-weight: 600;
+  color: #fff; background: rgba(109,40,217,0.42);
+  border: 1px dotted var(--prop-on-dark); font-weight: 700;
   cursor: help;
 }
 .scope-count-chip.scope-count-prop-derived {
@@ -2102,7 +2136,7 @@ body {
 }
 .psec.psec-proposed-derived {
   border-left-style: dotted;
-  background: #f7fbf8;
+  background: #faf8fe;
 }
 .psec.psec-proposed-derived .psec-label { color: var(--prop); font-weight: 600; }
 /* ── VERSION COMPARE — PICKER MODAL ──────────────────────────────────────────── */
