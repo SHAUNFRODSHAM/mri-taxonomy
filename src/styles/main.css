@@ -1904,25 +1904,29 @@ body {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Violet, because every other family is already spoken for: green is core and
-     full coverage, gold is custom and partial, grey is out-of-scope and outside
-     (and is also the business card background), and a mild blue marks untagged
-     counts. The first attempt used a deep green, which scored 1.06:1 against the
-     #6E7878 card — invisible — and sat next to the green FULL badge, so the two
-     read as the same thing.
-       --prop     on white text ...... 7.1:1   (AA and AAA for bold text)
-       --prop-on-dark  on the card ... 2.5:1   outline chips, dark card
+  /* Open Box brand colours only. The secondary palette's purple #B07AA1 is the
+     brand's "highlight content" colour and is specified to be used sparingly —
+     which suits a proposal, by definition a small subset of the taxonomy.
+
+     It cannot carry the badge on its own, though. #B07AA1 has luminance 0.257,
+     almost exactly mid-tone, so the best contrast it can reach against ANY text
+     colour is ~3.4:1 — under the 4.5:1 AA needs for small badge text. Against
+     the #6E7878 card it is 1.33:1, so it fails as a border there too.
+
+     So the fill is the brand ink #373C3C (white text, 11.2:1) and the purple is
+     the accent — border and glyph — where it reads against the ink at 3.28:1.
+     Purple stays present but sparing, exactly as the guidelines ask.
+
      Shape still carries the meaning: solid = direct, dotted = link-implied. */
-  --prop:         #6D28D9;   /* solid badge fill */
-  --prop-lt:      #f3eefc;   /* tint for panel blocks on white */
-  --prop-on-dark: #C4B5FD;   /* text/border for chips sitting on a dark card */
-  --prop-ink:     #4C1D95;   /* violet text on a light background */
+  --prop:        #373C3C;   /* brand ink — badge fill, and text on light */
+  --prop-accent: #B07AA1;   /* brand purple — border, card edge, accents */
+  --prop-lt:     #f7f2f6;   /* faint purple tint for panel blocks on white */
 }
 
 /* Card treatment — a dashed left edge so the proposal reads at a glance
    without hiding the item's own scope/coverage badge. */
 .is-proposed {
-  border-left: 3px dashed var(--prop) !important;
+  border-left: 3px dashed var(--prop-accent) !important;
   background-image: linear-gradient(90deg, var(--prop-lt) 0%, transparent 42%);
 }
 
@@ -1933,6 +1937,7 @@ body {
   font-size: 0.56rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.03em; padding: 2px 7px; border-radius: 10px;
   color: #fff; background: var(--prop); white-space: nowrap;
+  border: 1px solid var(--prop-accent);   /* brand purple reads on the ink at 3.28:1 */
 }
 /* Cards in BOTH views share the same dark #6E7878 background with white text,
    so outline chips must use the light violet — the solid fill colour scores
@@ -1941,8 +1946,8 @@ body {
    tops out around 3.3:1. So the text is white and the VIOLET WASH carries the
    identity: white on a 55% violet fill measures 6.4:1 against that blend. */
 .prop-badge.prop-badge-add {
-  color: #fff; background: rgba(109,40,217,0.55);
-  border: 1px dashed var(--prop-on-dark);
+  color: #fff; background: rgba(55,60,60,0.72);
+  border: 1px dashed var(--prop-accent);
 }
 .prop-badge.prop-badge-add:hover {
   background: var(--prop); border-color: #fff;
@@ -1953,7 +1958,7 @@ body {
 /* "Proposed Scope only" filter toggle — mounted in both view filter bars. */
 .prop-filter-btn {
   display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px;
-  border: 1px dashed var(--prop); border-radius: 14px; background: transparent;
+  border: 1px dashed var(--prop-accent); border-radius: 14px; background: transparent;
   color: var(--prop); font-family: var(--font); font-size: 0.7rem; font-weight: 700;
   cursor: pointer; white-space: nowrap;
 }
@@ -1968,7 +1973,7 @@ body {
 /* Detail-panel badge + proposal block */
 .badge.badge-proposed { color: #fff; background: var(--prop); }
 .psec.psec-proposed {
-  border-left: 3px dashed var(--prop);
+  border-left: 3px dashed var(--prop-accent);
   background: var(--prop-lt);
   padding: 10px 12px; border-radius: 0 6px 6px 0;
 }
@@ -1989,7 +1994,7 @@ body {
 /* A proposed LINK — a mapping Open Box recommends that the client does not
    operate today. Dashed so it never reads as an existing connection. */
 .map-chip.map-chip-proposed {
-  border: 1px dashed var(--prop);
+  border: 1px dashed var(--prop-accent);
   background: var(--prop-lt);
 }
 .map-chip-prop {
@@ -1998,11 +2003,11 @@ body {
   color: var(--ink3); cursor: pointer; font-size: 11px; line-height: 1;
   font-weight: 700; padding: 0;
 }
-.map-chip-prop:hover     { border-color: var(--prop); color: var(--prop); }
-.map-chip-prop.active    { background: var(--prop); border-color: var(--prop); color: #fff; }
+.map-chip-prop:hover     { border-color: var(--prop-accent); color: var(--prop); }
+.map-chip-prop.active    { background: var(--prop); border-color: var(--prop-accent); color: #fff; }
 
 .cell-flow-chip.cell-flow-chip-proposed {
-  border: 1px dashed var(--prop) !important;
+  border: 1px dashed var(--prop-accent) !important;
   background: var(--prop-lt);
 }
 .cell-flow-prop-tag {
@@ -2011,7 +2016,7 @@ body {
   border-radius: 8px; padding: 1px 6px; white-space: nowrap;
 }
 .cell-flow-pip.cell-flow-pip-proposed {
-  background: var(--prop-lt); border: 1px dashed var(--prop);
+  background: var(--prop-lt); border: 1px dashed var(--prop-accent);
 }
 
 /* Export modal — the opt-in Proposed Scope checkbox */
@@ -2116,23 +2121,23 @@ body {
    one card cannot cascade across the link graph.                            */
 
 .is-proposed-derived {
-  border-left: 3px dotted var(--prop) !important;
+  border-left: 3px dotted var(--prop-accent) !important;
 }
 /* Same reasoning as the add chip: white text on a violet wash. Kept lighter
    than the add chip and dotted rather than dashed, so direct / offered /
    implied stay distinguishable by fill and border as well as by wording. */
 .prop-badge.prop-badge-derived {
-  color: #fff; background: rgba(109,40,217,0.42);
-  border: 1px dotted var(--prop-on-dark); font-weight: 700;
+  color: #fff; background: rgba(55,60,60,0.6);
+  border: 1px dotted var(--prop-accent); font-weight: 700;
   cursor: help;
 }
 .scope-count-chip.scope-count-prop-derived {
   color: var(--prop); background: transparent;
-  border: 1px dotted var(--prop);
+  border: 1px dotted var(--prop-accent);
 }
 .badge.badge-proposed-derived {
   color: var(--prop); background: #fff;
-  border: 1px dotted var(--prop);
+  border: 1px dotted var(--prop-accent);
 }
 .psec.psec-proposed-derived {
   border-left-style: dotted;
