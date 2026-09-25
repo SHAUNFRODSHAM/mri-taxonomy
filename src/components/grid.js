@@ -3,6 +3,7 @@ import {
   linkedSystemIds, PROPOSED, isProposed, proposedTooltip,
   refreshDerivedProposals, proposedVia, derivedTooltip,
 } from '../data/links.js';
+import { matchesMarkets, marketFilterActive } from '../data/markets.js';
 
 /** Toggle a process's expanded (sub-processes revealed) state. */
 function toggleExpand(id) {
@@ -81,6 +82,9 @@ export function render(callbacks) {
   const showingAll = ALL_SCOPE_KEYS.every(k => filters.includes(k)) && !state.proposedOnly;
   const linkedSet = linkedSystemIds();   // system ids linked to a value stream
   refreshDerivedProposals();             // one-hop proposal derivation, per render
+  // Market applies independently of scope, so an emptied column can be the
+  // result of either filter.
+  const anyFilterActive = !showingAll || marketFilterActive();
   let renderedCols = 0;
 
   currentData().forEach(col => {
@@ -170,6 +174,11 @@ export function render(callbacks) {
       const subMatches  = subs.some(s => matchesScope(s, proc, linkedSet, filters));
       if (!showingAll && !procMatches && !subMatches && !state.editMode) return; // hide non-matching process
 
+      // Market applicability — an item with no marketScope applies everywhere.
+      // A sub INHERITS its parent's markets, so an out-of-market process takes
+      // its whole subtree with it (no need to tag every sub).
+      if (!matchesMarkets(proc) && !state.editMode) return; // out of market for this client
+
       // Collapse is respected during filtering (no force-expand).
       const expanded = !!state.expandedProcs[proc.id];
       const subToggle = hasSubs
@@ -184,6 +193,7 @@ export function render(callbacks) {
       if (expanded) {
         subs.forEach(sub => {
           if (!showingAll && !matchesScope(sub, proc, linkedSet, filters) && !state.editMode) return; // skip non-matching sub
+          if (!matchesMarkets(sub) && !state.editMode) return;                                       // skip out-of-market sub
           const cls = sub.type === 'process' ? 'process-box' : 'sub-box';
           colBody.appendChild(makeItemEl(sub, cls + ' is-nested', onItemClick, onEditClick,
             () => onRemoveItem('sub', col.id, proc.id, sub.id),
@@ -203,9 +213,9 @@ export function render(callbacks) {
       }
     });
 
-    // Hide a whole column when a scope filter is active and nothing matches
+    // Hide a whole column when a filter is active and nothing matches
     // (in edit mode keep columns so they remain editable / can be populated).
-    if (!showingAll && visibleCount === 0 && !state.editMode) {
+    if (anyFilterActive && visibleCount === 0 && !state.editMode) {
       return; // skip this column entirely
     }
 
@@ -225,7 +235,7 @@ export function render(callbacks) {
   if (renderedCols === 0) {
     const msg = document.createElement('div');
     msg.className = 'empty-filter-msg grid-empty-msg';
-    msg.textContent = 'No items match the selected scope(s).';
+    msg.textContent = 'No items match the selected scope(s) and market(s).';
     grid.appendChild(msg);
   }
 

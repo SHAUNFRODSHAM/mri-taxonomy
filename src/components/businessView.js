@@ -12,13 +12,15 @@
 import { state, snapshot } from '../state.js';
 import { makeMultiSelect } from './multiSelect.js';
 import { clientNoteHTML } from './clientNote.js';
+import { marketNoteHTML } from './marketNote.js';
 import {
   COVERAGE, COVERAGE_ORDER, businessHasLink, coverageTooltip,
   PROPOSED, isProposed, proposedTooltip, businessHasProposedLink,
   refreshDerivedProposals, proposedVia, derivedTooltip,
 } from '../data/links.js';
+import { MARKETS, matchesMarkets } from '../data/markets.js';
 import {
-  BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS, VERTICALS, findBusinessItem,
+  BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, VERTICALS, findBusinessItem,
 } from '../data/business/index.js';
 
 const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -104,6 +106,12 @@ export function matchesVerticals(item) {
   if (!sel || !sel.length) return true;               // nothing selected → don't hide
   if (sel.length === SECTORS.length) return true;      // all selected → show all
   return sel.some(v => item.vertical[v]);
+}
+
+/** The full business-grid filter: market applicability + vertical + coverage.
+ *  Exported so the document export filters identically to the on-screen grid. */
+export function matchesItem(item) {
+  return matchesMarkets(item) && matchesVerticals(item) && matchesCoverage(item);
 }
 
 // Phase-2 hook: main.js injects a function that returns link-section HTML for an
@@ -293,11 +301,14 @@ function renderBusinessGrid() {
     let visible = 0;
 
     col.processes.forEach(proc => {
-      // A process shows if it (or any of its subs) matches the vertical +
-      // coverage selection.
-      const procMatches = matchesVerticals(proc) && matchesCoverage(proc);
+      // Market applicability gates the whole subtree: a sub inherits its
+      // parent's markets, so an out-of-market process hides its subs too.
+      if (!edit && !matchesMarkets(proc)) return;
+      // Otherwise a process shows if it (or any of its subs) matches the
+      // market + vertical + coverage selection.
+      const procMatches = matchesItem(proc);
       const subs = proc.subs || [];
-      const matchingSubs = subs.filter(s => matchesVerticals(s) && matchesCoverage(s));
+      const matchingSubs = subs.filter(matchesItem);
       // In edit mode show everything (so empty processes can be edited/filled).
       if (!edit && !procMatches && matchingSubs.length === 0) return;
 
@@ -312,7 +323,7 @@ function renderBusinessGrid() {
 
       if (expanded) {
         subs.forEach(sub => {
-          if (!edit && !matchesVerticals(sub)) return;
+          if (!edit && !matchesItem(sub)) return;
           colBody.appendChild(makeBizCard(sub, 'sub-box biz-card is-nested', false, col.id, proc.id, null));
           visible++;
         });
@@ -330,7 +341,7 @@ function renderBusinessGrid() {
     if (visible === 0 && !edit) {
       const msg = document.createElement('div');
       msg.className = 'empty-filter-msg';
-      msg.textContent = 'No items for this vertical';
+      msg.textContent = 'No items match the selected filters';
       colBody.appendChild(msg);
     }
 
@@ -576,18 +587,8 @@ export function showBusinessPanel(id) {
 
   html += clientNoteHTML(item);
 
-  // Market Variation — one block per selected market that has content
-  if (item.market) {
-    (state.markets || []).forEach(k => {
-      if (!item.market[k]) return;
-      const label = (MARKETS.find(m => m.key === k) || {}).label || k;
-      html += `
-    <div class="psec">
-      <div class="psec-label">Market Variation — ${esc(label)}</div>
-      <div class="biz-market-block">${esc(item.market[k])}</div>
-    </div>`;
-    });
-  }
+  // Market Notes — one block per selected market that has content
+  html += marketNoteHTML(item);
 
   // Vertical Detail — one colour-tagged row per selected sector that has content
   if (item.vertical) {

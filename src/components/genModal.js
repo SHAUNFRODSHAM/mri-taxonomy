@@ -1,5 +1,6 @@
 import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible, BUILTIN_VERSIONS } from '../state.js';
-import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, MARKETS } from '../data/business/index.js';
+import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES } from '../data/business/index.js';
+import { MARKETS } from '../data/markets.js';
 import { effectiveScope } from './grid.js';
 import { linkedSystemIds, systemLinksFor, COVERAGE, PROPOSED, isProposed, collectProposals } from '../data/links.js';
 import { generateDocx, generateBusinessDocx } from './docxExport.js';
