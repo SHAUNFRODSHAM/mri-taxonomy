@@ -251,7 +251,14 @@ burden of the feature — keep them short on purpose.
 | `cm-recov-service-emea` | `['UK','EU']` | "EMEA Service-Charge Packs" — country-specific module. Tagged at sub level because its parent applies everywhere |
 | `car-vat-charges` | `['UK','EU']` | VAT on charges; the US equivalent is sales & use tax, handled elsewhere. Its two subs inherit |
 | `cm-cash-methods-lockbox` | `['US']` | Electronic Lockbox (CMEL) is a US bank construct — **confirm before tagging** |
+| `gl-vat` column | `['UK','EU']` | **New** — master added a VAT & Tax Compliance column. VAT has no US analogue; sales & use tax is handled separately. One column tag covers all 6 items |
+| `gl-vat-mtd` | `['UK']` | **New** — Making Tax Digital is an HMRC regime. Narrower than its column, so it needs its own tag; its two subs inherit |
+| `vs-r2r` VAT / MTD card | `['UK','EU']` | **New** — the value-stream counterpart of `gl-vat`, added by the same change |
 | `rm-soda` items | *none* | Leave universal — SODA is the MRI statement name; UK/EU BTR clients still run move-out accounting. Notes cover the difference |
+
+`gl-vat` is the worked example of the §3 resolution rule: tag the **column** `['UK','EU']`,
+then let one **item** narrow to `['UK']`. Six items, two tags, and a US-only client sees
+neither.
 
 **Open question:** `ap_reporting_reports_spend` covers B-BBEE spend reporting (South Africa),
 which none of the three markets represents. Either add a fourth market key (`ZA`) or leave
@@ -260,13 +267,13 @@ the item universal with a note. Recommend the note, and revisit if ZA becomes a 
 ### 6.2 Vertical — `verticalScope` (new)
 
 Sector applicability is mostly structural, which is why the module and column levels matter:
-three structural tags (one module, one column, one sub) cover 57 system items that would
+three structural tags (one module, one column, one sub) cover 66 system items that would
 otherwise need a tag each.
 
 | Target | Level | `verticalScope` | Rationale |
 |---|---|---|---|
 | `rm` module | `MODULE_CONFIG.rm` | `['Residential']` | Residential Management is the residential system. One tag covers 47 items |
-| `cm-retail` column | column | `['Retail']` | Retail Management — percentage rent, sales capture, retail categories. Covers 9 items |
+| `cm-retail` column | column | `['Retail']` | Retail Management — percentage rent, sales capture, retail categories. Covers 18 items since master's Advanced Retail expansion |
 | `cm-setup-options-retail` | sub | `['Retail']` | "Retail Options" — retail-only configuration, in a setup column that applies to all sectors |
 | `cm-deposits-interest-guarantee` | sub | *none* | Bank guarantees skew EU/commercial, but all four sectors use them. Notes, not a tag |
 | `vs-l2c-g3-p3` Percentage rent (retail) | item | `['Retail']` | The title already declares it |
@@ -470,6 +477,23 @@ original content. Each row below is a literal note set to add to that item in it
   B-BBEE spend reporting for South Africa, which sits outside the three markets modelled here.
 
 ### 7.3 General Ledger — `src/data/gl.js`
+
+**`gl-vat-setup` — VAT / Tax Code Configuration** *(UK+EU via the column tag)*
+- **UK:** Standard, reduced, zero-rated and exempt codes, plus the option to tax on
+  property income. Partial exemption calculations drive the recoverable percentage.
+- **EU:** Rates and codes per country, with reverse-charge codes for cross-border supply.
+  A single tax-code set rarely survives a multi-country portfolio.
+
+**`gl-vat-mapping` — GL Account to VAT Box Mapping** *(UK+EU via the column tag)*
+- **UK:** Nine-box VAT return; the mapping must reconcile boxes 1–9 back to the ledger for
+  audit.
+- **EU:** Box structures differ by country, so the mapping is per jurisdiction rather than
+  per group.
+
+**`gl-vat-mtd` — Making Tax Digital (MTD) Compliance** *(UK-only — narrower than its column)*
+- **UK:** HMRC requires digital record keeping, unbroken digital links from source to
+  return, and API submission. Spreadsheet re-keying anywhere in the chain breaks the digital
+  link requirement, which is the usual implementation constraint.
 
 **`gl-framework-coa` — Chart of Accounts & Ledger Codes**
 - **US:** No statutory chart — the group COA governs.
@@ -869,11 +893,12 @@ The same caveat applies to its 143 `market` blocks.
 |---|---|---|---|
 | 1 | Market filter, predicate, notes component, both grids, panel, System-view dropdown | The Market filter works; notes render where they exist | **done** (`7a0ef07`) |
 | 2 | §6.1 market applicability tags | The four market-bound items hide correctly | **done** |
+| 2b | §6.1 additions — `gl-vat` column, `gl-vat-mtd`, the R2R VAT card | Covers the VAT & MTD content master added after step 2 shipped | next |
 | 3 | Market fields in both edit modals | Consultants can tag and annotate during discovery; persists per version | **done** |
 | 4 | §4a–4b — registry + generics, market reimplemented on top, old exports intact | No behaviour change; build and all 24 tests still pass | next |
 | 5 | §4c–4e — generic notes/fields component, call sites switched, `matchesVerticals` and `'All'` deleted | Vertical becomes a real applicability filter; the notes-as-applicability flaw is gone | next |
 | 6 | §5 items 4, 7, 10 — Vertical dropdown in both filter bars, column/module scope resolution | Vertical filters both views; the filter-active affordance lands | next |
-| 7 | §6.2 vertical applicability tags | RM reads as Residential, `cm-retail` as Retail — 3 structural tags covering 57 system items, plus 1 in the business view | next |
+| 7 | §6.2 vertical applicability tags | RM reads as Residential, `cm-retail` as Retail — 3 structural tags covering 66 system items, plus 1 in the business view | next |
 | 8 | §7 market notes, module by module | System and Business views carry the terminology detail | content |
 | 9 | §8 vertical notes, module by module | Sector detail lands on the processes that differ | content |
 | 10 | §5 items 11–13 — export + styling | Cover discloses every dimension and matches the body; notes appear in client documents | last |
