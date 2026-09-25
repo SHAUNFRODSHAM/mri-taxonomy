@@ -13,19 +13,54 @@ import { state, snapshot } from '../state.js';
 import { makeMultiSelect } from './multiSelect.js';
 import { clientNoteHTML } from './clientNote.js';
 import { marketNoteHTML } from './marketNote.js';
-import { COVERAGE, COVERAGE_ORDER, businessHasLink, coverageTooltip } from '../data/links.js';
+import {
+  COVERAGE, COVERAGE_ORDER, businessHasLink, coverageTooltip,
+  PROPOSED, isProposed, proposedTooltip, businessHasProposedLink,
+  refreshDerivedProposals, proposedVia, derivedTooltip,
+} from '../data/links.js';
 import { MARKETS, matchesMarkets } from '../data/markets.js';
 import {
   BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES, VERTICALS, findBusinessItem,
 } from '../data/business/index.js';
 
+const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 const COVERAGE_KEYS = ['full', 'partial', 'outside'];
 /** Does an item match the selected coverage filter? Untagged handled explicitly.
  *  Exported so the document export can filter identically to the on-screen grid. */
 export function matchesCoverage(item) {
+  // Proposed Scope is an orthogonal axis, so it narrows the coverage selection
+  // rather than being one of its values.
+  // Shows the whole proposal footprint — direct and link-derived.
+  if (state.proposedOnly && !isProposed(item) && !proposedVia(item.id, 'business')) return false;
   const sel = state.coverageFilters;
   if (!sel || !sel.length) return true;
   return sel.includes(item.coverage || 'untagged');
+}
+
+/** Toggle an item's Proposed Scope marker. Leaves the coverage tag untouched —
+ *  the delta between "what happens today" and "what we propose" is the point. */
+function toggleProposed(item) {
+  snapshot();
+  if (item.proposed) { delete item.proposed; delete item.proposed_note; }
+  else item.proposed = true;
+  renderBusinessGrid();
+  document.dispatchEvent(new CustomEvent('mri:versionDirty'));
+}
+
+/** Mark/clear Proposed Scope on every process + sub in a value-stream column. */
+function bulkProposeCoverage(col, proposed) {
+  snapshot();
+  col.processes.forEach(proc => {
+    const apply = it => {
+      if (proposed) it.proposed = true;
+      else { delete it.proposed; delete it.proposed_note; }
+    };
+    apply(proc);
+    (proc.subs || []).forEach(apply);
+  });
+  renderBusinessGrid();
+  document.dispatchEvent(new CustomEvent('mri:versionDirty'));
 }
 /** Cycle an item's coverage tag: none → full → partial → outside → none. */
 function cycleCoverage(item) {
@@ -133,6 +168,25 @@ function renderBusinessFilters() {
      { value: 'untagged', label: 'Untagged', short: 'Untagged' }],
     'coverageFilters',
     { swatch: v => (COVERAGE[v] ? COVERAGE[v].color : 'var(--border2)'), onChange: refreshBusinessAfterFilter }));
+
+  bar.appendChild(makeProposedToggle(refreshBusinessAfterFilter));
+}
+
+/** "Proposed Scope only" toggle — a separate axis from System Coverage, so it is
+ *  a single toggle rather than another value in that multi-select. Shared by both
+ *  views (the System view mounts the same control). */
+export function makeProposedToggle(onChange) {
+  const btn = document.createElement('button');
+  btn.className = 'prop-filter-btn' + (state.proposedOnly ? ' active' : '');
+  btn.textContent = `${PROPOSED.mark} Proposed Scope`;
+  btn.title = state.proposedOnly
+    ? 'Showing only items Open Box has proposed. Click to show everything.'
+    : `Show only Proposed Scope items — ${PROPOSED.desc}`;
+  btn.addEventListener('click', () => {
+    state.proposedOnly = !state.proposedOnly;
+    onChange();
+  });
+  return btn;
 }
 
 /** Refresh tabs + grid + any open panel after a filter change (popover stays). */
@@ -176,6 +230,7 @@ function renderBusinessGrid() {
   grid.className = 'grid' + (state.editMode ? ' edit-active' : '');
   grid.innerHTML = '';
 
+  refreshDerivedProposals();   // one-hop proposal derivation, per render
   const edit = state.editMode;
 
   data.forEach(col => {
@@ -185,7 +240,7 @@ function renderBusinessGrid() {
     const colHeader = document.createElement('div');
     colHeader.className = 'col-header biz-col-header';
     if (col.note) colHeader.title = col.note;   // L2 hover tooltip
-    colHeader.innerHTML = `<span class="col-header-title">${col.title}</span>`;
+    colHeader.innerHTML = `<span class="col-header-title">${esc(col.title)}</span>`;
     if (edit) {
       // Bulk-tag coverage dropdown (mirrors the system view's "Tag all")
       const scopeWrap = document.createElement('div');
@@ -203,15 +258,21 @@ function renderBusinessGrid() {
         { cov: 'partial', label: '● Tag all: PARTIAL' },
         { cov: 'outside', label: '● Tag all: OUTSIDE' },
         { cov: null,      label: '✕ Clear all tags', cls: 'scope-menu-clear' },
-      ].forEach(({ cov, label, cls }) => {
+        // Proposed Scope — separate axis, leaves the coverage tags alone.
+        { propose: true,  label: `${PROPOSED.mark} Propose all`, cls: 'scope-menu-propose',
+          tip: 'Mark every process in this domain as Proposed Scope (Open Box recommendation). Keeps the existing coverage tags.' },
+        { propose: false, label: `${PROPOSED.mark} Clear proposals`, cls: 'scope-menu-clear',
+          tip: 'Remove the Proposed Scope marker from every process in this domain.' },
+      ].forEach(({ cov, label, cls, propose, tip }) => {
         const b = document.createElement('button');
         b.textContent = label;
-        b.title = cov ? coverageTooltip(cov) : 'Remove the system-coverage tag from every process in this domain.';
+        b.title = tip || (cov ? coverageTooltip(cov) : 'Remove the system-coverage tag from every process in this domain.');
         if (cls) b.className = cls;
         b.addEventListener('click', e => {
           e.stopPropagation();
           scopeMenu.classList.remove('open');
-          bulkTagCoverage(col, cov);
+          if (propose === undefined) bulkTagCoverage(col, cov);
+          else bulkProposeCoverage(col, propose);
         });
         scopeMenu.appendChild(b);
       });
@@ -332,6 +393,9 @@ function toggleBizExpand(id) {
 function makeBizCard(item, baseClass, isProcess, colId, procId, subToggle) {
   const el = document.createElement('div');
   el.className = baseClass;
+  const derivedFrom = isProposed(item) ? null : proposedVia(item.id, 'business');
+  if (isProposed(item))  el.classList.add('is-proposed');
+  else if (derivedFrom)  el.classList.add('is-proposed-derived');
   el.dataset.id = item.id;
 
   const title = document.createElement('span');
@@ -376,13 +440,48 @@ function makeBizCard(item, baseClass, isProcess, colId, procId, subToggle) {
       badge.addEventListener('click', e => { e.stopPropagation(); cycleCoverage(item); });
       el.appendChild(badge);
     }
-    // Warn when FULL/PARTIAL but not yet linked to a system process
+    // Warn when FULL/PARTIAL but not yet linked to a system process. A PROPOSED
+    // link is not an answer here — it is our recommendation, not agreed scope —
+    // so the warning stands, but we say so rather than looking like a plain gap.
     if (coverageNeedsLink(item)) {
       const warn = document.createElement('span');
       warn.className = 'cov-warn';
-      warn.textContent = '⚠ link needed';
-      warn.title = 'Tagged Full/Partial but not linked to any MRI PMX system process';
+      if (businessHasProposedLink(item.id)) {
+        warn.textContent = '⚠ proposed link only';
+        warn.title = 'Tagged Full/Partial with no agreed MRI PMX link — only a proposed (Open Box recommended) link exists.';
+      } else {
+        warn.textContent = '⚠ link needed';
+        warn.title = 'Tagged Full/Partial but not linked to any MRI PMX system process';
+      }
       el.appendChild(warn);
+    }
+
+    // Proposed Scope marker — rendered alongside the coverage badge so the card
+    // reads "Outside today ✦ PROPOSED", which is the value-add story in one line.
+    if (isProposed(item)) {
+      const pb = document.createElement('span');
+      pb.className = 'prop-badge';
+      pb.textContent = `${PROPOSED.mark} ${PROPOSED.short.toUpperCase()}`;
+      pb.title = proposedTooltip(item) + (state.editMode ? '\n\nClick to remove the proposal.' : '');
+      if (state.editMode) {
+        pb.classList.add('prop-editable');
+        pb.addEventListener('click', e => { e.stopPropagation(); toggleProposed(item); });
+      }
+      el.appendChild(pb);
+    } else if (derivedFrom) {
+      // Implied by a proposed MRI PMX process linked to this card.
+      const pb = document.createElement('span');
+      pb.className = 'prop-badge prop-badge-derived';
+      pb.textContent = `○ ${PROPOSED.short.toUpperCase()} (linked)`;
+      pb.title = derivedTooltip(derivedFrom, 'business');
+      el.appendChild(pb);
+    } else if (state.editMode) {
+      const pb = document.createElement('span');
+      pb.className = 'prop-badge prop-badge-add prop-editable';
+      pb.textContent = `${PROPOSED.mark} Propose`;
+      pb.title = 'Flag as Proposed Scope — Open Box has identified potential value add here. Keeps the existing coverage tag.';
+      pb.addEventListener('click', e => { e.stopPropagation(); toggleProposed(item); });
+      el.appendChild(pb);
     }
   }
 
@@ -435,20 +534,54 @@ export function showBusinessPanel(id) {
   document.getElementById('panel-badges').innerHTML =
     `<span class="badge ${isProcess ? 'badge-process' : 'badge-sub'}">${isProcess ? 'Process' : 'Sub-Process'}</span>
      <span class="badge badge-business">Business</span>${covBadge}`
+     + (isProposed(item)
+         ? `<span class="badge badge-proposed" title="${PROPOSED.desc}">${PROPOSED.mark} ${PROPOSED.short}</span>`
+         : (proposedVia(item.id, 'business')
+             ? `<span class="badge badge-proposed-derived" title="${esc(derivedTooltip(proposedVia(item.id, 'business'), 'business'))}">○ ${PROPOSED.short} (linked)</span>` : ''))
      + (item.needsEnrichment ? '<span class="badge badge-enrich">Needs enrichment</span>' : '')
      + (coverageNeedsLink(item) ? '<span class="badge badge-enrich" title="Tagged Full/Partial but not linked to a system process">⚠ link needed</span>' : '');
 
   let html = `
     <div class="psec">
       <div class="psec-label">Overview</div>
-      <p class="psec-text">${item.desc || ''}</p>
+      <p class="psec-text">${esc(item.desc || '')}</p>
     </div>`;
+
+  // Open Box proposal — stated up front, and explicitly labelled as ours so it
+  // can never be mistaken for agreed client scope.
+  if (isProposed(item)) {
+    html += `
+    <div class="psec psec-proposed">
+      <div class="psec-label">${PROPOSED.mark} Proposed Scope — Open Box recommendation</div>
+      <p class="psec-text">${item.proposed_note
+        ? esc(item.proposed_note)
+        : '<em>No rationale captured yet. Add the value add identified in discovery via Edit Mode.</em>'}</p>
+      <p class="psec-note">Current state: ${item.coverage
+        ? COVERAGE[item.coverage].label
+        : 'untagged'}. This is an Open Box recommendation, not agreed scope.</p>
+    </div>`;
+  } else {
+    // Derived: implied by a proposed MRI PMX process on the other side of a link.
+    const via = proposedVia(item.id, 'business');
+    if (via) {
+      html += `
+    <div class="psec psec-proposed psec-proposed-derived">
+      <div class="psec-label">○ Proposed Scope (linked)</div>
+      <p class="psec-text">This process is not itself proposed, but it is linked to
+        ${via.length > 1 ? 'MRI PMX processes that are' : 'an MRI PMX process that is'}:</p>
+      <ul class="act-list">${via.map(o =>
+        `<li>${esc(o.moduleLabel)} › ${esc(o.title)}${o.note ? ` — ${esc(o.note)}` : ''}</li>`).join('')}</ul>
+      <p class="psec-note">Shown as part of that proposal. Flag this process directly if it
+        warrants a separate case.</p>
+    </div>`;
+    }
+  }
 
   if (item.activities && item.activities.length) {
     html += `
     <div class="psec">
       <div class="psec-label">Core Activities</div>
-      <ul class="act-list">${item.activities.map(a => `<li>${a}</li>`).join('')}</ul>
+      <ul class="act-list">${item.activities.map(a => `<li>${esc(a)}</li>`).join('')}</ul>
     </div>`;
   }
 
@@ -461,7 +594,7 @@ export function showBusinessPanel(id) {
   if (item.vertical) {
     const sel = (state.verticals && state.verticals.length) ? state.verticals : SECTORS;
     const rows = sel.filter(v => item.vertical[v]).map(v =>
-      `<div class="biz-vert-row"><span class="biz-vert-tag vert-${v.toLowerCase()}">${v}</span><span>${item.vertical[v]}</span></div>`).join('');
+      `<div class="biz-vert-row"><span class="biz-vert-tag vert-${v.toLowerCase()}">${esc(v)}</span><span>${esc(item.vertical[v])}</span></div>`).join('');
     if (rows) {
       html += `
     <div class="psec">
@@ -475,7 +608,7 @@ export function showBusinessPanel(id) {
     html += `
     <div class="psec">
       <div class="psec-label">Standards &amp; Frameworks</div>
-      <div class="biz-std-grid">${item.standards.map(s => `<span class="biz-std-chip">${s}</span>`).join('')}</div>
+      <div class="biz-std-grid">${item.standards.map(s => `<span class="biz-std-chip">${esc(s)}</span>`).join('')}</div>
     </div>`;
   }
 

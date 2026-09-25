@@ -43,6 +43,202 @@ export function coverageTooltip(key) {
 }
 export const COVERAGE_ORDER = ['full', 'partial', 'outside'];
 
+/* ── Proposed Scope — Open Box value-add proposals ────────────────────────────
+   Deliberately ORTHOGONAL to coverage (business) and scope (system) rather than
+   a fourth value in either enum. An item keeps its current-state tag AND may
+   additionally carry `proposed: true` + `proposed_note`.
+
+   That separation is the whole point. A process tagged "Outside" (the client
+   runs it in spreadsheets today) which Open Box believes PMX could absorb is a
+   proposal worth making precisely BECAUSE of the delta — "manual today, we
+   propose bringing it into the system". Folding `proposed` into the coverage
+   enum would overwrite the current state and erase the argument.
+
+   Proposals are Open Box's opinion, not agreed client scope, so they render in
+   Open Box green with a dashed edge and are EXCLUDED from generated documents
+   unless "Proposed Scope" is explicitly ticked in the export options. */
+export const PROPOSED = {
+  label: 'Proposed scope — Open Box recommendation',
+  short: 'Proposed',
+  mark:  '✦',
+  color: '#00833C',
+  desc:  'Open Box has identified potential value add here through discovery analysis. '
+       + 'This is a recommendation, not agreed client scope, and is excluded from generated '
+       + 'documents unless Proposed Scope is explicitly included.',
+};
+
+/** True when an item carries an Open Box proposal. */
+export function isProposed(item) {
+  return !!(item && item.proposed);
+}
+
+/** Tooltip for a proposal marker — appends the captured rationale when present. */
+export function proposedTooltip(item) {
+  const note = item && item.proposed_note;
+  return note
+    ? `${PROPOSED.label}\n\n${note}`
+    : `${PROPOSED.label}\n\n${PROPOSED.desc}`;
+}
+
+/* ── Derived proposals (one hop across the links) ─────────────────────────────
+   Flagging a value-stream card as Proposed implies the MRI PMX processes that
+   would deliver it, and flagging a system process implies the value-stream
+   cards it would serve. Rather than writing `proposed` onto the other side, the
+   other side is DERIVED — for two reasons:
+
+   1. Storing it would cascade. Propagation is bidirectional, so a stored flag
+      would run business → system → every OTHER business card on that system
+      item → their system items, and so on. System items carry 5.9 business
+      links on average (max 16), so one click on the VAT card would transitively
+      propose 35 business cards and 27 system items. Derivation reads only the
+      DIRECT `proposed` flag, so it stops dead after one hop.
+   2. A derived marker self-corrects when links change; a copied flag goes
+      stale and has to be cleaned up by hand.
+
+   Direct proposals carry the rationale and appear in the Proposals document;
+   derived ones are shown hollow and nest under their origin. This mirrors how
+   effectiveScope already derives auto out-of-scope from the same link set. */
+
+let _derivedCache = null;
+
+/** Rebuild the derived-proposal index. Renderers call this once per render. */
+export function refreshDerivedProposals() {
+  const bizItems = new Map();
+  Object.entries(BUSINESS_DATA).forEach(([mod, cols]) => {
+    const modLabel = (BUSINESS_CONFIG[mod] || {}).label || mod;
+    cols.forEach(col => col.processes.forEach(p => {
+      bizItems.set(p.id, { item: p, breadcrumb: col.title, moduleLabel: modLabel });
+      (p.subs || []).forEach(s => bizItems.set(s.id,
+        { item: s, breadcrumb: `${col.title} › ${p.title}`, moduleLabel: modLabel }));
+    }));
+  });
+
+  const sysItems = new Map();
+  Object.entries(ALL_DATA).forEach(([mod, cols]) => {
+    const modLabel = (MODULE_CONFIG[mod] || {}).label || mod;
+    cols.forEach(col => col.processes.forEach(p => {
+      sysItems.set(p.id, { item: p, breadcrumb: col.title, moduleLabel: modLabel });
+      (p.subs || []).forEach(s => sysItems.set(s.id,
+        { item: s, breadcrumb: `${col.title} › ${p.title}`, moduleLabel: modLabel }));
+    }));
+  });
+
+  const system = new Map();    // system id  → origins on the business side
+  const business = new Map();  // business id → origins on the system side
+  const add = (map, key, val) => {
+    const arr = map.get(key);
+    if (arr) { if (!arr.some(o => o.id === val.id)) arr.push(val); }
+    else map.set(key, [val]);
+  };
+
+  // Derivation follows every link, proposed or agreed: a proposed link is
+  // itself part of the recommendation, so it should carry the marker across.
+  getLinks().forEach(l => {
+    const b = bizItems.get(l.b);
+    const s = sysItems.get(l.s);
+    if (!b || !s) return;
+    // Only the DIRECT flag is read — this is what keeps derivation to one hop.
+    if (b.item.proposed) add(system, l.s,
+      { id: l.b, title: b.item.title, breadcrumb: b.breadcrumb, moduleLabel: b.moduleLabel, note: b.item.proposed_note || '' });
+    if (s.item.proposed) add(business, l.b,
+      { id: l.s, title: s.item.title, breadcrumb: s.breadcrumb, moduleLabel: s.moduleLabel, note: s.item.proposed_note || '' });
+  });
+
+  _derivedCache = { system, business };
+  return _derivedCache;
+}
+
+function derivedProposals() {
+  return _derivedCache || refreshDerivedProposals();
+}
+
+/** Origins that make `id` a derived proposal, or null.
+ *  `side` is the side `id` lives on: 'system' or 'business'. */
+export function proposedVia(id, side) {
+  const d = derivedProposals();
+  const arr = (side === 'system' ? d.system : d.business).get(id);
+  return arr && arr.length ? arr : null;
+}
+
+/** True when an item is proposed either directly or by derivation. */
+export function isProposedOrDerived(item, side) {
+  return isProposed(item) || !!proposedVia(item.id, side);
+}
+
+/** Tooltip for a derived (hollow) proposal marker, naming the origin(s). */
+export function derivedTooltip(origins, side) {
+  const other = side === 'system' ? 'value-stream process' : 'MRI PMX process';
+  const lines = origins.map(o => `• ${o.moduleLabel} › ${o.title}`).join('\n');
+  return `Linked to a proposed ${other}${origins.length > 1 ? 'es' : ''} — implied by:\n${lines}\n\n`
+       + 'Open Box proposed the linked item; this one is shown as part of that proposal. '
+       + 'Flag it directly if you want to make a separate case for it.';
+}
+
+/** The linked counterparts of a directly-proposed item, for document nesting. */
+export function proposalCounterparts(id, side) {
+  // side = the side `id` lives on; we want what it links TO on the other side.
+  const d = derivedProposals();
+  const out = [];
+  const bizItems = side === 'business';
+  getLinks().forEach(l => {
+    if (bizItems && l.b === id) out.push({ otherId: l.s, proposedLink: !!l.proposed });
+    if (!bizItems && l.s === id) out.push({ otherId: l.b, proposedLink: !!l.proposed });
+  });
+  return out;
+}
+
+/** Every proposed item across both views, for the Value-Add Proposals report.
+ *  Returns [{ side, moduleKey, moduleLabel, breadcrumb, item, currentTag }]. */
+export function collectProposals() {
+  const out = [];
+
+  Object.entries(BUSINESS_DATA).forEach(([modKey, cols]) => {
+    const modLabel = (BUSINESS_CONFIG[modKey] || {}).label || modKey;
+    cols.forEach(col => col.processes.forEach(proc => {
+      if (isProposed(proc)) {
+        out.push({ side: 'business', moduleKey: modKey, moduleLabel: modLabel,
+                   breadcrumb: col.title, item: proc, currentTag: proc.coverage || null });
+      }
+      (proc.subs || []).forEach(sub => {
+        if (isProposed(sub)) {
+          out.push({ side: 'business', moduleKey: modKey, moduleLabel: modLabel,
+                     breadcrumb: `${col.title} › ${proc.title}`, item: sub, currentTag: sub.coverage || null });
+        }
+      });
+    }));
+  });
+
+  Object.entries(ALL_DATA).forEach(([modKey, cols]) => {
+    const modLabel = (MODULE_CONFIG[modKey] || {}).label || modKey;
+    cols.forEach(col => col.processes.forEach(proc => {
+      if (isProposed(proc)) {
+        out.push({ side: 'system', moduleKey: modKey, moduleLabel: modLabel,
+                   breadcrumb: col.title, item: proc, currentTag: proc.scope || null });
+      }
+      (proc.subs || []).forEach(sub => {
+        if (isProposed(sub)) {
+          out.push({ side: 'system', moduleKey: modKey, moduleLabel: modLabel,
+                     breadcrumb: `${col.title} › ${proc.title}`, item: sub, currentTag: sub.scope || null });
+        }
+      });
+    }));
+  });
+
+  // Attach the linked counterparts on the other side so the document can nest
+  // them under each proposal ("this is what it touches in PMX") instead of
+  // giving derived items their own duplicate entries.
+  out.forEach(p => {
+    p.counterparts = proposalCounterparts(p.item.id, p.side)
+      .map(c => {
+        const r = p.side === 'business' ? resolveSystem(c.otherId) : resolveBusiness(c.otherId);
+        return r ? { title: r.title, moduleLabel: r.moduleLabel, breadcrumb: r.breadcrumb, proposedLink: c.proposedLink } : null;
+      })
+      .filter(Boolean);
+  });
+
+  return out;
+}
+
 /**
  * Group-level mapping: value-stream L2 group id → MRI PMX system process ids.
  * Expanded to per-L3 links at load (every L3 card under a group links to the
@@ -55,10 +251,15 @@ const GROUP_LINKS = {
   'vs-l2c-g1': ['cm-lease-setup', 'cm-lease-special', 'rm-leasing-prospects', 'rm-leasing-application', 'rm-leasing-execution'],
   'vs-l2c-g2': ['cm-lease-admin', 'cm-lease-setup'],
   'vs-l2c-g3': ['cm-billing-recurring', 'cm-cpi-escalations', 'rm-billing-charges'],
-  'vs-l2c-g4': ['cm-recov-service', 'cm-recov-setup', 'cm-recov-recon'],
-  'vs-l2c-g5': ['cm-cash-receipts', 'cm-cash-recon', 'cm-billing-adjustments', 'rm-billing-receipts', 'rm-billing-delinquency'],
-  'vs-l2c-g6': ['cm-billing-advanced', 'cm-income-mapping', 'gl-journals-operational'],
-  'vs-l2c-g7': ['cm-lease-admin', 'rm-residents-renewal', 'rm-residents-moveout'],
+  // NOTE: value-stream group ids are POSITIONAL (`${vs.id}-g${index+1}`), so
+  // inserting a group renumbers every group after it. "Retail Turnover &
+  // Trading Performance" was inserted at position 4, which shifted the four
+  // groups below up by one — their link keys were remapped to match.
+  'vs-l2c-g4': [],   // Retail Turnover & Trading Performance — see CARD_LINKS
+  'vs-l2c-g5': ['cm-recov-service', 'cm-recov-setup', 'cm-recov-recon'],
+  'vs-l2c-g6': ['cm-cash-receipts', 'cm-cash-recon', 'cm-billing-adjustments', 'rm-billing-receipts', 'rm-billing-delinquency'],
+  'vs-l2c-g7': ['cm-billing-advanced', 'cm-income-mapping', 'gl-journals-operational'],
+  'vs-l2c-g8': ['cm-lease-admin', 'rm-residents-renewal', 'rm-residents-moveout'],
 
   // Quote to Cash → Corporate Accounts Receivable
   'vs-q2c-g1': ['car-acct-setup', 'car-acct-tracking'],
@@ -109,6 +310,39 @@ const GROUP_LINKS = {
   // vs-pfo-g4 (ESG) and vs-h2r (HR) have no MRI PMX counterpart — gaps.
 };
 
+/**
+ * Card-level links: business L3 card id → MRI PMX system process ids.
+ * Additive to GROUP_LINKS, for the rare card whose system counterpart is
+ * more specific than the rest of its group shares (so the whole group
+ * doesn't get over-linked to a screen only one card actually uses).
+ */
+const CARD_LINKS = {
+  // Record to Report › Financial, Regulatory & Investor Reporting
+  'vs-r2r-g4-p6': ['gl-vat-setup', 'gl-vat-mapping', 'gl-vat-mtd'], // VAT / MTD compliance
+
+  // Lease to Cash › Rent Billing & Recurring Charges (retail)
+  'vs-l2c-g3-p3': ['cm-retail-percentage', 'cm-retail-percentage-calc'], // Percentage rent (retail)
+  'vs-l2c-g3-p4': ['cm-retail-departments'],                            // Retail sales departments
+  'vs-l2c-g3-p5': ['cm-retail-sales'],                                  // Retail sales capture & estimation
+  'vs-l2c-g3-p6': ['cm-retail-categories', 'cm-retail-reporting'],      // Retail category hierarchy & reporting
+
+  // Lease to Cash › Retail Turnover & Trading Performance (AR-010 to AR-090).
+  // Card-level rather than group-level: these are distinct business processes
+  // whose system counterparts differ card by card, and several have no direct
+  // MRI PMX counterpart at all (governance, tenant mix, deal negotiation) —
+  // group-level links would over-link the whole set to retail screens.
+  'vs-l2c-g4-p2': ['cm-retail-categories', 'cm-setup-lookups'],         // Tenant mix, zoning & category management
+  'vs-l2c-g4-p3': ['cm-retail-percentage', 'cm-retail-percentage-breakpoints'], // Lease structuring & turnover determination
+  'vs-l2c-g4-p4': ['cm-retail-percentage-reporting', 'cm-retail-departments'],  // Turnover base & exclusions
+  'vs-l2c-g4-p5': ['cm-retail-sales', 'cm-retail-sales-batch'],         // Turnover certificate & audit compliance
+  'vs-l2c-g4-p6': ['cm-lease-setup'],                                   // Franchise, guarantor & co-tenancy
+  'vs-l2c-g4-p7': ['cm-retail-departments', 'cm-lease-special'],        // Special tenant category leasing
+  'vs-l2c-g4-p8': ['cm-retail-reporting', 'cm-retail-categories'],      // Trading performance reporting
+  'vs-l2c-g4-p9': ['cm-lease-admin', 'cm-retail-percentage-calc'],      // Retail renewal & turnover repricing
+  // vs-l2c-g4-p1 (Retail leasing governance) has no MRI PMX counterpart —
+  // it is an organisational control, left as a deliberate gap.
+};
+
 /** Find a business column (L2 group) by id across all value streams. */
 function businessGroup(groupId) {
   for (const mod of BUSINESS_MODULES) {
@@ -118,13 +352,16 @@ function businessGroup(groupId) {
   return null;
 }
 
-/** Expand GROUP_LINKS to per-L3 business↔system pairs. */
+/** Expand GROUP_LINKS to per-L3 business↔system pairs, then layer on CARD_LINKS. */
 function buildSeedLinks() {
   const out = [];
   Object.entries(GROUP_LINKS).forEach(([groupId, sysIds]) => {
     const col = businessGroup(groupId);
     if (!col) return;
     col.processes.forEach(card => sysIds.forEach(s => out.push({ b: card.id, s })));
+  });
+  Object.entries(CARD_LINKS).forEach(([cardId, sysIds]) => {
+    sysIds.forEach(s => out.push({ b: cardId, s }));
   });
   return out;
 }
@@ -155,21 +392,45 @@ function findLinkIndex(b, s) {
   return getLinks().findIndex(l => l.b === b && l.s === s);
 }
 
-/** Set of system-process ids that currently have ≥1 business (value-stream) link. */
+/* Proposed links are Open Box recommendations, not the client's current reality,
+   so they are excluded from both helpers below. Counting them would let adding a
+   proposal silently pull a system item out of "auto out of scope" and silence the
+   "⚠ link needed" warning — i.e. a suggestion would masquerade as agreed scope. */
+
+/** Set of system-process ids that currently have ≥1 AGREED business link. */
 export function linkedSystemIds() {
-  return new Set(getLinks().map(l => l.s));
+  return new Set(getLinks().filter(l => !l.proposed).map(l => l.s));
 }
 
-/** True if a business (value-stream) item has ≥1 link to a system process. */
+/** True if a business (value-stream) item has ≥1 agreed link to a system process. */
 export function businessHasLink(businessId) {
-  return getLinks().some(l => l.b === businessId);
+  return getLinks().some(l => l.b === businessId && !l.proposed);
 }
 
-/** Add a link (no-op if it already exists). Returns true if added. */
-export function addLink(b, s, coverage = 'full', note = '') {
+/** True if a business item has ≥1 PROPOSED link (used to render the gap answer). */
+export function businessHasProposedLink(businessId) {
+  return getLinks().some(l => l.b === businessId && l.proposed);
+}
+
+/** Add a link (no-op if it already exists). Returns true if added.
+ *  `proposed` marks the link itself as an Open Box recommendation — a mapping
+ *  that does NOT exist in the client's world today but which we are proposing.
+ *  This is how a taxonomy gap becomes "here is what we would do about it". */
+export function addLink(b, s, coverage = 'full', note = '', proposed = false) {
   if (findLinkIndex(b, s) !== -1) return false;
-  getLinks().push({ b, s, coverage, note });
+  const link = { b, s, coverage, note };
+  if (proposed) link.proposed = true;
+  getLinks().push(link);
   return true;
+}
+
+/** Toggle a link's proposed flag. Returns the new value, or null if not found. */
+export function toggleLinkProposed(b, s) {
+  const l = getLinks().find(x => x.b === b && x.s === s);
+  if (!l) return null;
+  if (l.proposed) delete l.proposed;
+  else l.proposed = true;
+  return !!l.proposed;
 }
 
 /** Remove a link. Returns true if one was removed. */
@@ -293,7 +554,7 @@ export function allResolvedLinks() {
     const b = resolveBusiness(l.b);
     const s = resolveSystem(l.s);
     if (!b || !s) return null;
-    return { b: { ...b, domain: businessDomainOf(l.b) }, s, coverage: b.coverage };
+    return { b: { ...b, domain: businessDomainOf(l.b) }, s, coverage: b.coverage, proposed: !!l.proposed };
   }).filter(Boolean);
 }
 

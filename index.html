@@ -35,6 +35,7 @@
     </button>
 
     <div class="topbar-actions">
+      <button class="btn btn-raised"      id="wiz-open-btn" title="Step-by-step scoping walkthrough">🧭 Guided Discovery</button>
       <button class="btn btn-blue"        id="gen-btn">⬇ Generate Doc</button>
       <button class="btn btn-ghost"       id="undo-btn" disabled title="Nothing to undo">↩ Undo</button>
       <button class="btn btn-reset"       id="reset-btn" style="display:none" title="Restore this module to its original factory content">↺ Reset</button>
@@ -218,6 +219,13 @@
         <label class="gen-check-wrap"><input type="checkbox" id="gscope-inc-custom"  checked><label for="gscope-inc-custom">● CUSTOM</label></label>
         <label class="gen-check-wrap"><input type="checkbox" id="gscope-inc-oos"     checked><label for="gscope-inc-oos">● OUT OF SCOPE</label></label>
         <label class="gen-check-wrap"><input type="checkbox" id="gscope-inc-untag"   checked><label for="gscope-inc-untag">Untagged</label></label>
+        <!-- Proposed Scope is an Open Box recommendation, not agreed client scope, so it
+             is OFF by default: a proposal must never appear in a signed scope document
+             unless it was deliberately ticked. -->
+        <span style="margin-left:12px;border-left:1px solid #ddd;padding-left:12px;" class="gen-opt-label">Open Box:</span>
+        <label class="gen-check-wrap gen-check-prop"
+               title="Include Open Box's proposed scope — value add identified during discovery. Off by default so proposals never appear in an agreed-scope document by accident.">
+          <input type="checkbox" id="gscope-inc-proposed"><label for="gscope-inc-proposed">✦ Proposed Scope</label></label>
       </div>
       <div class="gen-body">
         <div class="doc-out" id="doc-out">Click Generate to build your document.</div>
@@ -289,6 +297,7 @@
       <!-- Rendered by versionMenu.js -->
     </div>
     <div class="ver-panel-ftr">
+      <button class="btn btn-cancel" id="ver-compare-btn" title="See what changed between two versions">⇄ Compare Versions</button>
       <button class="btn btn-raised" id="ver-save-as-btn">+ Save As New Version</button>
     </div>
   </div>

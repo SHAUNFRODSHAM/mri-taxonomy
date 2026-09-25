@@ -1,17 +1,26 @@
-import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible } from '../state.js';
+import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible, BUILTIN_VERSIONS } from '../state.js';
 import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES } from '../data/business/index.js';
 import { MARKETS } from '../data/markets.js';
 import { effectiveScope } from './grid.js';
-import { linkedSystemIds, systemLinksFor, COVERAGE } from '../data/links.js';
+import { linkedSystemIds, systemLinksFor, COVERAGE, PROPOSED, isProposed, collectProposals } from '../data/links.js';
 import { generateDocx, generateBusinessDocx } from './docxExport.js';
 import { houseStyleCSS } from './obDocStyle.js';
 import { matchesCoverage, matchesVerticals } from './businessView.js';
 
-/* Cover-page identity. The app has no document-level client/project field yet
-   (only per-item clientNote), so these are the shared defaults used by the
-   preview, the PDF and the .docx alike — change them in one place. */
-const CLIENT_NAME  = 'Client Name';
-const PROJECT_NAME = 'MRI ERP Implementation';
+/* Cover-page identity, shared by the preview, the PDF and the .docx — change it
+   in one place.
+
+   The client name IS the version title: a saved version is the client-specific
+   copy of the taxonomy, so the name the consultant typed on Save As is the
+   engagement it belongs to. The two built-in baselines are app labels rather
+   than client names, so those fall back to the placeholder. */
+const CLIENT_PLACEHOLDER = 'Client Name';
+const PROJECT_NAME       = 'MRI ERP Implementation';
+
+function coverClientName() {
+  if (BUILTIN_VERSIONS.has(state.activeVersionId)) return CLIENT_PLACEHOLDER;
+  return state.activeVersionName || CLIENT_PLACEHOLDER;
+}
 
 /* The preview pane is styled from the same SPEC as the .docx. Injected once,
    scoped to #doc-out, so it overrides the generic app styling in main.css. */
@@ -63,6 +72,9 @@ function getScopeIncludes() {
     custom:        document.getElementById('gscope-inc-custom')?.checked ?? true,
     'out-of-scope':document.getElementById('gscope-inc-oos')?.checked    ?? true,
     untagged:      document.getElementById('gscope-inc-untag')?.checked  ?? true,
+    // Defaults to FALSE, unlike every other include: a proposal is Open Box's
+    // recommendation, so it is opt-in rather than opt-out for any document.
+    proposed:      document.getElementById('gscope-inc-proposed')?.checked ?? false,
   };
 }
 
@@ -111,10 +123,13 @@ function obTableHTML(headers, rows) {
   return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
-/** The branded cover block, matching the .docx cover page. */
-function obCoverHTML({ docTitle, versionName, dateStr, clientName, projectName }) {
+/** The branded cover block, matching the .docx cover page.
+ *  Title / date / client / project, exactly as the Open Box template lays it
+ *  out. The version name is not repeated here — it now prints as the client
+ *  name, and the Scope/Coverage Summary names it in full. */
+function obCoverHTML({ docTitle, dateStr, clientName, projectName }) {
   return `<p class="ob-title">${e(docTitle)}</p>
-    <p class="ob-date">${e(versionName)} &nbsp;|&nbsp; ${e(dateStr)}</p>
+    <p class="ob-date">${e(dateStr)}</p>
     <p class="ob-client">${e(clientName)}</p>
     <p class="ob-project">${e(projectName)}</p>`;
 }
@@ -174,8 +189,8 @@ export function buildDoc() {
   const caption     = makeCaptioner();
 
   let html = obCoverHTML({
-    docTitle: 'Process Summary', versionName, dateStr,
-    clientName: CLIENT_NAME, projectName: PROJECT_NAME,
+    docTitle: 'Process Summary', dateStr,
+    clientName: coverClientName(), projectName: PROJECT_NAME,
   });
   html += buildScopeSummary(tabs, includes, caption, scopeStr, versionName, dateStr);
 
@@ -201,8 +216,74 @@ export function buildDoc() {
     });
   });
 
+  if (includes.proposed) html += buildProposalsSection();
+
   document.getElementById('doc-out').innerHTML = html;
   _previewReady = true;
+}
+
+/* ── Value-Add Proposals ──────────────────────────────────────────────────────
+   A dedicated closing section listing every Open Box proposal with its
+   rationale and the current state it would change. Rendered only when
+   "✦ Proposed Scope" is ticked, and headed with an explicit disclaimer so the
+   reader cannot mistake a recommendation for agreed scope. */
+export function buildProposalsSection() {
+  const proposals = collectProposals();
+  if (!proposals.length) {
+    return `<h1>${PROPOSED.mark} Value-Add Proposals</h1>
+      <p><em>No proposals have been recorded. Flag items as Proposed Scope in either view to populate this section.</em></p>`;
+  }
+
+  const covLabel   = k => (COVERAGE[k] ? COVERAGE[k].label : null);
+  const scopeLabel = { core: 'Core', custom: 'Custom', 'out-of-scope': 'Out of scope' };
+
+  let out = `<h1>${PROPOSED.mark} Value-Add Proposals</h1>
+    <p><strong>These are Open Box recommendations, not agreed scope.</strong> Each item below was
+    identified during discovery analysis as an opportunity to add value. They are presented for
+    client consideration and do not form part of the agreed implementation scope unless
+    separately confirmed.</p>`;
+
+  [['business', 'Value Stream proposals'], ['system', 'MRI PMX System proposals']].forEach(([side, heading]) => {
+    const group = proposals.filter(p => p.side === side);
+    if (!group.length) return;
+    out += `<h2>${e(heading)}</h2>`;
+
+    // Group by module so the section mirrors the app's own navigation.
+    const byMod = new Map();
+    group.forEach(p => {
+      if (!byMod.has(p.moduleLabel)) byMod.set(p.moduleLabel, []);
+      byMod.get(p.moduleLabel).push(p);
+    });
+
+    byMod.forEach((items, modLabel) => {
+      out += `<h3>${e(modLabel)}</h3>`;
+      items.forEach(p => {
+        const current = side === 'business'
+          ? (covLabel(p.currentTag) || 'Untagged')
+          : (scopeLabel[p.currentTag] || 'Untagged');
+        out += `<h4>${e(p.item.title)}</h4>
+          <p><strong>Where:</strong> ${e(p.breadcrumb)}<br>
+          <strong>Current state:</strong> ${e(current)}<br>
+          <strong>Open Box proposes:</strong> bringing this into scope</p>
+          <p>${p.item.proposed_note
+            ? e(p.item.proposed_note)
+            : '<em>Rationale to be captured.</em>'}</p>`;
+        // Linked counterparts nest here rather than getting their own entries,
+        // so one recommendation reads as one item instead of being counted
+        // once on each side of every link.
+        if (p.counterparts && p.counterparts.length) {
+          const heading = side === 'business'
+            ? 'MRI PMX processes this would touch'
+            : 'Value-stream processes this would serve';
+          out += `<p><strong>${heading}:</strong></p><ul>${p.counterparts.map(c =>
+            `<li>${e(c.moduleLabel)} › ${e(c.title)}${c.proposedLink ? ' <em>(proposed link)</em>' : ''}</li>`
+          ).join('')}</ul>`;
+        }
+      });
+    });
+  });
+
+  return out;
 }
 
 /* Mirrors processBlock() in docxExport.js — same fields, same order, same
@@ -290,8 +371,8 @@ function buildBusinessPreview() {
   totalRow.isTotal = true;
 
   let html = obCoverHTML({
-    docTitle: 'Business Process Taxonomy', versionName, dateStr,
-    clientName: CLIENT_NAME, projectName: PROJECT_NAME,
+    docTitle: 'Business Process Taxonomy', dateStr,
+    clientName: coverClientName(), projectName: PROJECT_NAME,
   });
 
   html += `<h1>Coverage Summary</h1>
@@ -324,6 +405,8 @@ function buildBusinessPreview() {
       });
     });
   });
+
+  if (getScopeIncludes().proposed) html += buildProposalsSection();
 
   document.getElementById('doc-out').innerHTML = html;
   _previewReady = true;
@@ -361,6 +444,7 @@ export async function downloadWord() {
       inclOverview, inclActivities, inclPrereqs, inclAssoc,
       includes, linkedSet, scopeStr, versionName, dateStr,
       effectiveScopeFn: effectiveScope,
+      clientName: coverClientName(), projectName: PROJECT_NAME,
     });
     const url = URL.createObjectURL(blob);
     const a   = document.createElement('a');
@@ -404,7 +488,9 @@ async function downloadBusinessWord() {
       itemFilter:    item => matchesCoverage(item) && matchesVerticals(item),
       linksFor:      systemLinksFor,
       coverageLabel: k => COVERAGE[k]?.label || k,
+      inclProposed:  getScopeIncludes().proposed,
       docTitle: 'Business Process Taxonomy',
+      clientName: coverClientName(), projectName: PROJECT_NAME,
     });
     const url = URL.createObjectURL(blob);
     const a   = document.createElement('a');

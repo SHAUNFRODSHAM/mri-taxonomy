@@ -1899,3 +1899,343 @@ body {
   font-family: var(--font); font-size: 0.74rem; font-weight: 700; cursor: pointer;
 }
 .lke-add:hover { background: #e6f0d0; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Proposed Scope — Open Box value-add proposals
+   ───────────────────────────────────────────────────────────────────────────
+   Proposals must never be mistaken for agreed client scope, so they are
+   distinguished by SHAPE as well as colour: a dashed edge plus the ✦ glyph.
+   The existing palette already spends green (core / full), gold (partial) and
+   grey (custom / out-of-scope / untagged) on the current-state tags, so hue
+   alone would be ambiguous — and the dashed treatment stays legible for
+   colour-blind readers.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --prop:    #00833C;   /* Open Box proposal — deep green, distinct from the lime */
+  --prop-lt: #eaf6ee;
+}
+
+/* Card treatment — a dashed left edge so the proposal reads at a glance
+   without hiding the item's own scope/coverage badge. */
+.is-proposed {
+  border-left: 3px dashed var(--prop) !important;
+  background-image: linear-gradient(90deg, var(--prop-lt) 0%, transparent 42%);
+}
+
+/* The ✦ PROPOSED chip. Sits ALONGSIDE the scope/coverage badge — the pair is
+   the whole point ("Outside today ✦ PROPOSED"). */
+.prop-badge {
+  flex-shrink: 0; display: inline-block; margin-left: 6px; vertical-align: middle;
+  font-size: 0.56rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.03em; padding: 2px 7px; border-radius: 10px;
+  color: #fff; background: var(--prop); white-space: nowrap;
+}
+.prop-badge.prop-badge-add {
+  color: var(--prop); background: transparent; border: 1px dashed var(--prop);
+}
+.prop-badge.prop-editable { cursor: pointer; }
+.prop-badge.prop-editable:hover { filter: brightness(1.12); }
+
+/* "Proposed Scope only" filter toggle — mounted in both view filter bars. */
+.prop-filter-btn {
+  display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px;
+  border: 1px dashed var(--prop); border-radius: 14px; background: transparent;
+  color: var(--prop); font-family: var(--font); font-size: 0.7rem; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+}
+.prop-filter-btn:hover  { background: var(--prop-lt); }
+.prop-filter-btn.active { background: var(--prop); color: #fff; border-style: solid; }
+
+/* Count chip in the System view filter bar */
+.scope-count-chip.scope-count-prop {
+  color: #fff; background: var(--prop);
+}
+
+/* Detail-panel badge + proposal block */
+.badge.badge-proposed { color: #fff; background: var(--prop); }
+.psec.psec-proposed {
+  border-left: 3px dashed var(--prop);
+  background: var(--prop-lt);
+  padding: 10px 12px; border-radius: 0 6px 6px 0;
+}
+.psec.psec-proposed .psec-label { color: var(--prop); }
+.psec .psec-note {
+  margin: 6px 0 0; font-size: 0.7rem; color: var(--ink3); font-style: italic;
+}
+
+/* Bulk "Propose all" entry in the Tag-all dropdowns */
+.col-scope-menu .scope-menu-propose {
+  color: var(--prop); font-weight: 700;
+  border-top: 1px solid var(--border2);
+}
+.col-scope-menu .scope-menu-propose:hover { background: var(--prop-lt); }
+
+/* ── Mapping view ────────────────────────────────────────────────────────── */
+
+/* A proposed LINK — a mapping Open Box recommends that the client does not
+   operate today. Dashed so it never reads as an existing connection. */
+.map-chip.map-chip-proposed {
+  border: 1px dashed var(--prop);
+  background: var(--prop-lt);
+}
+.map-chip-prop {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid var(--border2); background: var(--surface);
+  color: var(--ink3); cursor: pointer; font-size: 11px; line-height: 1;
+  font-weight: 700; padding: 0;
+}
+.map-chip-prop:hover     { border-color: var(--prop); color: var(--prop); }
+.map-chip-prop.active    { background: var(--prop); border-color: var(--prop); color: #fff; }
+
+.cell-flow-chip.cell-flow-chip-proposed {
+  border: 1px dashed var(--prop) !important;
+  background: var(--prop-lt);
+}
+.cell-flow-prop-tag {
+  font-size: 8.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.03em; color: #fff; background: var(--prop);
+  border-radius: 8px; padding: 1px 6px; white-space: nowrap;
+}
+.cell-flow-pip.cell-flow-pip-proposed {
+  background: var(--prop-lt); border: 1px dashed var(--prop);
+}
+
+/* Export modal — the opt-in Proposed Scope checkbox */
+.gen-check-wrap.gen-check-prop label { color: var(--prop); font-weight: 700; }
+
+/* Proposal rationale field in the edit modals */
+.prop-check-row {
+  display: flex !important; align-items: center; gap: 8px;
+  margin: 8px 0 2px; font-weight: 600; cursor: pointer;
+}
+.prop-check-row input { width: auto; margin: 0; }
+
+/* ── GUIDED DISCOVERY WIZARD (DevOps #3282) ──────────────────────────────────── */
+.wiz-overlay {
+  position: fixed; right: 20px; bottom: 20px; z-index: 400;
+  pointer-events: none;
+}
+.wiz-card {
+  width: 360px; background: var(--surface); border-radius: var(--radius-lg);
+  box-shadow: var(--elev3); border: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+  transform: translateY(16px) scale(0.98); opacity: 0; pointer-events: none;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.wiz-overlay.open .wiz-card {
+  transform: translateY(0) scale(1); opacity: 1; pointer-events: auto;
+}
+
+.wiz-hdr {
+  background: #373C3C; padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 3px solid var(--green);
+}
+.wiz-hdr-title { color: #fff; font-size: 0.8rem; font-weight: 700; font-family: var(--font); }
+.wiz-close {
+  background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.75);
+  width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 0.7rem;
+  transition: all var(--dur);
+}
+.wiz-close:hover { background: var(--red); color: #fff; }
+
+.wiz-steps {
+  display: flex; align-items: flex-start; padding: 14px 16px 4px; gap: 0;
+}
+.wiz-dot {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1;
+  min-width: 0;
+}
+.wiz-dot-num {
+  width: 20px; height: 20px; border-radius: 50%; background: var(--surface3);
+  color: var(--ink3); font-size: 0.62rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  border: 1px solid var(--border2);
+}
+.wiz-dot.active .wiz-dot-num { background: var(--green); color: #373C3C; border-color: var(--green); }
+.wiz-dot.done   .wiz-dot-num { background: var(--blue);  color: #fff;    border-color: var(--blue); }
+.wiz-dot-label {
+  font-size: 0.56rem; color: var(--ink3); text-align: center; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.wiz-dot.active .wiz-dot-label { color: var(--ink); font-weight: 700; }
+.wiz-dot-line { flex-shrink: 1; width: 100%; height: 1px; background: var(--border2); margin-top: 10px; }
+
+.wiz-body { padding: 12px 16px 4px; }
+.wiz-step-title {
+  font-size: 0.78rem; font-weight: 700; color: var(--ink); font-family: var(--font);
+  margin-bottom: 6px;
+}
+.wiz-step-desc {
+  font-size: 0.72rem; color: var(--ink2); line-height: 1.5; margin: 0 0 12px;
+}
+.wiz-actions { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+
+.wiz-ftr {
+  display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border);
+}
+.wiz-btn-sm { font-size: 0.68rem; padding: 7px 10px; flex: 1; justify-content: center; }
+.wiz-ftr #wiz-back:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Entry / resume banner — sits above the wizard card's fixed position */
+.wiz-banner {
+  position: fixed; right: 20px; bottom: 20px; z-index: 399;
+  max-width: 380px; background: var(--ink); color: #fff;
+  border-radius: var(--radius-lg); box-shadow: var(--elev3);
+  padding: 12px 14px; display: none;
+  align-items: center; gap: 10px; flex-wrap: wrap;
+  border-left: 4px solid var(--green);
+}
+.wiz-banner.open { display: flex; }
+.wiz-banner-text { font-size: 0.72rem; line-height: 1.4; flex: 1; min-width: 200px; }
+.wiz-banner-x {
+  background: transparent; border: none; color: rgba(255,255,255,0.6);
+  cursor: pointer; font-size: 0.8rem; flex-shrink: 0;
+}
+.wiz-banner-x:hover { color: #fff; }
+
+/* ── Derived (link-implied) proposals ─────────────────────────────────────────
+   Hollow counterpart to the solid ✦ PROPOSED badge. An item is shown this way
+   when it is LINKED to a directly-proposed item on the other side. Derivation
+   is one hop only — a derived marker never implies further items — so flagging
+   one card cannot cascade across the link graph.                            */
+
+.is-proposed-derived {
+  border-left: 3px dotted var(--prop) !important;
+}
+.prop-badge.prop-badge-derived {
+  color: var(--prop); background: transparent;
+  border: 1px dotted var(--prop); font-weight: 600;
+  cursor: help;
+}
+.scope-count-chip.scope-count-prop-derived {
+  color: var(--prop); background: transparent;
+  border: 1px dotted var(--prop);
+}
+.badge.badge-proposed-derived {
+  color: var(--prop); background: #fff;
+  border: 1px dotted var(--prop);
+}
+.psec.psec-proposed-derived {
+  border-left-style: dotted;
+  background: #f7fbf8;
+}
+.psec.psec-proposed-derived .psec-label { color: var(--prop); font-weight: 600; }
+/* ── VERSION COMPARE — PICKER MODAL ──────────────────────────────────────────── */
+.cmp-picker-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 410; align-items: center; justify-content: center; padding: 20px;
+}
+.cmp-picker-overlay.open { display: flex; }
+.cmp-picker-modal {
+  background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--elev3);
+  width: 100%; max-width: 560px; overflow: hidden;
+}
+.cmp-picker-hdr { padding: 18px 22px 4px; }
+.cmp-picker-hdr h3 { font-family: var(--font); font-size: 1rem; color: var(--ink); margin: 0 0 4px; }
+.cmp-picker-hdr p { font-size: 0.78rem; color: var(--ink2); margin: 0 0 12px; }
+.cmp-picker-body {
+  display: flex; align-items: flex-end; gap: 14px; padding: 4px 22px 20px;
+}
+.cmp-picker-field { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.cmp-picker-field label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink3); }
+.cmp-picker-field select {
+  padding: 9px 10px; border-radius: 6px; border: 1px solid var(--border2);
+  font-family: var(--font); font-size: 0.8rem; color: var(--ink); background: var(--surface);
+}
+.cmp-picker-arrow { font-size: 1.1rem; color: var(--ink3); padding-bottom: 9px; }
+.cmp-picker-ftr {
+  display: flex; justify-content: flex-end; gap: 8px; padding: 14px 22px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── VERSION COMPARE — RESULTS OVERLAY ───────────────────────────────────────── */
+.cmp-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  z-index: 420; align-items: center; justify-content: center; padding: 24px;
+}
+.cmp-overlay.open { display: flex; }
+.cmp-panel {
+  background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--elev3);
+  width: 100%; max-width: 980px; height: 88vh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+.cmp-hdr {
+  background: #373C3C; padding: 14px 20px; display: flex; align-items: center;
+  justify-content: space-between; border-bottom: 3px solid var(--green); flex-shrink: 0;
+}
+.cmp-hdr-titles { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cmp-hdr-label {
+  color: #fff; font-family: var(--font); font-size: 0.85rem; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px;
+}
+.cmp-hdr-vs { color: rgba(255,255,255,0.5); font-size: 0.9rem; flex-shrink: 0; }
+.cmp-hdr-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.cmp-close {
+  background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.75);
+  width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 0.8rem;
+  display: flex; align-items: center; justify-content: center; transition: all var(--dur);
+}
+.cmp-close:hover { background: var(--red); color: #fff; }
+
+.cmp-toolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap;
+}
+.cmp-filters { display: flex; gap: 8px; }
+.cmp-filter-chip {
+  display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 20px;
+  border: 1px solid var(--border2); background: var(--surface2); color: var(--ink3);
+  font-family: var(--font); font-size: 0.7rem; font-weight: 700; cursor: pointer;
+  opacity: 0.55; transition: all var(--dur);
+}
+.cmp-filter-chip.active { opacity: 1; }
+.cmp-filter-chip.cmp-added.active   { background: var(--green-lt); border-color: var(--green); color: var(--green-dk); }
+.cmp-filter-chip.cmp-removed.active { background: #fdecec; border-color: var(--red); color: var(--red); }
+.cmp-filter-chip.cmp-modified.active{ background: #fdf3d9; border-color: #b8860b; color: #8a6408; }
+.cmp-filter-count { font-weight: 700; }
+
+.cmp-nav { display: flex; align-items: center; gap: 10px; }
+.cmp-nav-count { font-size: 0.72rem; color: var(--ink3); font-weight: 700; min-width: 56px; text-align: center; }
+.cmp-btn-sm { font-size: 0.68rem; padding: 6px 11px; }
+
+.cmp-body { flex: 1; overflow-y: auto; padding: 14px 20px 24px; background: var(--surface2); }
+.cmp-empty {
+  text-align: center; padding: 60px 20px; color: var(--ink3); font-size: 0.9rem; font-family: var(--font);
+}
+
+.cmp-card {
+  background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border);
+  border-left: 4px solid var(--border2); padding: 12px 14px; margin-bottom: 10px; cursor: pointer;
+  transition: box-shadow var(--dur), border-color var(--dur);
+}
+.cmp-card:hover { box-shadow: var(--elev1); }
+.cmp-card.cmp-added    { border-left-color: var(--green); }
+.cmp-card.cmp-removed  { border-left-color: var(--red); }
+.cmp-card.cmp-modified { border-left-color: #b8860b; }
+.cmp-card.cmp-card-current { box-shadow: 0 0 0 2px var(--blue), var(--elev2); }
+
+.cmp-card-hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+.cmp-badge {
+  font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 2px 7px; border-radius: 4px; color: #fff;
+}
+.cmp-badge.cmp-added    { background: var(--green-dk); }
+.cmp-badge.cmp-removed  { background: var(--red); }
+.cmp-badge.cmp-modified { background: #b8860b; }
+.cmp-card-module { font-size: 0.66rem; font-weight: 700; color: var(--ink2); text-transform: uppercase; letter-spacing: 0.03em; }
+.cmp-card-bc { font-size: 0.68rem; color: var(--ink3); }
+.cmp-card-title { font-family: var(--font); font-size: 0.86rem; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+
+.cmp-card-fields { display: flex; flex-direction: column; gap: 6px; }
+.cmp-field-row { display: grid; grid-template-columns: 120px 1fr 1fr; gap: 8px; align-items: start; }
+.cmp-field-label { font-size: 0.66rem; font-weight: 700; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.03em; padding-top: 4px; }
+.cmp-field-side {
+  font-size: 0.78rem; line-height: 1.5; color: var(--ink); padding: 5px 8px; border-radius: 5px; word-break: break-word;
+}
+.cmp-side-old { background: #fdecec; }
+.cmp-side-new { background: var(--green-lt); }
+.cmp-side-empty { background: transparent; }
+.cmp-blank { color: var(--ink3); font-style: italic; }

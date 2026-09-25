@@ -12,7 +12,7 @@ import { ALL_DATA, MODULE_CONFIG } from '../data/index.js';
 import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES } from '../data/business/index.js';
 import {
   buildMappingMatrix, cellPairs, COVERAGE, COVERAGE_ORDER, coverageTooltip,
-  addLink, removeLink, setLinkCoverage, getLinks,
+  addLink, removeLink, setLinkCoverage, getLinks, toggleLinkProposed, PROPOSED,
 } from '../data/links.js';
 
 let onNavigate = () => {};
@@ -283,7 +283,9 @@ function buildDomainCard(row, sysCandidates) {
           if (!resolved) return;
 
           const chip = document.createElement('div');
-          chip.className = `map-chip map-chip-${link.coverage || 'full'}`;
+          const chipCls = () => `map-chip map-chip-${link.coverage || 'full'}`
+            + (link.proposed ? ' map-chip-proposed' : '');
+          chip.className = chipCls();
 
           const covSel = document.createElement('select');
           covSel.className = 'map-chip-cov';
@@ -299,7 +301,8 @@ function buildDomainCard(row, sysCandidates) {
             e.stopPropagation();
             snapshotLinks();
             setLinkCoverage(proc.id, link.s, covSel.value);
-            chip.className = `map-chip map-chip-${covSel.value}`;
+            link.coverage = covSel.value;
+            chip.className = chipCls();
             dirty();
           });
 
@@ -322,8 +325,35 @@ function buildDomainCard(row, sysCandidates) {
             dirty();
           });
 
+          // Proposed-link toggle. A proposed link is a mapping Open Box
+          // recommends but which the client does not operate today — it is how a
+          // taxonomy gap becomes "here is what we would do about it". Excluded
+          // from linkedSystemIds(), so it never silently confers agreed scope.
+          const propBtn = document.createElement('button');
+          propBtn.type = 'button';
+          propBtn.className = 'map-chip-prop' + (link.proposed ? ' active' : '');
+          propBtn.textContent = PROPOSED.mark;
+          propBtn.title = link.proposed
+            ? 'Proposed link (Open Box recommendation) — click to make it an agreed link.'
+            : 'Mark as a proposed link — Open Box recommends this mapping but the client does not operate it today.';
+          propBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            snapshotLinks();
+            // `link` is a live reference into state.links, so toggleLinkProposed
+            // has already updated it — do NOT flip it again here.
+            const nowProposed = toggleLinkProposed(proc.id, link.s);
+            chip.className = chipCls();
+            propBtn.classList.toggle('active', !!nowProposed);
+            propBtn.title = nowProposed
+              ? 'Proposed link (Open Box recommendation) — click to make it an agreed link.'
+              : 'Mark as a proposed link — Open Box recommends this mapping but the client does not operate it today.';
+            refreshHeader();
+            dirty();
+          });
+
           chip.appendChild(covSel);
           chip.appendChild(lbl);
+          chip.appendChild(propBtn);
           chip.appendChild(delBtn);
           linksArea.appendChild(chip);
         });
@@ -601,17 +631,19 @@ function showCell(domainId, sysMod) {
   const byBiz = new Map();
   pairs.forEach(p => {
     if (!byBiz.has(p.b.id)) byBiz.set(p.b.id, { biz: p.b, sys: [] });
-    byBiz.get(p.b.id).sys.push({ s: p.s, coverage: p.coverage || 'full' });
+    byBiz.get(p.b.id).sys.push({ s: p.s, coverage: p.coverage || 'full', proposed: p.proposed });
   });
 
   // Build flow rows
   const flowRows = [...byBiz.values()].map(({ biz, sys }) => {
-    const chips = sys.map(({ s, coverage }) => {
+    const chips = sys.map(({ s, coverage, proposed }) => {
       const cov = COVERAGE[coverage] || COVERAGE.full;
-      return `<button class="cell-flow-chip cell-flow-chip-${coverage}" data-xview="system" data-xid="${esc(s.id)}"
-        title="${esc(s.breadcrumb)} · ${esc(coverageTooltip(coverage))}">
+      return `<button class="cell-flow-chip cell-flow-chip-${coverage}${proposed ? ' cell-flow-chip-proposed' : ''}"
+        data-xview="system" data-xid="${esc(s.id)}"
+        title="${esc(s.breadcrumb)} · ${esc(coverageTooltip(coverage))}${proposed ? ' · ' + esc(PROPOSED.label) : ''}">
         <span class="cell-flow-chip-top">
           <span class="cell-flow-cov-tag cell-flow-cov-tag-${coverage}">${esc(cov.short)}</span>
+          ${proposed ? `<span class="cell-flow-prop-tag" title="${esc(PROPOSED.desc)}">${PROPOSED.mark} ${esc(PROPOSED.short)}</span>` : ''}
           <span class="cell-flow-chip-mod">${esc(s.moduleLabel)}</span>
         </span>
         <span class="cell-flow-chip-title">${esc(s.title)}</span>
@@ -632,11 +664,15 @@ function showCell(domainId, sysMod) {
   // Legend
   const covCounts = { full: 0, partial: 0, outside: 0 };
   pairs.forEach(p => { const k = p.coverage || 'full'; if (k in covCounts) covCounts[k]++; });
+  const propCount = pairs.filter(p => p.proposed).length;
   const legendParts = COVERAGE_ORDER
     .filter(k => covCounts[k] > 0)
     .map(k => `<span class="cell-flow-legend-item">
       <span class="cell-flow-pip cell-flow-pip-${k}"></span>${esc(COVERAGE[k].label)} <strong>${covCounts[k]}</strong>
-    </span>`).join('');
+    </span>`).join('')
+    + (propCount ? `<span class="cell-flow-legend-item" title="${esc(PROPOSED.desc)}">
+        <span class="cell-flow-pip cell-flow-pip-proposed"></span>${esc(PROPOSED.label)} <strong>${propCount}</strong>
+      </span>` : '');
 
   document.getElementById('panel-body').innerHTML = `
     <div class="psec">

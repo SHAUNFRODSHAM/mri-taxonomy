@@ -1,6 +1,11 @@
 import { state, findItem, findBreadcrumb, snapshot, triggerRender } from '../state.js';
 import { renderLinkEditor } from './linkEditor.js';
 import { marketFieldsHTML, readMarketFields } from './marketNote.js';
+import { proposalFieldHTML, initProposalField, applyProposalField } from './proposalField.js';
+
+const SCOPE_STATE_LABELS = {
+  'core': 'Core', 'custom': 'Custom', 'out-of-scope': 'Out of scope',
+};
 
 export function openEditModal(id) {
   const item = findItem(id);
@@ -17,12 +22,12 @@ export function openEditModal(id) {
     <label>Display Name</label>
     <input type="text" id="em-name" value="${esc(item.title)}" />
     <label>Overview Description</label>
-    <textarea id="em-desc">${item.desc || ''}</textarea>
+    <textarea id="em-desc">${esc(item.desc || '')}</textarea>
     <label>Core Activities</label>
-    <textarea id="em-activities">${(item.activities || []).join('\n')}</textarea>
+    <textarea id="em-activities">${esc((item.activities || []).join('\n'))}</textarea>
     <p class="field-hint">One activity per line.</p>
     <label>Client Note</label>
-    <textarea id="em-client-note" placeholder="Client-specific note — saved with this version">${(item.clientNote || '')}</textarea>
+    <textarea id="em-client-note" placeholder="Client-specific note — saved with this version">${esc(item.clientNote || '')}</textarea>
     ${marketFieldsHTML(item)}
     <div class="modal-sec-head">MRI Sub-Process Title</div>
     <label>MRI Module Reference Title</label>
@@ -53,9 +58,11 @@ export function openEditModal(id) {
     <button class="btn-dyn-add" data-action="add-assoc">+ Add Associated Process</button>
     <div class="modal-sec-head">Linked Business Processes</div>
     <p class="field-hint" style="margin-top:-6px">Value-stream processes this MRI PMX process supports.</p>
-    <div id="em-link-editor"></div>`;
+    <div id="em-link-editor"></div>
+    ${proposalFieldHTML(item, SCOPE_STATE_LABELS[item.scope] || 'untagged')}`;
 
   renderLinkEditor(document.getElementById('em-link-editor'), id, 'system');
+  initProposalField();
 
   // Single delegated listener for the modal body
   const body = document.getElementById('em-body');
@@ -133,6 +140,7 @@ export function saveEditModal() {
       name: (row.querySelector('.assoc-name-input')?.value || '').trim(),
       desc: (row.querySelector('.assoc-desc-input')?.value || '').trim(),
     })).filter(a => a.name);
+  applyProposalField(item);
 
   closeEditModal();
   triggerRender();

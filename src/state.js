@@ -36,6 +36,11 @@ export const state = {
   // Business ⇄ system links: [{ b, s, coverage, note }]. Seeded from
   // SEED_LINKS at boot, editable during discovery, persisted per version.
   links: [],
+  // "Proposed Scope only" filter — shared by both views. Orthogonal to
+  // scopeFilters / coverageFilters: when true it narrows whatever those select
+  // down to the items Open Box has proposed. Not persisted in versions (it is a
+  // view preference, not client data).
+  proposedOnly: false,
   // Discovery Baseline flag — when true, the System view shows every untagged
   // item as Untagged (suppresses the auto out-of-scope derivation). Set only
   // while the built-in "Discovery Baseline" version is loaded.
@@ -49,6 +54,13 @@ export const state = {
 export function isModuleVisible(tab) {
   return state.moduleVisibility[tab] !== false;
 }
+
+/** Built-in read-only baselines that cannot be overwritten. Their names
+ *  ("Original", "Discovery Baseline") are app labels rather than client names,
+ *  so the document cover falls back to a placeholder while one is active.
+ *  Lives here so main.js and genModal.js share one definition — genModal cannot
+ *  import from main.js, which imports genModal. */
+export const BUILTIN_VERSIONS = new Set(['original', 'discovery']);
 
 export const MAX_HIST = 20;
 

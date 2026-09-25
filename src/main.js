@@ -1,12 +1,12 @@
 import './styles/main.css';
-import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, snapshotAll, restoreSnapshot, currentData, triggerRender, registerRender, registerHistoryChange, isModuleVisible } from './state.js';
+import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, snapshotAll, restoreSnapshot, currentData, triggerRender, registerRender, registerHistoryChange, isModuleVisible, BUILTIN_VERSIONS } from './state.js';
 import { render, effectiveScope } from './components/grid.js';
 import { showPanel, closePanel, setSystemLinkRenderer } from './components/panel.js';
 import { openEditModal, closeEditModal, saveEditModal } from './components/editModal.js';
 import { openAddModal, closeAddModal, confirmAdd, openAddTabModal, closeAddTabModal, confirmAddTab } from './components/addModal.js';
 import { openGenModal, closeGenModal, buildDoc, downloadWord, downloadPDF } from './components/genModal.js';
 import { renderVersionPanel } from './components/versionMenu.js';
-import { renderBusiness, initBusinessView, setBusinessLinkRenderer, showBusinessPanel } from './components/businessView.js';
+import { renderBusiness, initBusinessView, setBusinessLinkRenderer, showBusinessPanel, makeProposedToggle } from './components/businessView.js';
 import { openBusinessEditModal, saveBusinessEditModal, initBusinessEditModal, isBusinessEditOpen } from './components/businessEditModal.js';
 import { renderMapping, initMappingView } from './components/mappingView.js';
 import { makeMultiSelect } from './components/multiSelect.js';
@@ -14,6 +14,8 @@ import { systemLinksFor, businessLinksFor, systemItemModule, initLinks, seedLink
 import { MARKETS } from './data/markets.js';
 import { findBusinessItem, BUSINESS_DATA, BUSINESS_ORIGINAL, BUSINESS_CONFIG, BUSINESS_MODULES } from './data/business/index.js';
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData, duplicateVersion } from './versions.js';
+import { initDiscoveryWizard, openWizard, closeWizard, maybeShowEntryBanner } from './components/discoveryWizard.js';
+import { openComparePicker, openCompareResults } from './components/compareView.js';
 
 // ── CALLBACKS passed to grid renderer ─────────────────────────────────────────
 
@@ -24,6 +26,8 @@ const gridCallbacks = {
   onAddModal:    openAddModal,
   onScopeChange: cycleScope,
   onBulkTag:     bulkTagColumn,
+  onProposeToggle: toggleProposedSystem,
+  onBulkPropose:   bulkProposeColumn,
 };
 
 // Register render so components can call triggerRender()
@@ -234,7 +238,7 @@ function syncTabBar() {
     const btn = document.createElement('button');
     btn.className   = 'tab-btn';
     btn.dataset.tab = tabId;
-    btn.innerHTML   = `<span class="tab-icon">${cfg.icon || '📋'}</span>${cfg.label}`;
+    btn.innerHTML   = `<span class="tab-icon">${esc(cfg.icon || '📋')}</span>${esc(cfg.label)}`;
     btn.addEventListener('click', () => {
       document.dispatchEvent(new CustomEvent('mri:switchTab', { detail: tabId }));
     });
@@ -297,8 +301,8 @@ function buildModuleVisMenu() {
     html += `<label class="mod-vis-row${visible ? '' : ' off'}">
       <input type="checkbox" data-mod="${tab}" ${visible ? 'checked' : ''} ${lastVisible ? 'disabled' : ''}
         ${lastVisible ? 'title="At least one module must stay visible"' : ''}>
-      <span class="mod-vis-icon">${cfg.icon || '📋'}</span>
-      <span class="mod-vis-name">${cfg.label || tab}</span>
+      <span class="mod-vis-icon">${esc(cfg.icon || '📋')}</span>
+      <span class="mod-vis-name">${esc(cfg.label || tab)}</span>
     </label>`;
   });
   html += '<div class="mod-vis-hint">Use Save Changes (or Save As) to commit this selection to the version.</div>';
@@ -344,9 +348,6 @@ function toggleEdit() {
   else render(gridCallbacks);
 }
 
-/** Built-in read-only baselines that cannot be overwritten. */
-const BUILTIN_VERSIONS = new Set(['original', 'discovery']);
-
 /** Show Save Changes only when in edit mode on a saved (non-built-in) version. */
 function updateSaveChangesBtn() {
   const visible = state.editMode && !BUILTIN_VERSIONS.has(state.activeVersionId);
@@ -380,12 +381,19 @@ function saveChangesToVersion() {
 /** Blank every scope (system) and coverage (business) tag — the Discovery
  *  Baseline state. Used on discovery load, boot, and reset-while-in-discovery. */
 function clearAllTags() {
+  // Proposals are discovery output, not baseline content, so the Discovery
+  // Baseline clears them alongside the scope/coverage tags.
+  const clearProp = it => { delete it.proposed; delete it.proposed_note; };
   Object.values(ALL_DATA).forEach(mod => mod.forEach(col => col.processes.forEach(p => {
-    p.scope = null; (p.subs || []).forEach(s => { s.scope = null; });
+    p.scope = null; clearProp(p);
+    (p.subs || []).forEach(s => { s.scope = null; clearProp(s); });
   })));
   Object.values(BUSINESS_DATA).forEach(mod => mod.forEach(col => col.processes.forEach(p => {
-    p.coverage = null; (p.subs || []).forEach(s => { s.coverage = null; });
+    p.coverage = null; clearProp(p);
+    (p.subs || []).forEach(s => { s.coverage = null; clearProp(s); });
   })));
+  // Proposed links are Open Box recommendations captured during discovery too.
+  state.links = (state.links || []).filter(l => !l.proposed);
 }
 
 function openResetModal() {
@@ -580,6 +588,7 @@ function confirmSaveAs() {
 
   closeSaveAsModal();
   updateVersionBadge();
+  document.dispatchEvent(new CustomEvent('mri:versionSaved', { detail: { id, name } }));
 
   // Brief visual confirmation
   const badge = document.getElementById('ver-badge-name');
@@ -675,6 +684,7 @@ function loadVersion(id) {
   updateUndoBtn();
   updateVersionBadge();
   updateSaveChangesBtn();
+  maybeShowEntryBanner();
 }
 
 // ── DELETE VERSION ────────────────────────────────────────────────────────────
@@ -708,6 +718,31 @@ function cycleScope(item) {
   updateVersionBadge();
 }
 
+/** Toggle Proposed Scope on a system item. Leaves item.scope untouched — the
+ *  proposal is an extra statement about the item, not a replacement for its
+ *  agreed scope, so the current-state → proposed delta survives. */
+function toggleProposedSystem(item) {
+  snapshot();
+  if (item.proposed) { delete item.proposed; delete item.proposed_note; }
+  else item.proposed = true;
+  render(gridCallbacks);
+  updateVersionBadge();
+}
+
+/** Mark/clear Proposed Scope across a whole system column. */
+function bulkProposeColumn(colId, proposed) {
+  snapshot();
+  const col = ALL_DATA[state.currentTab]?.find(c => c.id === colId);
+  if (!col) return;
+  const apply = it => {
+    if (proposed) it.proposed = true;
+    else { delete it.proposed; delete it.proposed_note; }
+  };
+  col.processes.forEach(proc => { apply(proc); (proc.subs || []).forEach(apply); });
+  render(gridCallbacks);
+  updateVersionBadge();
+}
+
 /** Set all processes and sub-processes in a column to a given scope. */
 function bulkTagColumn(colId, scope) {
   snapshot();
@@ -733,6 +768,7 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#mod-vis-wrap')) closeModuleVisMenu();
 });
 document.getElementById('gen-btn').addEventListener('click', openGenModal);
+document.getElementById('wiz-open-btn').addEventListener('click', openWizard);
 document.getElementById('reset-btn').addEventListener('click', openResetModal);
 document.getElementById('save-changes-btn').addEventListener('click', saveChangesToVersion);
 
@@ -743,6 +779,7 @@ document.getElementById('ver-badge').addEventListener('click', openVersionPanel)
 // Version panel
 document.getElementById('ver-panel-close').addEventListener('click', closeVersionPanel);
 document.getElementById('ver-save-as-btn').addEventListener('click', openSaveAsModal);
+document.getElementById('ver-compare-btn').addEventListener('click', openComparePicker);
 
 // Save As modal
 document.getElementById('save-as-close').addEventListener('click', closeSaveAsModal);
@@ -806,6 +843,8 @@ function renderScopeFilter() {
     swatch: v => SCOPE_FILTER_COLOURS[v] || 'var(--border2)',
     onChange: () => render(gridCallbacks),
   }));
+  // Same Proposed Scope toggle the Business view uses — one control, one meaning.
+  mount.appendChild(makeProposedToggle(() => { renderScopeFilter(); render(gridCallbacks); }));
   renderMarketFilter();
 }
 
@@ -907,6 +946,32 @@ document.addEventListener('keydown', e => {
   }
 });
 
+// ── GUIDED DISCOVERY WIZARD (DevOps #3282) ─────────────────────────────────────
+
+initDiscoveryWizard({
+  getVersionId:      () => state.activeVersionId,
+  isBaselineVersion: id => id === 'original' || id === 'discovery',
+  startNewVersion:   openSaveAsModal,
+  openValueStreams:  () => { switchView('business'); closeWizardChrome(); },
+  openSystemView:    () => { switchView('system'); closeWizardChrome(); },
+  openModuleSelector: () => {
+    switchView('system');
+    if (!state.editMode) toggleEdit();
+    // Deferred: the document-level "click outside closes the menu" listener
+    // (main.js) sees this same click bubble past #mod-vis-wrap and would
+    // close the menu on the same tick it opens — open it on the next one.
+    setTimeout(openModuleVisMenu, 0);
+    closeWizardChrome();
+  },
+  openMapping: () => { switchView('mapping'); closeWizardChrome(); },
+  openExport:  () => { openGenModal(); closeWizardChrome(); },
+  compareToBaseline: () => { closeWizardChrome(); openCompareResults('discovery', 'live'); },
+});
+
+/** Collapse the wizard card itself when its action jumps the user into the
+ *  real UI, without losing wizard progress — reopen via the topbar button. */
+function closeWizardChrome() { closeWizard(); }
+
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 initLinks();
 // Default landing = Discovery Baseline (the new-client consulting start point):
@@ -920,3 +985,4 @@ updateVersionBadge();
 applyModuleVisibility();
 // Boot into the default view (Business Process first, per the methodology)
 switchView(state.viewMode);
+maybeShowEntryBanner();
