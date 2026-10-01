@@ -1,5 +1,6 @@
 import { state, findItem, findBreadcrumb, snapshot, triggerRender } from '../state.js';
 import { renderLinkEditor } from './linkEditor.js';
+import { marketFieldsHTML, readMarketFields } from './marketNote.js';
 import { proposalFieldHTML, initProposalField, applyProposalField } from './proposalField.js';
 
 const SCOPE_STATE_LABELS = {
@@ -27,6 +28,7 @@ export function openEditModal(id) {
     <p class="field-hint">One activity per line.</p>
     <label>Client Note</label>
     <textarea id="em-client-note" placeholder="Client-specific note — saved with this version">${esc(item.clientNote || '')}</textarea>
+    ${marketFieldsHTML(item)}
     <div class="modal-sec-head">MRI Sub-Process Title</div>
     <label>MRI Module Reference Title</label>
     <input type="text" id="em-mri-title" value="${esc(item.mri_title || '')}" placeholder="e.g. Unit Maintenance — MRI Property Manager" />
@@ -127,6 +129,7 @@ export function saveEditModal() {
   item.activities = document.getElementById('em-activities').value
     .split('\n').map(s => s.trim()).filter(Boolean);
   item.clientNote = document.getElementById('em-client-note').value.trim();
+  readMarketFields(item);
   item.mri_title  = document.getElementById('em-mri-title').value.trim();
   item.mri_prereqs = [...document.getElementById('prereq-list')
     .querySelectorAll('.prereq-input')]

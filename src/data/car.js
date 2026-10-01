@@ -368,6 +368,7 @@ export const car = [
         id: 'car-vat-charges',
         title: 'VAT / Tax on Charges',
         type: 'process',
+        marketScope: ['UK', 'EU'],
         desc: 'Applying VAT or tax to corporate receivable charges where due, recording it as a separate charge code and posting it to the VAT control account in GL. VAT configuration itself lives at entity/international level, not in CAR.',
         activities: [
           'Bill VAT/tax on charges where applicable, using a separate tax charge code',

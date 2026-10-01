@@ -11,6 +11,7 @@ import { openBusinessEditModal, saveBusinessEditModal, initBusinessEditModal, is
 import { renderMapping, initMappingView } from './components/mappingView.js';
 import { makeMultiSelect } from './components/multiSelect.js';
 import { systemLinksFor, businessLinksFor, systemItemModule, initLinks, seedLinks, pruneDanglingLinks } from './data/links.js';
+import { MARKETS } from './data/markets.js';
 import { findBusinessItem, BUSINESS_DATA, BUSINESS_ORIGINAL, BUSINESS_CONFIG, BUSINESS_MODULES } from './data/business/index.js';
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData, duplicateVersion } from './versions.js';
 import { initDiscoveryWizard, openWizard, closeWizard, maybeShowEntryBanner } from './components/discoveryWizard.js';
@@ -844,6 +845,20 @@ function renderScopeFilter() {
   }));
   // Same Proposed Scope toggle the Business view uses — one control, one meaning.
   mount.appendChild(makeProposedToggle(() => { renderScopeFilter(); render(gridCallbacks); }));
+  renderMarketFilter();
+}
+
+/* Market filter — bound to the same state.markets as the Business view, so one
+   selection governs both views and the document export. Unlike scopeFilters it
+   is NOT reset on tab switch: market is a property of the client, not of the
+   module being viewed. */
+function renderMarketFilter() {
+  const mount = document.getElementById('market-filter-mount');
+  if (!mount) return;
+  mount.innerHTML = '';
+  mount.appendChild(makeMultiSelect('Market',
+    MARKETS.map(m => ({ value: m.key, label: m.label, short: m.key })),
+    'markets', { onChange: () => render(gridCallbacks) }));
 }
 
 /** Expand or collapse every process (with subs) in the current system module. */
