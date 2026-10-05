@@ -90,6 +90,7 @@ export function render(callbacks) {
   currentData().forEach(col => {
     const colEl = document.createElement('div');
     colEl.className = 'col';
+    colEl.dataset.columnId = col.id;
 
     // ── Column header ──
     const colHeader = document.createElement('div');

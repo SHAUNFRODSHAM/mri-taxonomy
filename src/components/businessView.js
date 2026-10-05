@@ -236,6 +236,7 @@ function renderBusinessGrid() {
   data.forEach(col => {
     const colEl = document.createElement('div');
     colEl.className = 'col';
+    colEl.dataset.columnId = col.id;
 
     const colHeader = document.createElement('div');
     colHeader.className = 'col-header biz-col-header';
