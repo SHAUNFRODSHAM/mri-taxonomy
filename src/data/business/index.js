@@ -65,12 +65,9 @@ export const BUSINESS_ORIGINAL = Object.freeze(JSON.parse(JSON.stringify(BUSINES
 
 export const BUSINESS_MODULES = Object.keys(BUSINESS_DATA);
 
-// Market + vertical dimension definitions for the business-view filters.
-export const MARKETS   = [
-  { key: 'UK', label: '🇬🇧 United Kingdom' },
-  { key: 'US', label: '🇺🇸 United States' },
-  { key: 'EU', label: '🇪🇺 Pan-European' },
-];
+// Vertical dimension definition for the business-view filter. MARKETS lives in
+// ../markets.js and is NOT re-exported here: state.js imports this module, and
+// markets.js imports state.js, so a re-export would close an import cycle.
 export const VERTICALS = ['All', 'Retail', 'Industrial', 'Office', 'Residential'];
 
 /** Find a business item (process or sub) by id, plus its breadcrumb. */

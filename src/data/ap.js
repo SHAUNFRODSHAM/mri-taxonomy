@@ -566,6 +566,7 @@ export const ap = [
         id: 'ap_tax_1099',
         title: '1099 Processing (US)',
         type: 'process',
+        marketScope: ['US'],
         desc: 'US regulatory reporting of payments to vendors — producing 1099 forms for reportable spend. This is a statutory obligation for US operations, driven off the vendor and payment data AP already holds.',
         activities: [
           'Produce 1099-MISC / 1099-NEC forms for payments over the reporting threshold ($600)',
@@ -585,6 +586,7 @@ export const ap = [
         id: 'ap_tax_vat',
         title: 'VAT & Withholding',
         type: 'process',
+        marketScope: ['UK', 'EU'],
         desc: 'Non-US tax handling — VAT on payables and withholding deductions such as UK CIS. These ensure AP reclaims and withholds the right amounts and posts them to the correct control accounts.',
         activities: [
           'Set up VAT with reclaimable tax percentage and a VAT control account, and enable tax event processing',

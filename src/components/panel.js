@@ -1,5 +1,6 @@
 import { state } from '../state.js';
 import { clientNoteHTML } from './clientNote.js';
+import { marketNoteHTML } from './marketNote.js';
 import { PROPOSED, isProposed, proposedVia, derivedTooltip } from '../data/links.js';
 
 const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -64,6 +65,7 @@ export function showPanel(item, bc, isPro, scopeInfo) {
   const assoc   = item.mri_assoc   || [];
 
   const clientNote = clientNoteHTML(item);
+  const marketNote = marketNoteHTML(item);
   document.getElementById('panel-body').innerHTML = `
     <div class="panel-col">
       <div class="psec">
@@ -74,6 +76,7 @@ export function showPanel(item, bc, isPro, scopeInfo) {
         <div class="psec-label">Core Activities</div>
         <ul class="act-list">${(item.activities || []).map(a => `<li>${esc(a)}</li>`).join('')}</ul>
       </div>
+      ${marketNote}
       ${clientNote}
       ${proposalSec}
     </div>
