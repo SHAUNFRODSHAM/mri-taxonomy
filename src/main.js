@@ -217,8 +217,11 @@ function navigateToCompareTarget(target) {
   else render(gridCallbacks);
 
   if (target.itemId) {
-    if (isBusiness) showBusinessPanel(target.itemId);
-    else handleClick(target.itemId);
+    const itemId = target.itemId;
+    requestAnimationFrame(() => {
+      if (isBusiness) showBusinessPanel(itemId);
+      else handleClick(itemId);
+    });
   }
 
   const domId = target.itemId || target.columnId;
