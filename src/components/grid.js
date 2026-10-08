@@ -15,9 +15,9 @@ function toggleExpand(id) {
 // ── Scope config ──────────────────────────────────────────────────────────────
 const SCOPE_ORDER  = [null, 'core', 'custom', 'out-of-scope'];
 const SCOPE_LABELS = {
-  'core':         '● CORE',
-  'custom':       '● CUSTOM',
-  'out-of-scope': '● OUT OF SCOPE',
+  'core':         '\u25cf CORE',
+  'custom':       '\u25cf CUSTOM',
+  'out-of-scope': '\u25cf OUT OF SCOPE',
 };
 
 // ── Effective scope ─────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ function isConnected(item, parentProcess, linkedSet) {
 /** @returns {{scope: string|null, auto: boolean}} */
 export function effectiveScope(item, parentProcess, linkedSet) {
   if (item.scope) return { scope: item.scope, auto: false };
-  // Discovery Baseline: everything reads Untagged — suppress the auto
+  // Discovery Baseline: everything reads Untagged \u2014 suppress the auto
   // out-of-scope derivation so nothing is pre-decided before discovery.
   if (state.suppressAutoScope) return { scope: null, auto: false };
   const set = linkedSet || linkedSystemIds();
@@ -47,7 +47,7 @@ export function effectiveScope(item, parentProcess, linkedSet) {
  *  The two are separate axes: Proposed Scope is orthogonal to core/custom/OOS,
  *  so it narrows the selection rather than replacing it. */
 function matchesScope(item, parentProcess, linkedSet, filters) {
-  // The filter shows the whole proposal footprint — direct and derived — so you
+  // The filter shows the whole proposal footprint \u2014 direct and derived \u2014 so you
   // can see everything a recommendation touches, not just where it was flagged.
   if (state.proposedOnly && !isProposed(item) && !proposedVia(item.id, 'system')) return false;
   return filters.includes(effectiveScope(item, parentProcess, linkedSet).scope || 'untagged');
@@ -103,23 +103,23 @@ export function render(callbacks) {
     titleSpan.textContent = col.title;
     colHeader.appendChild(titleSpan);
 
-    // Bulk-tag dropdown (edit mode only — shown via CSS)
+    // Bulk-tag dropdown (edit mode only \u2014 shown via CSS)
     const scopeWrap = document.createElement('div');
     scopeWrap.className = 'col-scope-wrap';
 
     const scopeBtn = document.createElement('button');
     scopeBtn.className = 'col-scope-btn';
-    scopeBtn.textContent = '⚐ Tag all ▾';
+    scopeBtn.textContent = '\u2690 Tag all \u25be';
     scopeWrap.appendChild(scopeBtn);
 
     const scopeMenu = document.createElement('div');
     scopeMenu.className = 'col-scope-menu';
     [
-      { scope: 'core',         label: '● Tag all: CORE' },
-      { scope: 'custom',       label: '● Tag all: CUSTOM' },
-      { scope: 'out-of-scope', label: '● Tag all: OUT OF SCOPE' },
-      { scope: null,           label: '✕ Clear all tags', cls: 'scope-menu-clear' },
-      // Proposed Scope is a separate axis — these leave the scope tags alone.
+      { scope: 'core',         label: '\u25cf Tag all: CORE' },
+      { scope: 'custom',       label: '\u25cf Tag all: CUSTOM' },
+      { scope: 'out-of-scope', label: '\u25cf Tag all: OUT OF SCOPE' },
+      { scope: null,           label: '\u2715 Clear all tags', cls: 'scope-menu-clear' },
+      // Proposed Scope is a separate axis \u2014 these leave the scope tags alone.
       { propose: true,  label: `${PROPOSED.mark} Propose all`, cls: 'scope-menu-propose',
         tip: 'Mark every process in this column as Proposed Scope (Open Box recommendation). Leaves the existing scope tags intact.' },
       { propose: false, label: `${PROPOSED.mark} Clear proposals`, cls: 'scope-menu-clear',
@@ -153,7 +153,7 @@ export function render(callbacks) {
     // Delete column button
     const colDelBtn = document.createElement('span');
     colDelBtn.className = 'col-del-btn';
-    colDelBtn.textContent = '×';
+    colDelBtn.textContent = '\u00d7';
     colDelBtn.addEventListener('click', e => {
       e.stopPropagation();
       onRemoveItem('col', col.id);
@@ -175,7 +175,7 @@ export function render(callbacks) {
       const subMatches  = subs.some(s => matchesScope(s, proc, linkedSet, filters));
       if (!showingAll && !procMatches && !subMatches && !state.editMode) return; // hide non-matching process
 
-      // Market applicability — an item with no marketScope applies everywhere.
+      // Market applicability \u2014 an item with no marketScope applies everywhere.
       // A sub INHERITS its parent's markets, so an out-of-market process takes
       // its whole subtree with it (no need to tag every sub).
       if (!matchesMarkets(proc) && !state.editMode) return; // out of market for this client
@@ -203,7 +203,7 @@ export function render(callbacks) {
         });
       }
 
-      // Add sub-process button (edit mode) — when expanded, or when there are
+      // Add sub-process button (edit mode) \u2014 when expanded, or when there are
       // no subs yet so the first one can be added.
       if (state.editMode && (expanded || !hasSubs)) {
         const addSubBtn = document.createElement('button');
@@ -286,7 +286,7 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
     el.classList.add('has-subs');
     const tog = document.createElement('span');
     tog.className = 'sub-toggle' + (subToggle.expanded ? ' open' : '');
-    tog.textContent = (subToggle.expanded ? '− ' : '+ ') + subToggle.count;
+    tog.textContent = (subToggle.expanded ? '\u2212 ' : '+ ') + subToggle.count;
     tog.title = subToggle.expanded
       ? 'Collapse sub-processes'
       : `Show ${subToggle.count} sub-process${subToggle.count > 1 ? 'es' : ''}`;
@@ -294,13 +294,13 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
     el.appendChild(tog);
   }
 
-  // Scope badge — manual tag, or the auto Out-of-Scope default (shown in all modes)
+  // Scope badge \u2014 manual tag, or the auto Out-of-Scope default (shown in all modes)
   if (scope) {
     const badge = document.createElement('span');
     badge.className = `scope-badge scope-badge-${scope}` + (auto ? ' scope-badge-auto' : '');
-    badge.textContent = auto ? '○ OUT OF SCOPE' : (SCOPE_LABELS[scope] || scope);
+    badge.textContent = auto ? '\u25cb OUT OF SCOPE' : (SCOPE_LABELS[scope] || scope);
     badge.title = auto
-      ? 'Auto — not yet linked to a value stream. Review & link, or tag manually.'
+      ? 'Auto \u2014 not yet linked to a value stream. Review & link, or tag manually.'
       : (state.editMode ? 'Click to cycle scope' : '');
     if (state.editMode) {
       badge.addEventListener('click', e => { e.stopPropagation(); onScopeChange(item); });
@@ -316,8 +316,8 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
     el.appendChild(badge);
   }
 
-  // Proposed Scope marker — sits ALONGSIDE the scope badge, never replacing it,
-  // so the current-state → proposed delta stays readable on the card.
+  // Proposed Scope marker \u2014 sits ALONGSIDE the scope badge, never replacing it,
+  // so the current-state \u2192 proposed delta stays readable on the card.
   if (isProposed(item)) {
     const pb = document.createElement('span');
     pb.className = 'prop-badge';
@@ -334,14 +334,14 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
     // Hollow, and not click-to-clear: there is nothing stored here to clear.
     const pb = document.createElement('span');
     pb.className = 'prop-badge prop-badge-derived';
-    pb.textContent = `○ ${PROPOSED.short.toUpperCase()} (linked)`;
+    pb.textContent = `\u25cb ${PROPOSED.short.toUpperCase()} (linked)`;
     pb.title = derivedTooltip(derivedFrom, 'system');
     el.appendChild(pb);
   } else if (state.editMode) {
     const pb = document.createElement('span');
     pb.className = 'prop-badge prop-badge-add prop-editable';
     pb.textContent = `${PROPOSED.mark} Propose`;
-    pb.title = 'Flag as Proposed Scope — Open Box has identified potential value add here. Keeps the existing scope tag.';
+    pb.title = 'Flag as Proposed Scope \u2014 Open Box has identified potential value add here. Keeps the existing scope tag.';
     pb.addEventListener('click', e => { e.stopPropagation(); onProposeToggle(item); });
     el.appendChild(pb);
   }
@@ -349,7 +349,7 @@ function makeItemEl(item, baseClass, onItemClick, onEditClick, onRemove, onScope
   // Delete button (shown via CSS in edit mode)
   const delBtn = document.createElement('span');
   delBtn.className = 'del-btn';
-  delBtn.textContent = '×';
+  delBtn.textContent = '\u00d7';
   delBtn.addEventListener('click', e => { e.stopPropagation(); onRemove(); });
   el.appendChild(delBtn);
 
@@ -405,7 +405,7 @@ function updateFilterBar() {
     counts['out-of-scope'] ? `<span class="scope-count-chip scope-count-oos">${oosLabel}</span>` : '',
     counts.untagged     ? `<span class="scope-count-chip scope-count-untag">Untagged ${counts.untagged}</span>` : '',
     counts.proposed     ? `<span class="scope-count-chip scope-count-prop" title="${PROPOSED.label}">${PROPOSED.mark} PROPOSED ${counts.proposed}</span>` : '',
-    counts.derived      ? `<span class="scope-count-chip scope-count-prop-derived" title="Implied by a proposed value-stream process linked to these items.">○ LINKED ${counts.derived}</span>` : '',
+    counts.derived      ? `<span class="scope-count-chip scope-count-prop-derived" title="Implied by a proposed value-stream process linked to these items.">\u25cb LINKED ${counts.derived}</span>` : '',
   ].join('');
 }
 

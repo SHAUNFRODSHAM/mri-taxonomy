@@ -535,6 +535,8 @@ export function showBusinessPanel(id) {
   document.getElementById('panel-badges').innerHTML =
     `<span class="badge ${isProcess ? 'badge-process' : 'badge-sub'}">${isProcess ? 'Process' : 'Sub-Process'}</span>
      <span class="badge badge-business">Business</span>${covBadge}`
+     + `<button class="disc-open-btn btn btn-ghost" data-id="${esc(id)}" data-side="business"
+          title="Open As-Is discovery page for this process">As-Is Discovery</button>`
      + (isProposed(item)
          ? `<span class="badge badge-proposed" title="${PROPOSED.desc}">${PROPOSED.mark} ${PROPOSED.short}</span>`
          : (proposedVia(item.id, 'business')
