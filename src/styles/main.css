@@ -2221,6 +2221,14 @@ body {
   display: flex; align-items: center; justify-content: center; transition: all var(--dur);
 }
 .cmp-close:hover { background: var(--red); color: #fff; }
+.cmp-return-btn {
+  position: fixed; right: 24px; bottom: 24px; z-index: 430;
+  border: 1px solid var(--blue); border-radius: 7px; padding: 10px 14px;
+  background: var(--surface); color: var(--blue); font: 700 0.78rem var(--font);
+  box-shadow: var(--elev2); cursor: pointer;
+}
+.cmp-return-btn:hover, .cmp-return-btn:focus-visible { background: var(--blue); color: #fff; }
+.cmp-return-btn[hidden] { display: none; }
 
 .cmp-toolbar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -2270,6 +2278,12 @@ body {
 .cmp-card-module { font-size: 0.66rem; font-weight: 700; color: var(--ink2); text-transform: uppercase; letter-spacing: 0.03em; }
 .cmp-card-bc { font-size: 0.68rem; color: var(--ink3); }
 .cmp-card-title { font-family: var(--font); font-size: 0.86rem; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.cmp-card-links { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.cmp-go-link {
+  border: 1px solid var(--blue); border-radius: 5px; padding: 4px 8px;
+  background: transparent; color: var(--blue); font: 600 0.68rem var(--font); cursor: pointer;
+}
+.cmp-go-link:hover, .cmp-go-link:focus-visible { background: var(--blue); color: #fff; }
 
 .cmp-card-fields { display: flex; flex-direction: column; gap: 6px; }
 .cmp-field-row { display: grid; grid-template-columns: 120px 1fr 1fr; gap: 8px; align-items: start; }

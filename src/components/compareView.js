@@ -36,6 +36,12 @@ let pickerRoot = null;
 let currentRecords = [];
 let currentIndex = -1;
 let activeFilters = new Set(['added', 'removed', 'modified']);
+let navigateToTarget = null;
+let returnButton = null;
+
+export function setCompareNavigator(fn) {
+  navigateToTarget = fn;
+}
 
 // ── Building comparable snapshots ────────────────────────────────────────────
 
@@ -187,6 +193,14 @@ function ensureResultsDom() {
     </div>`;
   document.body.appendChild(root);
 
+  returnButton = document.createElement('button');
+  returnButton.className = 'cmp-return-btn';
+  returnButton.type = 'button';
+  returnButton.textContent = '← Return to comparison';
+  returnButton.hidden = true;
+  returnButton.addEventListener('click', returnToCompareResults);
+  document.body.appendChild(returnButton);
+
   root.querySelector('#cmp-close').addEventListener('click', closeCompareResults);
   root.querySelector('#cmp-swap').addEventListener('click', () => {
     if (root.dataset.idA && root.dataset.idB) {
@@ -219,6 +233,15 @@ export function openCompareResults(idA, idB) {
 
 export function closeCompareResults() {
   if (root) root.classList.remove('open');
+  if (returnButton) returnButton.hidden = true;
+}
+
+function returnToCompareResults() {
+  if (!root) return;
+  returnButton.hidden = true;
+  root.classList.add('open');
+  updateCurrentHighlight();
+  updateNavCount();
 }
 
 function renderFilters() {
@@ -268,9 +291,31 @@ function fieldRowHtml(field, status) {
   </div>`;
 }
 
+function targetAvailability(target) {
+  const modules = target.scope === 'business' ? BUSINESS_DATA : ALL_DATA;
+  const columns = modules[target.moduleKey];
+  if (!columns) return null;
+  if (target.itemId) {
+    const itemExists = columns.some(col =>
+      (col.processes || []).some(proc =>
+        proc.id === target.itemId || (proc.subs || []).some(sub => sub.id === target.itemId)));
+    if (itemExists) return 'item';
+  }
+  if (target.columnId && columns.some(col => col.id === target.columnId)) return 'section';
+  return target.itemId ? null : 'module';
+}
+
 function recordCardHtml(rec, idx) {
   const meta = STATUS_META[rec.status];
   const isCurrent = idx === currentIndex;
+  const targets = (rec.targets || []).map((target, targetIndex) => {
+    const availability = targetAvailability(target);
+    if (!availability) return '';
+    const label = rec.scope === 'link'
+      ? (target.scope === 'business' ? 'Open business process' : 'Open MRI process')
+      : availability === 'item' ? 'Go to item' : availability === 'section' ? 'Go to section' : 'Go to module';
+    return `<button class="cmp-go-link" type="button" data-target-index="${targetIndex}">${label} →</button>`;
+  }).filter(Boolean).join('');
   return `
     <div class="cmp-card ${meta.cls} ${isCurrent ? 'cmp-card-current' : ''}" data-idx="${idx}" id="cmp-rec-${rec.id}">
       <div class="cmp-card-hdr">
@@ -279,6 +324,7 @@ function recordCardHtml(rec, idx) {
         ${rec.breadcrumb ? `<span class="cmp-card-bc">${esc(rec.breadcrumb)}</span>` : ''}
       </div>
       <div class="cmp-card-title">${esc(rec.title)}</div>
+      ${targets ? `<div class="cmp-card-links">${targets}</div>` : ''}
       <div class="cmp-card-fields">${rec.fields.map(f => fieldRowHtml(f, rec.status)).join('')}</div>
     </div>`;
 }
@@ -294,6 +340,20 @@ function renderBody() {
   } else {
     body.innerHTML = records.map((r) => recordCardHtml(r, currentRecords.indexOf(r))).join('');
     body.querySelectorAll('.cmp-card').forEach(card => {
+      card.querySelectorAll('.cmp-go-link').forEach(button => {
+        button.addEventListener('click', e => {
+          e.stopPropagation();
+          const recordIndex = parseInt(card.dataset.idx, 10);
+          const rec = currentRecords[recordIndex];
+          const target = rec.targets[parseInt(button.dataset.targetIndex, 10)];
+          if (!navigateToTarget || !target) return;
+          currentIndex = recordIndex;
+          updateCurrentHighlight();
+          root.classList.remove('open');
+          returnButton.hidden = false;
+          navigateToTarget(target);
+        });
+      });
       card.addEventListener('click', () => {
         currentIndex = parseInt(card.dataset.idx, 10);
         updateCurrentHighlight();
