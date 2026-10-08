@@ -48,6 +48,9 @@ export const state = {
   // Which processes are expanded to reveal their sub-processes (id -> true).
   // Collapsed by default; a scope filter force-expands so matches stay visible.
   expandedProcs: {},
+  // Client As-Is discovery data — keyed by process id (both business and system ids).
+  // Persisted per client version; never mixed with the shared taxonomy data.
+  discoveryData: {},
 };
 
 /** A module is visible unless explicitly hidden. */

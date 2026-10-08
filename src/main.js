@@ -1,4 +1,6 @@
 import './styles/main.css';
+import { openDiscoveryPage, closeDiscoveryPage, setLinkedItemsFor, setDiscoveryPanelOpener, setDiscoveryMetaResolver } from './components/discoveryPage.js';
+import { snapshotDiscovery, restoreDiscovery, clearDiscovery } from './discoveryData.js';
 import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, snapshotAll, restoreSnapshot, currentData, triggerRender, registerRender, registerHistoryChange, isModuleVisible, BUILTIN_VERSIONS } from './state.js';
 import { render, effectiveScope } from './components/grid.js';
 import { showPanel, closePanel, setSystemLinkRenderer } from './components/panel.js';
@@ -163,7 +165,7 @@ function renderLinkSection(id, side) {
   const rows = links.map(l => `
     <button class="xlink" data-xview="${l.view}" data-xid="${esc(l.id)}">
       <span class="xlink-mod">${esc(l.moduleLabel)}</span>
-      <span class="xlink-arrow">→</span>
+      <span class="xlink-arrow">\u2192</span>
       <span class="xlink-body">
         <span class="xlink-title">${esc(l.title)}</span>
         <span class="xlink-bc">${esc(l.breadcrumb)}</span>
@@ -238,7 +240,7 @@ function syncTabBar() {
     const btn = document.createElement('button');
     btn.className   = 'tab-btn';
     btn.dataset.tab = tabId;
-    btn.innerHTML   = `<span class="tab-icon">${esc(cfg.icon || '📋')}</span>${esc(cfg.label)}`;
+    btn.innerHTML   = `<span class="tab-icon">${esc(cfg.icon || '\u{1F4CB}')}</span>${esc(cfg.label)}`;
     btn.addEventListener('click', () => {
       document.dispatchEvent(new CustomEvent('mri:switchTab', { detail: tabId }));
     });
@@ -301,7 +303,7 @@ function buildModuleVisMenu() {
     html += `<label class="mod-vis-row${visible ? '' : ' off'}">
       <input type="checkbox" data-mod="${tab}" ${visible ? 'checked' : ''} ${lastVisible ? 'disabled' : ''}
         ${lastVisible ? 'title="At least one module must stay visible"' : ''}>
-      <span class="mod-vis-icon">${esc(cfg.icon || '📋')}</span>
+      <span class="mod-vis-icon">${esc(cfg.icon || '\u{1F4CB}')}</span>
       <span class="mod-vis-name">${esc(cfg.label || tab)}</span>
     </label>`;
   });
@@ -365,7 +367,7 @@ function saveChangesToVersion() {
   const customModules = Object.keys(MODULE_CONFIG)
     .filter(k => !builtIn.has(k))
     .map(k => ({ id: k, config: MODULE_CONFIG[k] }));
-  updateVersionData(state.activeVersionId, dataSnapshot, customModules, { ...state.moduleVisibility }, JSON.parse(JSON.stringify(state.links)), JSON.parse(JSON.stringify(BUSINESS_DATA)));
+  updateVersionData(state.activeVersionId, dataSnapshot, customModules, { ...state.moduleVisibility }, JSON.parse(JSON.stringify(state.links)), JSON.parse(JSON.stringify(BUSINESS_DATA)), snapshotDiscovery());
   state.isDirty = false;
   updateVersionBadge();
   updateSaveChangesBtn();
@@ -579,7 +581,7 @@ function confirmSaveAs() {
     .filter(k => !builtIn.has(k))
     .map(k => ({ id: k, config: MODULE_CONFIG[k] }));
 
-  const id = saveNewVersion(name, dataSnapshot, customModules, { ...state.moduleVisibility }, JSON.parse(JSON.stringify(state.links)), JSON.parse(JSON.stringify(BUSINESS_DATA)));
+  const id = saveNewVersion(name, dataSnapshot, customModules, { ...state.moduleVisibility }, JSON.parse(JSON.stringify(state.links)), JSON.parse(JSON.stringify(BUSINESS_DATA)), snapshotDiscovery());
 
   // Set this as the active version, now clean
   state.activeVersionId   = id;
@@ -671,6 +673,8 @@ function loadVersion(id) {
     if (v.businessData) {
       Object.keys(v.businessData).forEach(m => { BUSINESS_DATA[m] = JSON.parse(JSON.stringify(v.businessData[m])); });
     }
+    clearDiscovery();
+    restoreDiscovery(v.discoveryData || {});
     if (!ALL_DATA[state.currentTab]) state.currentTab = Object.keys(ALL_DATA)[0] || 'cm';
   }
 
@@ -922,6 +926,52 @@ document.addEventListener('mri:renameVersion', e => {
   }
   renderVersionPanel();
 });
+
+// Discovery page injections
+setLinkedItemsFor((id, side) => {
+  if (side === 'business') return systemLinksFor(id);
+  return businessLinksFor(id);
+});
+setDiscoveryPanelOpener((id, side) => {
+  if (side === 'business') {
+    const f = findBusinessItem(id);
+    if (state.viewMode !== 'business') switchView('business');
+    if (f && f.module !== state.businessTab) switchBusinessTab(f.module);
+    showBusinessPanel(id);
+  } else {
+    const mod = systemItemModule(id);
+    if (state.viewMode !== 'system') switchView('system');
+    if (mod && mod !== state.currentTab) switchTab(mod);
+    handleClick(id);
+  }
+});
+setDiscoveryMetaResolver((id, side) => {
+  if (side === 'business') {
+    const f = findBusinessItem(id);
+    if (f) return { title: f.item.title, breadcrumb: f.breadcrumb };
+    return null;
+  }
+  for (const mod of Object.keys(ALL_DATA)) {
+    for (const col of ALL_DATA[mod]) {
+      for (const proc of col.processes) {
+        if (proc.id === id) return { title: proc.title, breadcrumb: col.title };
+        for (const sub of (proc.subs || [])) {
+          if (sub.id === id) return { title: sub.title, breadcrumb: `${col.title} \u203a ${proc.title}` };
+        }
+      }
+    }
+  }
+  return null;
+});
+
+function handleDiscoveryBtnClick(e) {
+  const btn = e.target.closest('.disc-open-btn');
+  if (!btn) return;
+  const { id, side } = btn.dataset;
+  openDiscoveryPage(id, side);
+}
+document.getElementById('panel-body').addEventListener('click', handleDiscoveryBtnClick);
+document.getElementById('panel-badges').addEventListener('click', handleDiscoveryBtnClick);
 
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {

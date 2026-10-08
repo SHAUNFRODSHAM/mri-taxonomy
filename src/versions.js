@@ -18,7 +18,7 @@ export function listVersions() {
  * @param {Object} moduleVisibility — map of tabId -> boolean (hidden = false)
  * @returns {string} new version id
  */
-export function saveNewVersion(name, dataSnapshot, customModules = [], moduleVisibility = {}, links = [], businessData = null) {
+export function saveNewVersion(name, dataSnapshot, customModules = [], moduleVisibility = {}, links = [], businessData = null, discoveryData = null) {
   const id = 'v_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
   const versions = listVersions();
   versions.push({
@@ -30,6 +30,7 @@ export function saveNewVersion(name, dataSnapshot, customModules = [], moduleVis
     moduleVisibility,
     links,
     businessData,
+    discoveryData,
   });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(versions));
   return id;
@@ -57,10 +58,10 @@ export function getVersion(id) {
 }
 
 /** Overwrite the data in an existing version (save changes). */
-export function updateVersionData(id, dataSnapshot, customModules = [], moduleVisibility = {}, links = [], businessData = null) {
+export function updateVersionData(id, dataSnapshot, customModules = [], moduleVisibility = {}, links = [], businessData = null, discoveryData = null) {
   const versions = listVersions().map(v =>
     v.id === id
-      ? { ...v, data: dataSnapshot, customModules, moduleVisibility, links, businessData, updatedAt: new Date().toISOString() }
+      ? { ...v, data: dataSnapshot, customModules, moduleVisibility, links, businessData, discoveryData, updatedAt: new Date().toISOString() }
       : v
   );
   localStorage.setItem(STORAGE_KEY, JSON.stringify(versions));
@@ -81,7 +82,8 @@ export function duplicateVersion(sourceId, newName) {
     JSON.parse(JSON.stringify(source.customModules || [])),
     JSON.parse(JSON.stringify(source.moduleVisibility || {})),
     JSON.parse(JSON.stringify(source.links || [])),
-    source.businessData ? JSON.parse(JSON.stringify(source.businessData)) : null,
+    source.businessData   ? JSON.parse(JSON.stringify(source.businessData))   : null,
+    source.discoveryData  ? JSON.parse(JSON.stringify(source.discoveryData))  : null,
   );
 }
 
