@@ -17,7 +17,7 @@ import { MARKETS } from './data/markets.js';
 import { findBusinessItem, BUSINESS_DATA, BUSINESS_ORIGINAL, BUSINESS_CONFIG, BUSINESS_MODULES } from './data/business/index.js';
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData, duplicateVersion } from './versions.js';
 import { initDiscoveryWizard, openWizard, closeWizard, maybeShowEntryBanner } from './components/discoveryWizard.js';
-import { openComparePicker, openCompareResults } from './components/compareView.js';
+import { openComparePicker, openCompareResults, setCompareNavigator } from './components/compareView.js';
 
 // ── CALLBACKS passed to grid renderer ─────────────────────────────────────────
 
@@ -192,6 +192,44 @@ function navigateToLinked(view, id) {
     showBusinessPanel(id);
   }
 }
+
+function navigateToCompareTarget(target) {
+  const isBusiness = target.scope === 'business';
+  const moduleData = isBusiness ? BUSINESS_DATA : ALL_DATA;
+  const moduleKey = target.moduleKey;
+  if (!moduleData[moduleKey]) return;
+
+  state.markets = ['UK', 'US', 'EU'];
+  if (isBusiness) {
+    if (state.viewMode !== 'business') switchView('business');
+    if (state.businessTab !== moduleKey) switchBusinessTab(moduleKey);
+    state.verticals = ['Retail', 'Industrial', 'Office', 'Residential'];
+    state.coverageFilters = ['full', 'partial', 'outside', 'untagged'];
+  } else {
+    if (state.viewMode !== 'system') switchView('system');
+    if (state.currentTab !== moduleKey) switchTab(moduleKey);
+    state.scopeFilters = ['core', 'custom', 'out-of-scope', 'untagged'];
+  }
+  state.proposedOnly = false;
+  if (target.parentId) state.expandedProcs[target.parentId] = true;
+
+  if (isBusiness) renderBusiness();
+  else render(gridCallbacks);
+
+  if (target.itemId) {
+    if (isBusiness) showBusinessPanel(target.itemId);
+    else handleClick(target.itemId);
+  }
+
+  const domId = target.itemId || target.columnId;
+  const elements = domId
+    ? [...document.querySelectorAll('[data-id], [data-column-id]')]
+    : [];
+  const element = elements.find(el => el.dataset.id === domId || el.dataset.columnId === domId);
+  if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+}
+
+setCompareNavigator(navigateToCompareTarget);
 
 // ── TAB SWITCHING ─────────────────────────────────────────────────────────────
 
