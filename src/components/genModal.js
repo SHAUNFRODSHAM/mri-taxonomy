@@ -1,4 +1,5 @@
 import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible, BUILTIN_VERSIONS } from '../state.js';
+import { getDiscovery, hasDiscovery } from '../discoveryData.js';
 import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES } from '../data/business/index.js';
 import { MARKETS } from '../data/markets.js';
 import { effectiveScope } from './grid.js';
@@ -307,6 +308,26 @@ function renderProcessPreview(item, tag, caption, overview, activities, prereqs,
   }
   if (item.clientNote) out += obField('Client note', item.clientNote);
 
+  out += renderDiscoverySection(item.id, 'system', caption);
+  return out;
+}
+
+/** Render a compact discovery As-Is section for a process (system side). */
+function renderDiscoverySection(processId, side, caption) {
+  if (!hasDiscovery(processId)) return '';
+  const d = getDiscovery(processId);
+  let out = `<p class="ob-label">Client As-Is Discovery</p>`;
+  if (d.narrative)   out += obField('Process narrative',     d.narrative);
+  if (d.roles)       out += obField('How it works / roles',  d.roles);
+  if (d.frequency)   out += obField('Frequency / volume',    d.frequency);
+  if (d.tools)       out += obField('Tools & workarounds',   d.tools);
+  if (d.controls)    out += obField('Controls & impact',     d.controls);
+  if (d.variations)  out += obField('Variations',            d.variations);
+  const evParts = [d.evidenceSource, d.evidenceDate, d.evidenceParticipants, d.evidenceConfidence ? `${d.evidenceConfidence} confidence` : ''].filter(Boolean);
+  if (evParts.length) out += obField('Evidence', evParts.join(' · '));
+  if (d.criticality)      out += obField('Criticality',        d.criticality);
+  if (d.discoveryStatus)  out += obField('Discovery status',   d.discoveryStatus);
+  if (d.targetState) out += `<p class="ob-label">Client target state</p><p>${e(d.targetState)}</p>`;
   return out;
 }
 
@@ -341,6 +362,7 @@ function renderStreamPreview(item, tag, caption, overview, activities) {
   }
   if (item.clientNote) out += obField('Client note', item.clientNote);
 
+  out += renderDiscoverySection(item.id, 'business', caption);
   return out;
 }
 

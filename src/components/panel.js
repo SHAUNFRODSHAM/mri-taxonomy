@@ -24,7 +24,7 @@ export function showPanel(item, bc, isPro, scopeInfo) {
   const eff = scopeInfo || { scope: item.scope || null, auto: false };
   const scopeBadge = eff.scope
     ? `<span class="badge badge-scope-${eff.scope}${eff.auto ? ' badge-scope-auto' : ''}"
-         title="${eff.auto ? 'Auto — not yet linked to a value stream; review & link, or tag manually.' : ''}">${scopeLabel[eff.scope] || eff.scope}${eff.auto ? ' · auto' : ''}</span>`
+         title="${eff.auto ? 'Auto — not yet linked to a value stream; review &amp; link, or tag manually.' : ''}">${scopeLabel[eff.scope] || eff.scope}${eff.auto ? ' · auto' : ''}</span>`
     : `<span class="badge badge-scope-untagged">Untagged</span>`;
 
   const derivedVia = isProposed(item) ? null : proposedVia(item.id, 'system');
@@ -37,7 +37,9 @@ export function showPanel(item, bc, isPro, scopeInfo) {
   document.getElementById('panel-badges').innerHTML = `
     <span class="badge ${isPro ? 'badge-process' : 'badge-sub'}">${isPro ? 'Process' : 'Sub-Process'}</span>
     <span class="badge badge-mri">MRI</span>
-    ${scopeBadge}${propBadge}`;
+    ${scopeBadge}${propBadge}
+    <button class="disc-open-btn btn btn-ghost" data-id="${esc(item.id)}" data-side="system"
+      title="Open As-Is discovery page for this process">As-Is Discovery</button>`;
 
   // Open Box proposal block — labelled as ours, with the current state spelled
   // out so it can never read as agreed client scope.

@@ -104,6 +104,7 @@ function diffColumns(colsA, colsB, itemFields, scope, moduleKey, moduleLabel, ou
       out.push({
         id: nextRecordId(), scope, level: 'column', status: 'removed',
         moduleKey, moduleLabel, breadcrumb: moduleLabel, title: a.title,
+        targets: [{ scope, moduleKey, columnId: id }],
         fields: [{ key: 'summary', label: 'Contents', a: `${(a.processes || []).length} process(es)`, b: '' }],
       });
       return;
@@ -112,6 +113,7 @@ function diffColumns(colsA, colsB, itemFields, scope, moduleKey, moduleLabel, ou
       out.push({
         id: nextRecordId(), scope, level: 'column', status: 'added',
         moduleKey, moduleLabel, breadcrumb: moduleLabel, title: b.title,
+        targets: [{ scope, moduleKey, columnId: id }],
         fields: [{ key: 'summary', label: 'Contents', a: '', b: `${(b.processes || []).length} process(es)` }],
       });
       return;
@@ -122,14 +124,15 @@ function diffColumns(colsA, colsB, itemFields, scope, moduleKey, moduleLabel, ou
     if (fieldDiffs.length) {
       out.push({
         id: nextRecordId(), scope, level: 'column', status: 'modified',
-        moduleKey, moduleLabel, breadcrumb: moduleLabel, title: b.title, fields: fieldDiffs,
+        moduleKey, moduleLabel, breadcrumb: moduleLabel, title: b.title,
+        targets: [{ scope, moduleKey, columnId: id }], fields: fieldDiffs,
       });
     }
-    diffProcesses(a.processes || [], b.processes || [], itemFields, scope, moduleKey, moduleLabel, b.title, out);
+    diffProcesses(a.processes || [], b.processes || [], itemFields, scope, moduleKey, moduleLabel, id, b.title, out);
   });
 }
 
-function diffProcesses(procsA, procsB, itemFields, scope, moduleKey, moduleLabel, colTitle, out) {
+function diffProcesses(procsA, procsB, itemFields, scope, moduleKey, moduleLabel, columnId, colTitle, out) {
   const mapA = byId(procsA);
   const mapB = byId(procsB);
   const ids = new Set([...mapA.keys(), ...mapB.keys()]);
@@ -142,14 +145,16 @@ function diffProcesses(procsA, procsB, itemFields, scope, moduleKey, moduleLabel
     if (a && !b) {
       out.push({
         id: nextRecordId(), scope, level: 'process', status: 'removed',
-        moduleKey, moduleLabel, breadcrumb, title: a.title, fields: snapshotFields(a, itemFields),
+        moduleKey, moduleLabel, breadcrumb, title: a.title,
+        targets: [{ scope, moduleKey, itemId: id, columnId }], fields: snapshotFields(a, itemFields),
       });
       return;
     }
     if (!a && b) {
       out.push({
         id: nextRecordId(), scope, level: 'process', status: 'added',
-        moduleKey, moduleLabel, breadcrumb, title: b.title, fields: snapshotFields(b, itemFields),
+        moduleKey, moduleLabel, breadcrumb, title: b.title,
+        targets: [{ scope, moduleKey, itemId: id, columnId }], fields: snapshotFields(b, itemFields),
       });
       return;
     }
@@ -158,14 +163,15 @@ function diffProcesses(procsA, procsB, itemFields, scope, moduleKey, moduleLabel
     if (fieldDiffs.length) {
       out.push({
         id: nextRecordId(), scope, level: 'process', status: 'modified',
-        moduleKey, moduleLabel, breadcrumb, title: b.title, fields: fieldDiffs,
+        moduleKey, moduleLabel, breadcrumb, title: b.title,
+        targets: [{ scope, moduleKey, itemId: id, columnId }], fields: fieldDiffs,
       });
     }
-    diffSubs(a.subs || [], b.subs || [], itemFields, scope, moduleKey, moduleLabel, `${colTitle} › ${b.title}`, out);
+    diffSubs(a.subs || [], b.subs || [], itemFields, scope, moduleKey, moduleLabel, id, columnId, `${colTitle} › ${b.title}`, out);
   });
 }
 
-function diffSubs(subsA, subsB, itemFields, scope, moduleKey, moduleLabel, breadcrumb, out) {
+function diffSubs(subsA, subsB, itemFields, scope, moduleKey, moduleLabel, processId, columnId, breadcrumb, out) {
   const mapA = byId(subsA);
   const mapB = byId(subsB);
   const ids = new Set([...mapA.keys(), ...mapB.keys()]);
@@ -177,14 +183,16 @@ function diffSubs(subsA, subsB, itemFields, scope, moduleKey, moduleLabel, bread
     if (a && !b) {
       out.push({
         id: nextRecordId(), scope, level: 'sub', status: 'removed',
-        moduleKey, moduleLabel, breadcrumb, title: a.title, fields: snapshotFields(a, itemFields),
+        moduleKey, moduleLabel, breadcrumb, title: a.title,
+        targets: [{ scope, moduleKey, itemId: id, parentId: processId, columnId }], fields: snapshotFields(a, itemFields),
       });
       return;
     }
     if (!a && b) {
       out.push({
         id: nextRecordId(), scope, level: 'sub', status: 'added',
-        moduleKey, moduleLabel, breadcrumb, title: b.title, fields: snapshotFields(b, itemFields),
+        moduleKey, moduleLabel, breadcrumb, title: b.title,
+        targets: [{ scope, moduleKey, itemId: id, parentId: processId, columnId }], fields: snapshotFields(b, itemFields),
       });
       return;
     }
@@ -193,7 +201,8 @@ function diffSubs(subsA, subsB, itemFields, scope, moduleKey, moduleLabel, bread
     if (fieldDiffs.length) {
       out.push({
         id: nextRecordId(), scope, level: 'sub', status: 'modified',
-        moduleKey, moduleLabel, breadcrumb, title: b.title, fields: fieldDiffs,
+        moduleKey, moduleLabel, breadcrumb, title: b.title,
+        targets: [{ scope, moduleKey, itemId: id, parentId: processId, columnId }], fields: fieldDiffs,
       });
     }
   });
@@ -207,9 +216,9 @@ function indexTree(dataShape, labelFor) {
     const label = labelFor(modKey);
     (dataShape[modKey] || []).forEach(col => {
       (col.processes || []).forEach(proc => {
-        idx.set(proc.id, { title: proc.title, breadcrumb: col.title, moduleLabel: label });
+        idx.set(proc.id, { title: proc.title, breadcrumb: col.title, moduleLabel: label, moduleKey: modKey, columnId: col.id });
         (proc.subs || []).forEach(sub => {
-          idx.set(sub.id, { title: sub.title, breadcrumb: `${col.title} › ${proc.title}`, moduleLabel: label });
+          idx.set(sub.id, { title: sub.title, breadcrumb: `${col.title} › ${proc.title}`, moduleLabel: label, moduleKey: modKey, columnId: col.id, parentId: proc.id });
         });
       });
     });
@@ -251,6 +260,10 @@ function diffLinks(versionA, versionB, out) {
       out.push({
         id: nextRecordId(), scope: 'link', level: 'link', status: 'removed',
         moduleKey: 'links', moduleLabel: 'Business ⇄ System Links', breadcrumb, title,
+        targets: [
+          { scope: 'business', moduleKey: bizInfo.moduleKey, itemId: ref.b, columnId: bizInfo.columnId, parentId: bizInfo.parentId },
+          { scope: 'system', moduleKey: sysInfo.moduleKey, itemId: ref.s, columnId: sysInfo.columnId, parentId: sysInfo.parentId },
+        ],
         fields: [{ key: 'coverage', label: 'Coverage', a: a.coverage || 'full', b: '' },
                  { key: 'note', label: 'Note', a: a.note || '', b: '' }],
       });
@@ -260,6 +273,10 @@ function diffLinks(versionA, versionB, out) {
       out.push({
         id: nextRecordId(), scope: 'link', level: 'link', status: 'added',
         moduleKey: 'links', moduleLabel: 'Business ⇄ System Links', breadcrumb, title,
+        targets: [
+          { scope: 'business', moduleKey: bizInfo.moduleKey, itemId: ref.b, columnId: bizInfo.columnId, parentId: bizInfo.parentId },
+          { scope: 'system', moduleKey: sysInfo.moduleKey, itemId: ref.s, columnId: sysInfo.columnId, parentId: sysInfo.parentId },
+        ],
         fields: [{ key: 'coverage', label: 'Coverage', a: '', b: b.coverage || 'full' },
                  { key: 'note', label: 'Note', a: '', b: b.note || '' }],
       });
@@ -276,6 +293,10 @@ function diffLinks(versionA, versionB, out) {
       out.push({
         id: nextRecordId(), scope: 'link', level: 'link', status: 'modified',
         moduleKey: 'links', moduleLabel: 'Business ⇄ System Links', breadcrumb, title, fields: fieldDiffs,
+        targets: [
+          { scope: 'business', moduleKey: bizInfo.moduleKey, itemId: ref.b, columnId: bizInfo.columnId, parentId: bizInfo.parentId },
+          { scope: 'system', moduleKey: sysInfo.moduleKey, itemId: ref.s, columnId: sysInfo.columnId, parentId: sysInfo.parentId },
+        ],
       });
     }
   });
@@ -297,6 +318,7 @@ function diffModuleVisibility(versionA, versionB, out) {
         id: nextRecordId(), scope: 'system', level: 'module-visibility', status: 'modified',
         moduleKey: key, moduleLabel: moduleLabelFor(versionB, key), breadcrumb: 'Module Visibility',
         title: moduleLabelFor(versionB, key),
+        targets: [{ scope: 'system', moduleKey: key }],
         fields: [{ key: 'visible', label: 'Visible', a: a ? 'Shown' : 'Hidden', b: b ? 'Shown' : 'Hidden' }],
       });
     }
