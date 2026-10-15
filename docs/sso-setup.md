@@ -135,3 +135,28 @@ App Service; the portal setting takes its place.
 - **Per-user permissions inside the app,** such as read-only reviewers versus
   editors. The role plumbing exists (`userRoles`), but nothing in the UI acts on
   it yet.
+
+## Merging with `feature/landing-intents`
+
+The two branches were built separately and merge in either order. A trial merge
+produces three conflicts, and all three are "both sides added something at the
+same place". Two of them need care:
+
+- **`src/main.js`, at the end of boot.** Keep the landing-page block, then put
+  the sign-in gate block **after** it, so the gate can fill the landing header's
+  `#landing-account` slot. Also **drop** the bare `maybeShowEntryBanner();` that
+  appears on this branch's side. The landing branch removed it deliberately,
+  because the landing page replaces the wizard's first-run banner. The indented
+  call inside `loadVersion()` stays.
+- **`src/styles/main.css`, at the end of the file.** Both blocks open with the
+  same `/* ═══…` banner line, so git keeps that line once, outside the conflict
+  markers. Keeping both sides then leaves the second block's comment with **no
+  opening `/*`**. The build warns `Unexpected "(" [css-syntax-error]` and the
+  browser silently drops the `.landing` rule, so the landing page renders as
+  plain content instead of a full-screen overlay. Re-add the opener line above
+  the second block's title. Don't merge while that warning is showing.
+- **`CLAUDE.md`.** Keep every table row from both sides.
+
+To check the merged result: set `VITE_AUTH_PROVIDER=mock` in `.env.local` and
+restart the dev server. The landing page should appear full-screen with
+"Test User (mock)" in its header.
