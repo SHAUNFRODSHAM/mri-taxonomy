@@ -4,7 +4,8 @@
    main.js for all state mutations (no circular imports).
    ═══════════════════════════════════════════════════════════════════════════ */
 
-import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible } from '../state.js';
+import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible, isStreamVisible } from '../state.js';
+import { BUSINESS_MODULES, BUSINESS_CONFIG } from '../data/business/index.js';
 import { listVersions, formatDate }      from '../versions.js';
 
 /**
@@ -18,8 +19,9 @@ export function renderVersionPanel() {
   const versions = listVersions();
   body.innerHTML = '';
 
-  // ── Module visibility section ──────────────────────────────────────────
+  // ── Module + value-stream visibility sections ──────────────────────────
   body.appendChild(buildModuleVisibilitySection());
+  body.appendChild(buildStreamVisibilitySection());
 
   // ── Original card (always first, locked) ───────────────────────────────
   const verSep = document.createElement('div');
@@ -100,6 +102,57 @@ function buildModuleVisibilitySection() {
     const name = document.createElement('span');
     name.className = 'ver-module-name';
     name.textContent = cfg.label || tab;
+
+    row.appendChild(cb);
+    row.appendChild(icon);
+    row.appendChild(name);
+    wrap.appendChild(row);
+  });
+
+  return wrap;
+}
+
+/**
+ * Builds the "Visible Value Streams" checklist — the business-side counterpart
+ * of the modules list, so a client version can be scoped to the streams in its
+ * SOW. Set first on the landing page's new-discovery setup; adjustable here.
+ */
+function buildStreamVisibilitySection() {
+  const wrap = document.createElement('div');
+  wrap.className = 'ver-modules';
+
+  const sep = document.createElement('div');
+  sep.className = 'ver-sep';
+  sep.textContent = 'Visible Value Streams';
+  wrap.appendChild(sep);
+
+  const visibleCount = BUSINESS_MODULES.filter(isStreamVisible).length;
+
+  BUSINESS_MODULES.forEach(vs => {
+    const cfg = BUSINESS_CONFIG[vs] || {};
+    const visible = isStreamVisible(vs);
+    const isLastVisible = visible && visibleCount === 1;
+
+    const row = document.createElement('label');
+    row.className = 'ver-module-row' + (visible ? '' : ' ver-module-off');
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = visible;
+    // The Value Streams view needs at least one tab to render.
+    cb.disabled = isLastVisible;
+    cb.title = isLastVisible ? 'At least one value stream must stay visible' : '';
+    cb.addEventListener('change', () => {
+      document.dispatchEvent(new CustomEvent('mri:toggleStream', { detail: vs }));
+    });
+
+    const icon = document.createElement('span');
+    icon.className = 'ver-module-icon';
+    icon.textContent = cfg.icon || '📋';
+
+    const name = document.createElement('span');
+    name.className = 'ver-module-name';
+    name.textContent = cfg.label || vs;
 
     row.appendChild(cb);
     row.appendChild(icon);

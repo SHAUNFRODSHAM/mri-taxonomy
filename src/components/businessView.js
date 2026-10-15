@@ -9,7 +9,7 @@
    Phase 2 via setLinkRenderer().
    ═══════════════════════════════════════════════════════════════════════════ */
 
-import { state, snapshot } from '../state.js';
+import { state, snapshot, isStreamVisible } from '../state.js';
 import { makeMultiSelect } from './multiSelect.js';
 import { clientNoteHTML } from './clientNote.js';
 import { marketNoteHTML } from './marketNote.js';
@@ -95,7 +95,11 @@ const SECTORS = VERTICALS.filter(v => v !== 'All'); // Retail/Industrial/Office/
 
 /** Ensure the active business tab is valid (value-stream ids). */
 function ensureBusinessTab() {
-  if (!BUSINESS_DATA[state.businessTab]) state.businessTab = BUSINESS_MODULES[0];
+  // Fall back to the first VISIBLE stream — a client version scoped away from
+  // Lease to Cash must not land on a hidden tab.
+  if (!BUSINESS_DATA[state.businessTab] || !isStreamVisible(state.businessTab)) {
+    state.businessTab = BUSINESS_MODULES.find(isStreamVisible) || BUSINESS_MODULES[0];
+  }
 }
 
 /** Does an item match the selected verticals? Vertical-agnostic items always show.
@@ -135,7 +139,7 @@ function renderBusinessTabs() {
   ensureBusinessTab();
   const tabBar = document.getElementById('business-tabbar');
   tabBar.innerHTML = '';
-  BUSINESS_MODULES.forEach(mod => {
+  BUSINESS_MODULES.filter(isStreamVisible).forEach(mod => {
     const cfg = BUSINESS_CONFIG[mod];
     const btn = document.createElement('button');
     btn.className = 'biz-tab-btn' + (mod === state.businessTab ? ' active' : '')

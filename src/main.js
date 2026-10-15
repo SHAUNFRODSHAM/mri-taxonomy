@@ -1,7 +1,7 @@
 import './styles/main.css';
 import { openDiscoveryPage, closeDiscoveryPage, setLinkedItemsFor, setDiscoveryPanelOpener, setDiscoveryMetaResolver } from './components/discoveryPage.js';
 import { snapshotDiscovery, restoreDiscovery, clearDiscovery } from './discoveryData.js';
-import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, snapshotAll, restoreSnapshot, currentData, triggerRender, registerRender, registerHistoryChange, isModuleVisible, BUILTIN_VERSIONS } from './state.js';
+import { state, ALL_DATA, MODULE_CONFIG, ORIGINAL_DATA, snapshot, snapshotAll, restoreSnapshot, currentData, triggerRender, registerRender, registerHistoryChange, isModuleVisible, isStreamVisible, isReadOnly, BUILTIN_VERSIONS } from './state.js';
 import { render, effectiveScope } from './components/grid.js';
 import { showPanel, closePanel, setSystemLinkRenderer } from './components/panel.js';
 import { openEditModal, closeEditModal, saveEditModal } from './components/editModal.js';
@@ -16,7 +16,8 @@ import { systemLinksFor, businessLinksFor, systemItemModule, initLinks, seedLink
 import { MARKETS } from './data/markets.js';
 import { findBusinessItem, BUSINESS_DATA, BUSINESS_ORIGINAL, BUSINESS_CONFIG, BUSINESS_MODULES } from './data/business/index.js';
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData, duplicateVersion } from './versions.js';
-import { initDiscoveryWizard, openWizard, closeWizard, maybeShowEntryBanner } from './components/discoveryWizard.js';
+import { initDiscoveryWizard, openWizard, openWizardAt, closeWizard, maybeShowEntryBanner } from './components/discoveryWizard.js';
+import { initLanding, showLanding, hideLanding } from './components/landingPage.js';
 import { openComparePicker, openCompareResults, setCompareNavigator } from './components/compareView.js';
 
 // ── CALLBACKS passed to grid renderer ─────────────────────────────────────────
@@ -314,6 +315,17 @@ function applyModuleVisibility() {
   }
 }
 
+/** Toggle a value stream's visibility (Versions panel), mark dirty, re-render
+ *  whichever view is showing so its tabs / matrix rows follow straight away. */
+function toggleStreamVisible(vs) {
+  state.moduleVisibility[vs] = !isStreamVisible(vs);
+  state.isDirty = true;
+  updateVersionBadge();
+  renderVersionPanel();
+  if (state.viewMode === 'business')     renderBusiness();
+  else if (state.viewMode === 'mapping') renderMapping();
+}
+
 /** Toggle a module's visibility, mark dirty, and re-sync the UI. */
 function toggleModuleVisible(tab) {
   const nowVisible = !isModuleVisible(tab);
@@ -322,6 +334,8 @@ function toggleModuleVisible(tab) {
   applyModuleVisibility();
   updateVersionBadge();
   renderVersionPanel();
+  // The mapping matrix now drops hidden modules, so it has to follow too.
+  if (state.viewMode === 'mapping') renderMapping();
   // Keep the edit-mode dropdown in sync if it's open
   if (document.getElementById('mod-vis-menu').classList.contains('open')) {
     buildModuleVisMenu();
@@ -375,6 +389,10 @@ function toggleModuleVisMenu() {
 // ── EDIT MODE ─────────────────────────────────────────────────────────────────
 
 function toggleEdit() {
+  // Explore mode is read-only: refuse to ENTER edit mode (leaving is always
+  // allowed). Guarding here covers every route in — the topbar button and the
+  // Guided Discovery wizard's module selector both come through this function.
+  if (!state.editMode && isReadOnly()) return;
   state.editMode = !state.editMode;
   const btn = document.getElementById('edit-btn');
   btn.textContent = state.editMode ? '✕ Exit Edit' : '✎ Edit Mode';
@@ -610,6 +628,22 @@ function confirmSaveAs() {
   const name  = input.value.trim();
   if (!name) { input.style.borderColor = 'var(--red)'; input.focus(); return; }
 
+  saveCurrentAsVersion(name);
+  closeSaveAsModal();
+
+  // Brief visual confirmation
+  const badge = document.getElementById('ver-badge-name');
+  if (badge) {
+    badge.style.color = 'var(--green)';
+    setTimeout(() => { badge.style.color = ''; }, 1200);
+  }
+}
+
+/** Save the whole current session as a new named version and make it active.
+ *  Shared by the Save-As modal and the landing page's new-discovery setup, so
+ *  a taxonomy created from the landing page is stored exactly like any other.
+ *  Fires mri:versionSaved, which the Guided Discovery wizard listens for. */
+function saveCurrentAsVersion(name) {
   // Deep-copy entire current ALL_DATA
   const dataSnapshot = {};
   Object.keys(ALL_DATA).forEach(tab => {
@@ -629,16 +663,9 @@ function confirmSaveAs() {
   state.activeVersionName = name;
   state.isDirty           = false;
 
-  closeSaveAsModal();
   updateVersionBadge();
   document.dispatchEvent(new CustomEvent('mri:versionSaved', { detail: { id, name } }));
-
-  // Brief visual confirmation
-  const badge = document.getElementById('ver-badge-name');
-  if (badge) {
-    badge.style.color = 'var(--green)';
-    setTimeout(() => { badge.style.color = ''; }, 1200);
-  }
+  return id;
 }
 
 // ── LOAD VERSION ──────────────────────────────────────────────────────────────
@@ -951,6 +978,7 @@ document.addEventListener('mri:versionDirty', () => {
 });
 document.addEventListener('mri:switchTab',     e => switchTab(e.detail));
 document.addEventListener('mri:toggleModule',  e => toggleModuleVisible(e.detail));
+document.addEventListener('mri:toggleStream',  e => toggleStreamVisible(e.detail));
 document.addEventListener('mri:loadVersion',   e => loadVersion(e.detail));
 document.addEventListener('mri:deleteVersion', e => handleDeleteVersion(e.detail));
 document.addEventListener('mri:duplicateVersion', e => {
@@ -1076,4 +1104,81 @@ updateVersionBadge();
 applyModuleVisibility();
 // Boot into the default view (Business Process first, per the methodology)
 switchView(state.viewMode);
-maybeShowEntryBanner();
+
+// ── LANDING PAGE ──────────────────────────────────────────────────────────────
+// The Discovery Baseline above stays loaded underneath as a safe default, but
+// the first thing shown is the landing page, which asks what the user is trying
+// to do. It replaces the wizard's first-run "start guided discovery?" banner as
+// the entry point, so maybeShowEntryBanner() is no longer called at boot — it
+// still runs on every version load (inside loadVersion) to offer a resume.
+
+/** Explore mode: hide every editing control and drop out of Edit Mode. */
+function setReadOnly(on) {
+  state.readOnly = !!on;
+  document.body.classList.toggle('read-only', state.readOnly);
+  if (state.readOnly && state.editMode) toggleEdit();   // leaving is always allowed
+}
+
+/** Before a landing choice replaces the session, protect unsaved work. Loads
+ *  overwrite silently elsewhere in the app (undo is the only net), and a page
+ *  reachable from anywhere makes that much easier to trip over. */
+function confirmLeave() {
+  if (!state.isDirty) return true;
+  return window.confirm(
+    `You have unsaved changes in "${state.activeVersionName}".\n\n` +
+    'Continue without saving? Undo can still bring them back until you make further changes.');
+}
+
+initLanding({
+  listVersions,
+  streams: BUSINESS_MODULES.map(id => ({
+    id, label: BUSINESS_CONFIG[id].label, icon: BUSINESS_CONFIG[id].icon,
+    supporting: !!BUSINESS_CONFIG[id].supporting,
+  })),
+  modules: Object.keys(ORIGINAL_DATA).map(id => ({
+    id, label: MODULE_CONFIG[id]?.label || id, icon: MODULE_CONFIG[id]?.icon,
+  })),
+
+  // Fresh, untagged Discovery Baseline → scope it to the SOW → save it as a
+  // named version so nothing ever edits a baseline → optionally hand off to
+  // Guided Discovery at 'scope' (naming and module choice are already done).
+  onStartNew({ name, streams, modules, guided }) {
+    setReadOnly(false);
+    loadVersion('discovery');
+    const keep = new Set([...streams, ...modules]);
+    [...Object.keys(ALL_DATA), ...BUSINESS_MODULES].forEach(k => {
+      state.moduleVisibility[k] = keep.has(k);
+    });
+    applyModuleVisibility();
+    saveCurrentAsVersion(name);
+    state.viewMode = 'business';
+    switchView('business');
+    if (guided) openWizardAt('scope');
+  },
+
+  onOpenVersion(id) {
+    setReadOnly(false);
+    loadVersion(id);
+    switchView(state.viewMode);
+  },
+
+  // The fully linked, fully tagged Original — the right thing to learn from —
+  // opened read-only so nobody alters the reference by accident.
+  onExplore() {
+    loadVersion('original');
+    setReadOnly(true);
+    switchView('business');
+  },
+
+  onCompare() { openComparePicker(); },
+  onResume()  { /* nothing to do — the session underneath is untouched */ },
+  confirmLeave,
+});
+
+document.getElementById('home-btn').addEventListener('click', () => {
+  if (state.editMode) toggleEdit();
+  closeWizard();
+  showLanding('home', { resumeLabel: state.activeVersionName });
+});
+
+showLanding('home');

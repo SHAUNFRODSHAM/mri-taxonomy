@@ -284,6 +284,9 @@ export const MODULE_CONFIG = {
 | Version save/load | `versions.js` for CRUD; `loadVersion()` in `main.js` to apply |
 | Document export | `genModal.js` — Word (`.doc` via mso HTML) and PDF (print dialog) |
 | Detail panel | `panel.js` — shown on process/sub click, displays all four data fields |
+| Landing page | `landingPage.js` — first screen at boot and via ⌂ Home. Four intents: start a new discovery, continue a client taxonomy, explore the reference (read-only), compare versions. Owns no state; `main.js` injects every action |
+| Module & stream visibility | `state.moduleVisibility` holds BOTH module ids (`gl`) and value-stream ids (`vs-l2c`) — they cannot collide. Read via `isModuleVisible()` / `isStreamVisible()`. Saved per version; honoured by tabs, Mapping and exports |
+| Explore (read-only) mode | `state.readOnly` + `body.read-only`. `toggleEdit()` refuses to enter Edit Mode while set — guard there, not at each button |
 
 ---
 

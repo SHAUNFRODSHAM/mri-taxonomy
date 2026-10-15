@@ -564,11 +564,16 @@ export function allResolvedLinks() {
  * count; domains with no links at all are flagged as gaps.
  */
 export function buildMappingMatrix() {
-  const systemModules = Object.keys(ALL_DATA).map(m => ({ id: m, label: MODULE_CONFIG[m]?.label || m }));
+  // Only what is in scope for this client: hidden modules drop out as columns
+  // and hidden value streams as rows. Previously the matrix ignored module
+  // visibility entirely, so a client scoped to three modules still saw all nine.
+  const visible = k => state.moduleVisibility[k] !== false;
+  const systemModules = Object.keys(ALL_DATA).filter(visible)
+    .map(m => ({ id: m, label: MODULE_CONFIG[m]?.label || m }));
   const resolved = allResolvedLinks();
 
   const rows = [];
-  for (const mod of BUSINESS_MODULES) {
+  for (const mod of BUSINESS_MODULES.filter(visible)) {
     for (const col of BUSINESS_DATA[mod]) {
       const cells = {};
       systemModules.forEach(sm => { cells[sm.id] = []; });

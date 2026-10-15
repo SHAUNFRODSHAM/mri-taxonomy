@@ -178,6 +178,17 @@ export function openWizard() {
   root.classList.add('open');
 }
 
+/** Start the wizard at a named step for the active version. Used by the landing
+ *  page's new-discovery setup, which has already named the engagement and
+ *  chosen the modules and value streams — so it hands off at 'scope' rather
+ *  than walking the consultant through the same two decisions again. */
+export function openWizardAt(stepKey) {
+  const idx = STEPS.findIndex(s => s.key === stepKey);
+  if (idx === -1) { openWizard(); return; }
+  setStepFor(getVersionId(), idx);
+  openWizard();
+}
+
 export function closeWizard() {
   state_.active = false;
   root.classList.remove('open');

@@ -41,6 +41,9 @@ export const state = {
   // down to the items Open Box has proposed. Not persisted in versions (it is a
   // view preference, not client data).
   proposedOnly: false,
+  // Explore mode (landing page → "Explore the reference taxonomy"). True hides
+  // every editing control; cleared whenever another landing intent is chosen.
+  readOnly: false,
   // Discovery Baseline flag — when true, the System view shows every untagged
   // item as Untagged (suppresses the auto out-of-scope derivation). Set only
   // while the built-in "Discovery Baseline" version is loaded.
@@ -56,6 +59,21 @@ export const state = {
 /** A module is visible unless explicitly hidden. */
 export function isModuleVisible(tab) {
   return state.moduleVisibility[tab] !== false;
+}
+
+/** A value stream is visible unless explicitly hidden.
+ *  Shares the moduleVisibility map rather than having its own: value-stream ids
+ *  ('vs-l2c') and module ids ('gl') cannot collide, and that map is already
+ *  carried through save, load, duplicate, undo and compare — so stream scoping
+ *  persists per client version with no extra plumbing. */
+export function isStreamVisible(vs) {
+  return state.moduleVisibility[vs] !== false;
+}
+
+/** Explore mode — the reference taxonomy opened for onboarding or training.
+ *  Editing is switched off so nobody alters the reference by accident. */
+export function isReadOnly() {
+  return !!state.readOnly;
 }
 
 /** Built-in read-only baselines that cannot be overwritten. Their names
