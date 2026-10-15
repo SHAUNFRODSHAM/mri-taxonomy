@@ -18,6 +18,7 @@ import { findBusinessItem, BUSINESS_DATA, BUSINESS_ORIGINAL, BUSINESS_CONFIG, BU
 import { listVersions, saveNewVersion, renameVersion, deleteVersion, getVersion, updateVersionData, duplicateVersion } from './versions.js';
 import { initDiscoveryWizard, openWizard, closeWizard, maybeShowEntryBanner } from './components/discoveryWizard.js';
 import { openComparePicker, openCompareResults, setCompareNavigator } from './components/compareView.js';
+import { runAuthGate } from './components/authGate.js';
 
 // ── CALLBACKS passed to grid renderer ─────────────────────────────────────────
 
@@ -1077,3 +1078,10 @@ applyModuleVisibility();
 // Boot into the default view (Business Process first, per the methodology)
 switchView(state.viewMode);
 maybeShowEntryBanner();
+
+// ── SIGN-IN GATE (feature/entra-sso-scaffold) ─────────────────────────────────
+// Last thing at boot, so anything that renders a sign-in slot (the landing
+// page's #landing-account) already exists. With no provider configured this
+// returns immediately and the app opens exactly as before. See auth/index.js
+// for why the hosting platform, not this gate, is what protects the content.
+runAuthGate();

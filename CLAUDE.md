@@ -284,6 +284,7 @@ export const MODULE_CONFIG = {
 | Version save/load | `versions.js` for CRUD; `loadVersion()` in `main.js` to apply |
 | Document export | `genModal.js` — Word (`.doc` via mso HTML) and PDF (print dialog) |
 | Detail panel | `panel.js` — shown on process/sub click, displays all four data fields |
+| Sign-in (SSO) | **Scaffold, off by default.** Entra ID enforced by the HOSTING PLATFORM via `public/staticwebapp.config.json` — that is the protection. `src/auth/index.js` only reads the user from `/.auth/me`; `authGate.js` shows loading / signed-out / no-access screens. Provider set at build time by `VITE_AUTH_PROVIDER` (`none` / `swa` / `mock`). Never store user details anywhere. See `docs/sso-setup.md` |
 
 ---
 

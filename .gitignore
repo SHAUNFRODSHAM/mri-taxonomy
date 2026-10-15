@@ -27,3 +27,7 @@ npm-debug.log*
 
 # Old prototype files (not part of the app)
 commercial_mgmt_taxonomy*.html
+
+# Local environment overrides (sign-in config etc.) — see .env.example
+.env.local
+.env.*.local
