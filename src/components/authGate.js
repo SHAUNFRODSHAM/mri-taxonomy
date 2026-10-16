@@ -62,14 +62,24 @@ function showSignedOut(isMock) {
       : `<a class="auth-btn" href="${esc(signInUrl())}">Sign in with Microsoft</a>`}`;
 }
 
-function showProblem(title, message, user, isMock) {
+/* Each problem gets advice that fits it. "Ask to be added in Entra" only helps
+   when the person lacks access; when the sign-in service itself cannot be
+   reached, the useful steps are to retry and then report it. */
+const ADVICE = {
+  forbidden:   'If you think you should have access, ask an administrator to add you to the application in Microsoft Entra.',
+  unavailable: 'This is usually temporary. Try again in a few minutes, and if it keeps happening, let an administrator know.',
+};
+
+function showProblem(kind, title, message, user, isMock) {
   body().innerHTML = `
     <p class="auth-msg auth-msg-strong">${esc(title)}</p>
     <p class="auth-fine">${esc(message)}</p>
     ${user ? `<p class="auth-fine">Signed in as <strong>${esc(user.name)}</strong>.</p>` : ''}
-    <p class="auth-fine">If you think you should have access, ask an administrator to add you
-      to the application in Microsoft Entra.</p>
+    <p class="auth-fine">${esc(ADVICE[kind])}</p>
+    ${kind === 'unavailable'
+      ? '<button class="auth-btn auth-btn-ghost" type="button" data-retry>Try again</button>' : ''}
     ${user && !isMock ? `<a class="auth-btn auth-btn-ghost" href="${esc(signOutUrl())}">Sign out</a>` : ''}`;
+  body().querySelector('[data-retry]')?.addEventListener('click', () => location.reload());
 }
 
 function dismiss() {
@@ -120,9 +130,9 @@ export async function runAuthGate() {
   }
   if (auth.status === 'signed-out') showSignedOut(isMock);
   else if (auth.status === 'forbidden')
-    showProblem('You don’t have access to this application', auth.message, auth.user, isMock);
+    showProblem('forbidden', 'You don’t have access to this application', auth.message, auth.user, isMock);
   else
-    showProblem('Sign-in is unavailable', auth.message, null, isMock);
+    showProblem('unavailable', 'Sign-in is unavailable', auth.message, null, isMock);
 
   return new Promise(() => {});   // hold here — the app must not open
 }
