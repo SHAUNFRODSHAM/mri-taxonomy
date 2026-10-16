@@ -1,4 +1,4 @@
-import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible, BUILTIN_VERSIONS } from '../state.js';
+import { state, ALL_DATA, MODULE_CONFIG, isModuleVisible, isStreamVisible, BUILTIN_VERSIONS } from '../state.js';
 import { getDiscovery, hasDiscovery } from '../discoveryData.js';
 import { BUSINESS_DATA, BUSINESS_CONFIG, BUSINESS_MODULES } from '../data/business/index.js';
 import { MARKETS } from '../data/markets.js';
@@ -334,7 +334,9 @@ function renderDiscoverySection(processId, side, caption) {
 // ── Business view preview ──────────────────────────────────────────────────────
 
 function businessDocTabs(scopeAll) {
-  return scopeAll ? BUSINESS_MODULES : [state.businessTab];
+  // "All" means all streams in scope for this client, mirroring how the System
+  // export uses only visible modules.
+  return scopeAll ? BUSINESS_MODULES.filter(isStreamVisible) : [state.businessTab];
 }
 function businessScopeStr(scopeAll) {
   if (!scopeAll) return BUSINESS_CONFIG[state.businessTab]?.label || state.businessTab;
